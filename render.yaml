@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: quotify-i62o
+    runtime: go
+    plan: free
+    rootDir: backend-go
+    buildCommand: go build -tags netgo -ldflags '-s -w' -o app ./cmd/server
+    startCommand: ./app
+    healthCheckPath: /api/v1/auth/health
+    envVars:
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SHEET_RANGE
+        value: login!A:B
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: AUTH_SESSION_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://quotify-net.vercel.app
+      - key: AUTH_DEBUG
+        value: "false"
