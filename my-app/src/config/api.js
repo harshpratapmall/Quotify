@@ -14,11 +14,12 @@ const hostnameEnvironment = {
 
 const configuredEnvironment = process.env.REACT_APP_ENV;
 const hostname = window.location.hostname;
-const environment = API_BASE_URLS[configuredEnvironment]
-  ? configuredEnvironment
-  : hostnameEnvironment[hostname] || (hostname === 'localhost' || hostname === '127.0.0.1'
-    ? 'local'
-    : 'production');
+const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+const environment = isLocalHost
+  ? 'local'
+  : (configuredEnvironment === 'development' || configuredEnvironment === 'production'
+    ? configuredEnvironment
+    : hostnameEnvironment[hostname] || 'production');
 
 export const apiBaseUrl = API_BASE_URLS[environment];
 
