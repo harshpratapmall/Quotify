@@ -212,9 +212,13 @@ function App() {
     const response = await fetch(apiUrl(`/api/v1/quotations/${id}`), { credentials: 'include' });
     if (!response.ok) return;
     const saved = await response.json();
-    setQuotation(saved.payload.quotation || createEmptyQuotation());
-    setItems(saved.payload.items || [{ ...lineItemTemplate }]);
-    setIncludeGst(saved.payload.includeGst ?? true); setGstRate(saved.payload.gstRate ?? '18');
+    let payload = saved.payload;
+    if (typeof payload === 'string') {
+      try { payload = JSON.parse(payload); } catch { payload = {}; }
+    }
+    setQuotation(payload?.quotation || createEmptyQuotation());
+    setItems(Array.isArray(payload?.items) && payload.items.length ? payload.items : [{ ...lineItemTemplate }]);
+    setIncludeGst(payload?.includeGst ?? true); setGstRate(payload?.gstRate ?? '18');
     setActiveQuotationId(saved.id); setSaveStatus(''); navigate('/quotation/new');
   };
 
