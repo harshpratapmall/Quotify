@@ -84,7 +84,13 @@ func Logout(c *gin.Context) {
 
 func setSessionCookie(c *gin.Context, value string, maxAge int) {
 	secure, _ := strconv.ParseBool(os.Getenv("COOKIE_SECURE"))
-	c.SetSameSite(http.SameSiteLaxMode)
+	sameSite := http.SameSiteLaxMode
+	if secure {
+		// The Vercel frontend and Render API are cross-site, so production
+		// requests need an explicit cross-site cookie policy.
+		sameSite = http.SameSiteNoneMode
+	}
+	c.SetSameSite(sameSite)
 	c.SetCookie(sessionCookieName, value, maxAge, "/", "", secure, true)
 }
 

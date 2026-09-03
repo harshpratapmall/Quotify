@@ -100,7 +100,7 @@ Do not assume persistence unless you add it explicitly.
 - `GOOGLE_SHEET_RANGE` defaults to `login!A:B` if unset.
 - `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
 - The app uses a cookie named `quotify_session`.
-- Session tokens are HMAC-signed and expire after 12 hours.
+- Session tokens are HMAC-signed and expire after 10 minutes.
 - Quotation state is entirely frontend-local.
 - PDF generation is entirely client-side in `my-app/src/App.js`.
 
