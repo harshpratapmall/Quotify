@@ -658,19 +658,26 @@ textarea {
 }
 
 .remove-item-action {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
   min-height: 46px;
   border: 1px solid rgba(165, 76, 67, 0.32);
   border-radius: 14px;
-  padding: 0.75rem 0.9rem;
+  padding: 0;
   color: #8b352d;
   background: rgba(165, 76, 67, 0.08);
   cursor: pointer;
-  font-weight: 800;
 }
 
 .remove-item-action:hover {
   color: var(--white);
   background: #a54c43;
+}
+
+.remove-item-action .action-icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .gst-controls {

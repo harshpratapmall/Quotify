@@ -27,7 +27,7 @@ flowchart TD
     D --> M[User enters client details, scope, items, GST]
     M --> N[React calculates subtotal, tax, and total]
     N --> O[Preview quotation in browser]
-    O --> P[Print or generate PDF in the client]
+    O --> P[Generate PDF in the client]
 ```
 
 ## Architecture
@@ -40,11 +40,16 @@ flowchart TD
 - In production, sends `/api/*` calls to a Vercel rewrite that forwards them to Render and keeps the session cookie first-party.
 - Generates the quotation preview and downloadable PDF entirely in the browser.
 - Chooses the API base URL from the browser hostname or `REACT_APP_ENV`.
+- Uses `@vercel/analytics` for Vercel Web Analytics; it is initialized from `src/index.js`.
 
 Key files:
 
 - [my-app/src/App.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/App.js)
 - [my-app/src/config/api.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/config/api.js)
+- [my-app/src/config/quotation.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/config/quotation.js)
+- [my-app/src/components/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/components/)
+- [my-app/src/services/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/services/)
+- [my-app/src/utils/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/utils/)
 - [my-app/src/App.css](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/App.css)
 
 ### Backend
@@ -92,6 +97,11 @@ Key files:
 | `POST` | `/api/v1/auth/login` | Validates credentials and creates a session |
 | `GET` | `/api/v1/auth/me` | Returns current authenticated user if cookie is valid |
 | `POST` | `/api/v1/auth/logout` | Clears the session cookie |
+| `GET` | `/api/v1/quotations` | Lists the signed-in user's saved quotations |
+| `POST` | `/api/v1/quotations` | Creates a saved quotation |
+| `GET` | `/api/v1/quotations/:id` | Reads one saved quotation |
+| `PUT` | `/api/v1/quotations/:id` | Updates one saved quotation |
+| `DELETE` | `/api/v1/quotations/:id` | Deletes one saved quotation |
 
 ## Local Development
 
@@ -211,10 +221,10 @@ The backend stores one quotation per row. `items_json` contains the complete edi
 
 ## Quotation Behavior
 
-- Quotation data is not persisted in the backend or a database.
-- All quotation editing state lives in the React app.
+- The active quotation draft lives in browser session storage.
+- Saved quotations are persisted in the Google Sheets `Quotations` worksheet.
 - Totals are calculated in the browser from line items and GST settings.
-- Preview rendering, print rendering, and direct PDF generation all happen client-side.
+- Preview rendering and direct PDF generation happen client-side.
 
 ## Testing
 

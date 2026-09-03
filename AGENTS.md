@@ -25,24 +25,28 @@ Primary business flow:
 - Google Sheets-backed username/password validation
 - Quotation form with client details, scope, line items, and GST
 - Browser preview
-- Print flow
 - Client-side PDF generation
+- Google Sheets-backed saved quotation CRUD
+- Vercel Web Analytics through `@vercel/analytics`
 
 ## What Does Not Exist
 
-- Database
 - User management UI
 - Password hashing layer in app code
-- API for creating or saving quotations
 
-Do not assume persistence unless you add it explicitly.
+Saved quotations are persisted to Google Sheets, not a database.
 
 ## Key Directories
 
 ### `my-app/`
 
-- `src/App.js`: main app, auth flow, client-side routing, quotation builder, preview, PDF generation
-- `src/config/api.js`: hostname/env-based API selection
+- `src/App.js`: application state and orchestration for auth, quotation actions, and routing
+- `src/components/`: login, dashboard, quotation workspace, preview, and shared presentational components
+- `src/config/`: API, route, and quotation defaults
+- `src/hooks/useAppRouter.js`: history-based client-side router
+- `src/services/`: centralized authenticated API requests
+- `src/utils/`: formatters, draft storage, quotation calculations/validation, and PDF generation
+- `src/index.js`: React bootstrapping and Vercel Analytics initialization
 - `vercel.json`: production `/api/*` rewrite to the Render backend
 - `src/App.css`: styling for login, dashboard, modal, and quotation document
 - `src/App.test.js`: basic login screen render test
@@ -103,9 +107,9 @@ Do not assume persistence unless you add it explicitly.
 - `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
 - The app uses a cookie named `quotify_session`.
 - Session tokens are HMAC-signed and expire after 10 minutes.
-- Quotation state is entirely frontend-local.
-- PDF generation is entirely client-side in `my-app/src/App.js`.
+- The active quotation draft is stored in browser session storage.
 - Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
+- PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.
 
 ## Common Agent Tasks
 
@@ -114,7 +118,7 @@ Do not assume persistence unless you add it explicitly.
 - Inspect `backend-go/internal/handlers/auth.go`
 - Inspect `backend-go/internal/sheets/credentials.go`
 - Check whether CORS or cookie behavior also needs changes in `backend-go/internal/routes/routes.go`
-- Verify the frontend fetch calls in `my-app/src/App.js` still use `credentials: 'include'`
+- Verify the frontend API services still use `credentials: 'include'`
 
 ### If asked to change API environments
 
@@ -126,17 +130,14 @@ Do not assume persistence unless you add it explicitly.
 
 ### If asked to change quotation layout or export behavior
 
-- Main logic is in `my-app/src/App.js`
+- App orchestration is in `my-app/src/App.js`; UI is in `src/components/`
 - Styling is in `my-app/src/App.css`
-- There are two export paths:
-  - Print window HTML export
-  - Custom generated PDF bytes
+- PDF generation is in `my-app/src/utils/pdf.js`
 
-### If asked to add persistence
+### If asked to change saved quotations
 
-- There is currently no storage layer
-- You will need to introduce new backend routes and a storage choice
-- Do not describe quotation save/load as existing behavior unless it is implemented
+- Inspect `backend-go/internal/handlers/quotations.go` and `backend-go/internal/sheets/quotations.go`.
+- Preserve the `Quotations` sheet schema and `items_json` payload compatibility.
 
 ## Safe Edit Guidance
 
@@ -179,5 +180,4 @@ When updating documentation for this repo:
 
 - Plain-text credential validation from Google Sheets is operational but weak for long-term security
 - Backend coverage currently tests cookie policy only; add route and Google Sheets boundary coverage as behavior grows.
-- No saved quotation history exists
 - The Vercel rewrite requires `my-app/` to remain the Vercel project root directory.
