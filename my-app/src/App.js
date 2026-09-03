@@ -4,6 +4,7 @@ import companyLogo from './assets/d2d-experts-logo.webp';
 import './App.css';
 
 const lineItemTemplate = { description: '', quantity: '1', rate: '' };
+const quotationDraftKey = 'quotify_active_quotation';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -16,6 +17,27 @@ const createEmptyQuotation = () => ({
   quoteDate: today,
   scopeOfWork: '',
 });
+
+const loadQuotationDraft = () => {
+  try {
+    const savedDraft = JSON.parse(window.sessionStorage.getItem(quotationDraftKey) || 'null');
+    if (!savedDraft || typeof savedDraft !== 'object') return null;
+    return savedDraft;
+  } catch {
+    return null;
+  }
+};
+
+const clientInitials = (clientName) => {
+  const initials = String(clientName || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+  return initials || 'CLIENT';
+};
 
 const currency = (amount) =>
   `₹ ${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
@@ -137,16 +159,17 @@ function useAppRouter() {
 
 function App() {
   const { pathname, navigate } = useAppRouter();
+  const [initialDraft] = useState(loadQuotationDraft);
   const [authStatus, setAuthStatus] = useState('checking');
   const [authExpiresAt, setAuthExpiresAt] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const [items, setItems] = useState([{ ...lineItemTemplate }]);
-  const [includeGst, setIncludeGst] = useState(true);
-  const [gstRate, setGstRate] = useState('18');
-  const [quotation, setQuotation] = useState(createEmptyQuotation);
+  const [items, setItems] = useState(() => initialDraft?.items || [{ ...lineItemTemplate }]);
+  const [includeGst, setIncludeGst] = useState(() => initialDraft?.includeGst ?? true);
+  const [gstRate, setGstRate] = useState(() => initialDraft?.gstRate ?? '18');
+  const [quotation, setQuotation] = useState(() => initialDraft?.quotation || createEmptyQuotation());
   const [savedQuotations, setSavedQuotations] = useState([]);
-  const [activeQuotationId, setActiveQuotationId] = useState(null);
+  const [activeQuotationId, setActiveQuotationId] = useState(() => initialDraft?.activeQuotationId || null);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
 
@@ -169,6 +192,12 @@ function App() {
     setItems((currentItems) => [...currentItems, { ...lineItemTemplate }]);
   };
 
+  const removeLineItem = (index) => {
+    setItems((currentItems) => currentItems.length === 1
+      ? currentItems
+      : currentItems.filter((_, itemIndex) => itemIndex !== index));
+  };
+
   const clearQuotation = () => {
     setQuotation(createEmptyQuotation());
     setItems([{ ...lineItemTemplate }]);
@@ -189,6 +218,17 @@ function App() {
   const tax = includeGst ? subtotal * (gstPercentage / 100) : 0;
   const total = subtotal + tax;
 
+  const quotationValidationError = () => {
+    if (!quotation.clientName.trim()) return 'Enter a client name before continuing.';
+    if (!quotation.projectName.trim()) return 'Enter a project name before continuing.';
+    if (!quotation.siteLocation.trim()) return 'Enter a site location before continuing.';
+    const hasPricedItem = items.some((item) => (
+      item.description.trim() && Number(item.quantity) > 0 && Number(item.rate) > 0
+    ));
+    if (!hasPricedItem) return 'Add at least one item with a description, quantity, and rate.';
+    return '';
+  };
+
   const quotationPayload = () => ({
     clientName: quotation.clientName, projectName: quotation.projectName, phone: quotation.phone,
     email: quotation.email, siteLocation: quotation.siteLocation, quoteDate: quotation.quoteDate,
@@ -197,6 +237,11 @@ function App() {
   });
 
   const saveQuotation = async () => {
+    const validationError = quotationValidationError();
+    if (validationError) {
+      setSaveStatus(validationError);
+      return false;
+    }
     setSaveStatus('Saving...');
     try {
       const response = await fetch(apiUrl(activeQuotationId ? `/api/v1/quotations/${activeQuotationId}` : '/api/v1/quotations'), {
@@ -207,7 +252,11 @@ function App() {
       setActiveQuotationId(saved.id);
       setSavedQuotations((current) => [saved, ...current.filter((entry) => entry.id !== saved.id)]);
       setSaveStatus('Saved');
-    } catch { setSaveStatus('Unable to save. Please try again.'); }
+      return true;
+    } catch {
+      setSaveStatus('Unable to save. Please try again.');
+      return false;
+    }
   };
 
   const openSavedQuotation = async (id, preview = false) => {
@@ -262,6 +311,21 @@ function App() {
       .then((quotes) => setSavedQuotations(Array.isArray(quotes) ? quotes : []))
       .catch(() => setSavedQuotations([]));
   }, [authStatus]);
+
+  useEffect(() => {
+    window.sessionStorage.setItem(quotationDraftKey, JSON.stringify({
+      quotation, items, includeGst, gstRate, activeQuotationId,
+    }));
+  }, [quotation, items, includeGst, gstRate, activeQuotationId]);
+
+  useEffect(() => {
+    if (pathname !== '/quotation/preview') return;
+    const validationError = quotationValidationError();
+    if (!validationError) return;
+    setSaveStatus(validationError);
+    setPreviewOnly(false);
+    navigate('/quotation/new', true);
+  }, [pathname, quotation, items, includeGst, gstRate, navigate]);
 
   useEffect(() => {
     if (authStatus === 'checking') {
@@ -336,31 +400,22 @@ function App() {
 
   const generateQuotation = (event) => {
     event.preventDefault();
+    const validationError = quotationValidationError();
+    if (validationError) {
+      setSaveStatus(validationError);
+      return;
+    }
     setPreviewOnly(false);
     navigate('/quotation/preview');
   };
 
-  const openPrintSettings = () => {
-    const documentPreview = document.querySelector('.quotation-document');
-    if (!documentPreview) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    printWindow.document.write(`<!doctype html><html><head><title>Door2Door Quotation</title><style>
-      @page { size: A4 portrait; margin: 12mm; }
-      body { margin: 0; color: #19334c; font: 12px Montserrat, Arial, sans-serif; }
-      .quotation-document { border: 1px solid #d8e1dc; border-radius: 10px; overflow: hidden; }
-      .document-header { display:flex; justify-content:space-between; padding:20px; color:#fff; background:#19334c; }
-      .document-brand { display:flex; gap:10px; align-items:center; }.document-brand > span { padding:10px; background:#ead7a6; color:#19334c; font-weight:bold; }
-      small, span { display:block; color:#607080; }.document-header small { color:#d7e3de; }.document-client { display:grid; grid-template-columns:1.15fr 1.3fr 1fr; gap:12px; padding:16px 20px; border-left:5px solid #3c766d; background:#f4f8f5; }.document-client strong { display:block; margin:4px 0; }
-      .document-scope { padding:14px 20px; }.document-items { margin:16px 20px; border:1px solid #cddbd4; }.document-item { display:grid; grid-template-columns:2fr .45fr .8fr .9fr; gap:8px; padding:10px; border-top:1px solid #dce5e0; }.document-item.heading { color:#fff; background:#19334c; border:0; font-weight:bold; }.document-item span:not(:first-child), .document-item strong { text-align:right; }
-      .document-total { margin-left:auto; width:280px; padding:0 20px 20px; }.document-total span { display:flex; justify-content:space-between; padding:5px 0; }.document-total .grand-total { margin-top:6px; padding:12px; color:#fff; background:#3c766d; }.document-total .grand-total strong { color:#fff; }.document-footer { padding:12px 20px; border-top:1px solid #dce5e0; text-align:center; }
-    </style></head><body>${documentPreview.outerHTML}<script>window.onload = () => window.print();</script></body></html>`);
-    printWindow.document.close();
-  };
-
   const downloadPdf = async () => {
+    const validationError = quotationValidationError();
+    if (validationError) {
+      setSaveStatus(validationError);
+      navigate('/quotation/new', true);
+      return;
+    }
     const logo = await loadLogoForPdf(companyLogo);
     const populatedItems = items.filter((item) => item.description || item.rate);
     const printableItems = populatedItems.length ? populatedItems : [{ ...lineItemTemplate, description: 'No line items added' }];
@@ -392,7 +447,7 @@ function App() {
       return safeValue.length > maxLength ? `${safeValue.slice(0, maxLength - 3)}...` : safeValue;
     };
 
-    const quoteNumber = `D2D-INT-${(quotation.quoteDate || today).replaceAll('-', '')}`;
+    const quoteNumber = `D2D-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}`;
     const hasScope = quotation.scopeOfWork.trim().length > 0;
     rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
     rectangle(22, 22, 551, 798, [1, 1, 1]);
@@ -666,7 +721,7 @@ function App() {
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Quotation Workspace</p>
-                <h3 id="quotation-workspace-title">Create a new quotation</h3>
+                <h3 id="quotation-workspace-title">{activeQuotationId ? 'Edit saved quotation' : 'Create a new quotation'}</h3>
               </div>
               <p className="section-text">
                 Fill in project details, add pricing lines, and review totals
@@ -754,6 +809,16 @@ function App() {
                         placeholder="0"
                       />
                     </label>
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        className="remove-item-action"
+                        onClick={() => removeLineItem(index)}
+                        aria-label={`Remove item ${index + 1}`}
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 ))}
                 <button
@@ -837,7 +902,6 @@ function App() {
             </article>
             <div className="preview-export-actions">
               <button type="button" className="secondary-action" onClick={saveQuotation}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
-              <button type="button" className="secondary-action" onClick={openPrintSettings}>Print / Save as PDF</button>
               <button type="button" className="primary-action" onClick={downloadPdf}>Download as PDF</button>
             </div>
           </section>
