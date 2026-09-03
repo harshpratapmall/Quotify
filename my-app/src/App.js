@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiUrl } from './config/api';
 import companyLogo from './assets/d2d-experts-logo.webp';
 import './App.css';
@@ -17,6 +17,15 @@ const createEmptyQuotation = () => ({
   quoteDate: today,
   scopeOfWork: '',
 });
+
+function ActionIcon({ type }) {
+  const paths = {
+    plus: <path d="M12 5v14M5 12h14" />, open: <path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Zm8 2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5Z" />,
+    edit: <path d="m4 16.5-.7 3.2 3.2-.7L17.7 7.8l-2.8-2.8L4 16.5ZM13.5 6.4l2.8 2.8" />,
+    delete: <path d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />,
+  };
+  return <svg className="action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[type]}</svg>;
+}
 
 const loadQuotationDraft = () => {
   try {
@@ -218,7 +227,7 @@ function App() {
   const tax = includeGst ? subtotal * (gstPercentage / 100) : 0;
   const total = subtotal + tax;
 
-  const quotationValidationError = () => {
+  const quotationValidationError = useCallback(() => {
     if (!quotation.clientName.trim()) return 'Enter a client name before continuing.';
     if (!quotation.projectName.trim()) return 'Enter a project name before continuing.';
     if (!quotation.siteLocation.trim()) return 'Enter a site location before continuing.';
@@ -227,7 +236,7 @@ function App() {
     ));
     if (!hasPricedItem) return 'Add at least one item with a description, quantity, and rate.';
     return '';
-  };
+  }, [quotation, items]);
 
   const quotationPayload = () => ({
     clientName: quotation.clientName, projectName: quotation.projectName, phone: quotation.phone,
@@ -661,7 +670,7 @@ function App() {
           className="primary-action desktop-only"
           onClick={() => navigate('/quotation/new')}
         >
-          Create New Quotation
+          <ActionIcon type="plus" /> Create New Quotation
         </button>
         <button type="button" className="logout-action" onClick={logout}>Log out</button>
       </header>
@@ -682,7 +691,7 @@ function App() {
                 className="primary-action"
                 onClick={() => navigate('/quotation/new')}
               >
-                Create New Quotation
+                <ActionIcon type="plus" /> Create New Quotation
               </button>
             </div>
           </div>
@@ -703,13 +712,13 @@ function App() {
         <section className="saved-panel">
           <div className="section-heading">
             <div><p className="eyebrow">Saved Quotations</p><h3>Quotation library</h3></div>
-            <button type="button" className="primary-action" onClick={() => { clearQuotation(); navigate('/quotation/new'); }}>New quotation</button>
+            <button type="button" className="primary-action new-quotation-action" onClick={() => { clearQuotation(); navigate('/quotation/new'); }}><ActionIcon type="plus" /> New quotation</button>
           </div>
           {savedQuotations.length === 0 ? <p className="section-text">No saved quotations yet. Create one and save it for later.</p> : (
             <div className="saved-quotation-list">
               {savedQuotations.map((entry) => <article className="saved-quotation-card" key={entry.id}>
                 <div><strong>{entry.clientName || 'Untitled client'}</strong><span>{entry.projectName || 'Untitled project'} · {entry.quoteDate || 'No date'}</span><small>₹ {Number(entry.total || 0).toLocaleString('en-IN')}</small></div>
-                <div className="saved-actions"><button type="button" onClick={() => openSavedQuotation(entry.id, true)}>Open</button><button type="button" onClick={() => openSavedQuotation(entry.id)}>Edit</button><button type="button" className="delete-action" onClick={() => deleteSavedQuotation(entry.id)}>Delete</button></div>
+                <div className="saved-actions"><button type="button" className="icon-action" aria-label="Open quotation" title="Open quotation" onClick={() => openSavedQuotation(entry.id, true)}><ActionIcon type="open" /></button><button type="button" className="icon-action" aria-label="Edit quotation" title="Edit quotation" onClick={() => openSavedQuotation(entry.id)}><ActionIcon type="edit" /></button><button type="button" className="icon-action delete-action" aria-label="Delete quotation" title="Delete quotation" onClick={() => deleteSavedQuotation(entry.id)}><ActionIcon type="delete" /></button></div>
               </article>)}
             </div>
           )}
