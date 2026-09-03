@@ -175,7 +175,17 @@ textarea {
   padding: 0.95rem 1rem;
   border: 1px solid var(--border);
   border-radius: 16px;
+  color: var(--text);
+  font-weight: 400;
   outline: none;
+}
+
+.login-card input::placeholder,
+.quotation-form input::placeholder,
+.quotation-form textarea::placeholder {
+  color: #8290a3;
+  font-weight: 400;
+  opacity: 1;
 }
 
 .login-card input:focus {
@@ -560,6 +570,7 @@ textarea {
   padding: 0.95rem 1rem;
   background: rgba(255, 255, 255, 0.96);
   color: var(--text);
+  font-weight: 400;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -628,7 +639,7 @@ textarea {
 
 .line-item-row input {
   color: var(--text);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .gst-controls {
