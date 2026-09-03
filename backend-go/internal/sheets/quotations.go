@@ -76,7 +76,31 @@ func UpdateQuotation(ctx context.Context, quote Quotation) error {
 }
 
 func DeleteQuotation(ctx context.Context, row int) error {
-	return writeValues(ctx, http.MethodPost, fmt.Sprintf("Quotations!A%d:Q%d:clear", row, row), nil)
+	account, err := loadServiceAccount()
+	if err != nil {
+		return err
+	}
+	token, err := accessToken(ctx, account)
+	if err != nil {
+		return err
+	}
+	rangeName := fmt.Sprintf("Quotations!A%d:Q%d", row, row)
+	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s:clear", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")), url.PathEscape(rangeName))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader("{}"))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	response, err := newHTTPClient().Do(req)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return fmt.Errorf("Google Sheets returned %s", response.Status)
+	}
+	return nil
 }
 
 func readValues(ctx context.Context, rangeName string) ([][]string, error) {

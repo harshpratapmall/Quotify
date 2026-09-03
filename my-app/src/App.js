@@ -228,6 +228,9 @@ function App() {
     if (response.ok) {
       setSavedQuotations((current) => current.filter((entry) => entry.id !== id));
       if (activeQuotationId === id) clearQuotation();
+      setSaveStatus('Quotation deleted');
+    } else {
+      setSaveStatus('Unable to delete quotation. Please try again.');
     }
   };
 
@@ -651,6 +654,7 @@ function App() {
               </article>)}
             </div>
           )}
+          {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
         </section>
 
         {(pathname === '/quotation/new' || pathname === '/quotation/preview') && (
