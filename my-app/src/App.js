@@ -145,6 +145,9 @@ function App() {
   const [includeGst, setIncludeGst] = useState(true);
   const [gstRate, setGstRate] = useState('18');
   const [quotation, setQuotation] = useState(createEmptyQuotation);
+  const [savedQuotations, setSavedQuotations] = useState([]);
+  const [activeQuotationId, setActiveQuotationId] = useState(null);
+  const [saveStatus, setSaveStatus] = useState('');
 
   const handleQuotationChange = (field, value) => {
     setQuotation((currentQuotation) => ({
@@ -170,6 +173,8 @@ function App() {
     setItems([{ ...lineItemTemplate }]);
     setIncludeGst(true);
     setGstRate('18');
+    setActiveQuotationId(null);
+    setSaveStatus('');
   };
 
   const subtotal = items.reduce((sum, item) => {
@@ -181,6 +186,46 @@ function App() {
   const gstPercentage = Number(gstRate) || 0;
   const tax = includeGst ? subtotal * (gstPercentage / 100) : 0;
   const total = subtotal + tax;
+
+  const quotationPayload = () => ({
+    clientName: quotation.clientName, projectName: quotation.projectName, phone: quotation.phone,
+    email: quotation.email, siteLocation: quotation.siteLocation, quoteDate: quotation.quoteDate,
+    scopeOfWork: quotation.scopeOfWork, includeGst, gstRate,
+    payload: { quotation, items, includeGst, gstRate }, subtotal, tax, total,
+  });
+
+  const saveQuotation = async () => {
+    setSaveStatus('Saving...');
+    try {
+      const response = await fetch(apiUrl(activeQuotationId ? `/api/v1/quotations/${activeQuotationId}` : '/api/v1/quotations'), {
+        method: activeQuotationId ? 'PUT' : 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(quotationPayload()),
+      });
+      const saved = await response.json();
+      if (!response.ok) throw new Error(saved.error);
+      setActiveQuotationId(saved.id);
+      setSavedQuotations((current) => [saved, ...current.filter((entry) => entry.id !== saved.id)]);
+      setSaveStatus('Saved');
+    } catch { setSaveStatus('Unable to save. Please try again.'); }
+  };
+
+  const openSavedQuotation = async (id) => {
+    const response = await fetch(apiUrl(`/api/v1/quotations/${id}`), { credentials: 'include' });
+    if (!response.ok) return;
+    const saved = await response.json();
+    setQuotation(saved.payload.quotation || createEmptyQuotation());
+    setItems(saved.payload.items || [{ ...lineItemTemplate }]);
+    setIncludeGst(saved.payload.includeGst ?? true); setGstRate(saved.payload.gstRate ?? '18');
+    setActiveQuotationId(saved.id); setSaveStatus(''); navigate('/quotation/new');
+  };
+
+  const deleteSavedQuotation = async (id) => {
+    if (!window.confirm('Delete this saved quotation?')) return;
+    const response = await fetch(apiUrl(`/api/v1/quotations/${id}`), { method: 'DELETE', credentials: 'include' });
+    if (response.ok) {
+      setSavedQuotations((current) => current.filter((entry) => entry.id !== id));
+      if (activeQuotationId === id) clearQuotation();
+    }
+  };
 
   useEffect(() => {
     fetch(apiUrl('/api/v1/auth/me'), { credentials: 'include' })
@@ -200,6 +245,14 @@ function App() {
         setAuthExpiresAt(null);
       });
   }, []);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return;
+    fetch(apiUrl('/api/v1/quotations'), { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : [])
+      .then((quotes) => setSavedQuotations(Array.isArray(quotes) ? quotes : []))
+      .catch(() => setSavedQuotations([]));
+  }, [authStatus]);
 
   useEffect(() => {
     if (authStatus === 'checking') {
@@ -581,6 +634,21 @@ function App() {
           </div>
         </section>
 
+        <section className="saved-panel">
+          <div className="section-heading">
+            <div><p className="eyebrow">Saved Quotations</p><h3>Quotation library</h3></div>
+            <button type="button" className="primary-action" onClick={() => { clearQuotation(); navigate('/quotation/new'); }}>New quotation</button>
+          </div>
+          {savedQuotations.length === 0 ? <p className="section-text">No saved quotations yet. Create one and save it for later.</p> : (
+            <div className="saved-quotation-list">
+              {savedQuotations.map((entry) => <article className="saved-quotation-card" key={entry.id}>
+                <div><strong>{entry.clientName || 'Untitled client'}</strong><span>{entry.projectName || 'Untitled project'} · {entry.quoteDate || 'No date'}</span><small>₹ {Number(entry.total || 0).toLocaleString('en-IN')}</small></div>
+                <div className="saved-actions"><button type="button" onClick={() => openSavedQuotation(entry.id)}>Open / Edit</button><button type="button" className="delete-action" onClick={() => deleteSavedQuotation(entry.id)}>Delete</button></div>
+              </article>)}
+            </div>
+          )}
+        </section>
+
         {(pathname === '/quotation/new' || pathname === '/quotation/preview') && (
           <div className="form-modal-backdrop" role="presentation" onMouseDown={() => navigate('/', true)}>
           <section className="form-card form-workspace-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
@@ -723,10 +791,12 @@ function App() {
                 <button type="button" className="clean-slate-action" onClick={clearQuotation}>
                   Clean Slate
                 </button>
+                <button type="button" className="secondary-action" onClick={saveQuotation}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
                 <button type="submit" className="primary-action">
                   Generate Quotation
                 </button>
               </div>
+              {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
             </form>
           </section>
           </div>
@@ -755,6 +825,7 @@ function App() {
               <p className="document-footer">Thank you for choosing Door2Door Interiors. This quotation is valid for 15 days.</p>
             </article>
             <div className="preview-export-actions">
+              <button type="button" className="secondary-action" onClick={saveQuotation}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
               <button type="button" className="secondary-action" onClick={openPrintSettings}>Print / Save as PDF</button>
               <button type="button" className="primary-action" onClick={downloadPdf}>Download as PDF</button>
             </div>

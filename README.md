@@ -203,6 +203,12 @@ Important Render environment variables:
 - `COOKIE_SECURE` should be `true` in HTTPS environments such as Render behind a public domain.
 - Production API requests use a Vercel rewrite so the cookie is first-party. Local and development environments still require CORS and browser credentials mode to stay aligned.
 
+## Saved Quotations
+
+Saved quotations use the `Quotations` worksheet in the existing Quotely spreadsheet. Row 1 must retain these columns in order: `quotation_id`, `created_at`, `updated_at`, `owner`, `client_name`, `project_name`, `phone`, `email`, `site_location`, `quote_date`, `scope_of_work`, `include_gst`, `gst_rate`, `items_json`, `subtotal`, `tax`, `total`.
+
+The backend stores one quotation per row. `items_json` contains the complete editable quotation payload; the remaining columns make the sheet easy to review and filter. The Google service account configured by `GOOGLE_SERVICE_ACCOUNT_JSON` must be shared as an **Editor** on Quotely, and the Google Sheets API must be enabled for that service account's Google Cloud project.
+
 ## Quotation Behavior
 
 - Quotation data is not persisted in the backend or a database.

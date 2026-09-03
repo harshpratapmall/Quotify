@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-const sheetsScope = "https://www.googleapis.com/auth/spreadsheets.readonly"
+const sheetsScope = "https://www.googleapis.com/auth/spreadsheets"
 
 type serviceAccount struct {
 	ClientEmail string `json:"client_email"`

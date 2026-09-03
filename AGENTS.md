@@ -31,7 +31,6 @@ Primary business flow:
 ## What Does Not Exist
 
 - Database
-- Server-side quotation storage
 - User management UI
 - Password hashing layer in app code
 - API for creating or saving quotations
@@ -56,6 +55,7 @@ Do not assume persistence unless you add it explicitly.
 - `internal/handlers/auth.go`: login, health, me, logout, session cookie logic
 - `internal/handlers/ping.go`: simple ping endpoint
 - `internal/sheets/credentials.go`: Google service account auth and sheet lookup
+- `internal/sheets/quotations.go`: quotation row serialization and Google Sheets CRUD
 - `.env.example`: backend env reference
 
 ### Root
@@ -105,6 +105,7 @@ Do not assume persistence unless you add it explicitly.
 - Session tokens are HMAC-signed and expire after 10 minutes.
 - Quotation state is entirely frontend-local.
 - PDF generation is entirely client-side in `my-app/src/App.js`.
+- Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
 
 ## Common Agent Tasks
 
