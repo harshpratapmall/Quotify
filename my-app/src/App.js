@@ -148,6 +148,7 @@ function App() {
   const [savedQuotations, setSavedQuotations] = useState([]);
   const [activeQuotationId, setActiveQuotationId] = useState(null);
   const [saveStatus, setSaveStatus] = useState('');
+  const [previewOnly, setPreviewOnly] = useState(false);
 
   const handleQuotationChange = (field, value) => {
     setQuotation((currentQuotation) => ({
@@ -175,6 +176,7 @@ function App() {
     setGstRate('18');
     setActiveQuotationId(null);
     setSaveStatus('');
+    setPreviewOnly(false);
   };
 
   const subtotal = items.reduce((sum, item) => {
@@ -208,7 +210,7 @@ function App() {
     } catch { setSaveStatus('Unable to save. Please try again.'); }
   };
 
-  const openSavedQuotation = async (id) => {
+  const openSavedQuotation = async (id, preview = false) => {
     const response = await fetch(apiUrl(`/api/v1/quotations/${id}`), { credentials: 'include' });
     if (!response.ok) return;
     const saved = await response.json();
@@ -219,7 +221,7 @@ function App() {
     setQuotation(payload?.quotation || createEmptyQuotation());
     setItems(Array.isArray(payload?.items) && payload.items.length ? payload.items : [{ ...lineItemTemplate }]);
     setIncludeGst(payload?.includeGst ?? true); setGstRate(payload?.gstRate ?? '18');
-    setActiveQuotationId(saved.id); setSaveStatus(''); navigate('/quotation/new');
+    setActiveQuotationId(saved.id); setSaveStatus(''); setPreviewOnly(preview); navigate(preview ? '/quotation/preview' : '/quotation/new');
   };
 
   const deleteSavedQuotation = async (id) => {
@@ -334,6 +336,7 @@ function App() {
 
   const generateQuotation = (event) => {
     event.preventDefault();
+    setPreviewOnly(false);
     navigate('/quotation/preview');
   };
 
@@ -650,14 +653,14 @@ function App() {
             <div className="saved-quotation-list">
               {savedQuotations.map((entry) => <article className="saved-quotation-card" key={entry.id}>
                 <div><strong>{entry.clientName || 'Untitled client'}</strong><span>{entry.projectName || 'Untitled project'} · {entry.quoteDate || 'No date'}</span><small>₹ {Number(entry.total || 0).toLocaleString('en-IN')}</small></div>
-                <div className="saved-actions"><button type="button" onClick={() => openSavedQuotation(entry.id)}>Open / Edit</button><button type="button" className="delete-action" onClick={() => deleteSavedQuotation(entry.id)}>Delete</button></div>
+                <div className="saved-actions"><button type="button" onClick={() => openSavedQuotation(entry.id, true)}>Open</button><button type="button" onClick={() => openSavedQuotation(entry.id)}>Edit</button><button type="button" className="delete-action" onClick={() => deleteSavedQuotation(entry.id)}>Delete</button></div>
               </article>)}
             </div>
           )}
           {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
         </section>
 
-        {(pathname === '/quotation/new' || pathname === '/quotation/preview') && (
+        {(pathname === '/quotation/new' || (pathname === '/quotation/preview' && !previewOnly)) && (
           <div className="form-modal-backdrop" role="presentation" onMouseDown={() => navigate('/', true)}>
           <section className="form-card form-workspace-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="section-heading">
@@ -819,7 +822,7 @@ function App() {
                 <p className="eyebrow">Ready to share</p>
                 <h2 id="quotation-preview-title">Quotation Preview</h2>
               </div>
-              <button type="button" className="close-button" aria-label="Close quotation preview" onClick={() => navigate('/quotation/new', true)}>x</button>
+              <button type="button" className="close-button" aria-label="Close quotation preview" onClick={() => navigate(previewOnly ? '/' : '/quotation/new', true)}>x</button>
             </div>
             <article className="quotation-document">
               <div className="document-header">

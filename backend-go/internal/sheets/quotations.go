@@ -84,9 +84,13 @@ func DeleteQuotation(ctx context.Context, row int) error {
 	if err != nil {
 		return err
 	}
-	rangeName := fmt.Sprintf("Quotations!A%d:Q%d", row, row)
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s:clear", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")), url.PathEscape(rangeName))
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader("{}"))
+	sheetID, err := quotationSheetID(ctx, token)
+	if err != nil {
+		return err
+	}
+	body, _ := json.Marshal(map[string]any{"requests": []any{map[string]any{"deleteDimension": map[string]any{"range": map[string]any{"sheetId": sheetID, "dimension": "ROWS", "startIndex": row - 1, "endIndex": row}}}}})
+	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s:batchUpdate", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -101,6 +105,40 @@ func DeleteQuotation(ctx context.Context, row int) error {
 		return fmt.Errorf("Google Sheets returned %s", response.Status)
 	}
 	return nil
+}
+
+func quotationSheetID(ctx context.Context, token string) (int, error) {
+	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	response, err := newHTTPClient().Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("Google Sheets returned %s", response.Status)
+	}
+	var metadata struct {
+		Sheets []struct {
+			Properties struct {
+				SheetID int    `json:"sheetId"`
+				Title   string `json:"title"`
+			} `json:"properties"`
+		} `json:"sheets"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&metadata); err != nil {
+		return 0, err
+	}
+	for _, sheet := range metadata.Sheets {
+		if sheet.Properties.Title == "Quotations" {
+			return sheet.Properties.SheetID, nil
+		}
+	}
+	return 0, fmt.Errorf("Quotations worksheet not found")
 }
 
 func readValues(ctx context.Context, rangeName string) ([][]string, error) {
