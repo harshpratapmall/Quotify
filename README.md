@@ -37,6 +37,7 @@ flowchart TD
 - Built with React 19 and Create React App tooling.
 - Uses a simple client-side router based on `window.history`.
 - Calls the backend with `credentials: 'include'` so the session cookie is sent on each auth request.
+- In production, sends `/api/*` calls to a Vercel rewrite that forwards them to Render and keeps the session cookie first-party.
 - Generates the quotation preview and downloadable PDF entirely in the browser.
 - Chooses the API base URL from the browser hostname or `REACT_APP_ENV`.
 
@@ -164,6 +165,8 @@ Notes:
 
 The frontend is intended to be deployed from `my-app/`.
 
+`my-app/vercel.json` proxies production `/api/*` requests to the Render service. Keep this rewrite in place: it allows modern browsers to retain the HTTP-only session cookie without relying on third-party-cookie support.
+
 Current production hostname mapping in the code:
 
 - `quotify-net.vercel.app` -> production backend
@@ -198,7 +201,7 @@ Important Render environment variables:
 - Session tokens are signed with `AUTH_SESSION_SECRET`.
 - Cookie lifetime is 10 minutes.
 - `COOKIE_SECURE` should be `true` in HTTPS environments such as Render behind a public domain.
-- The frontend depends on cross-origin cookies, so CORS and browser credentials mode must stay aligned.
+- Production API requests use a Vercel rewrite so the cookie is first-party. Local and development environments still require CORS and browser credentials mode to stay aligned.
 
 ## Quotation Behavior
 
@@ -234,5 +237,5 @@ go test ./...
 
 - Move sheet-based credentials to a stronger auth system when ready.
 - Persist quotations for reuse, search, and audit history.
-- Add backend tests for auth and Sheets integration boundaries.
+- Add Google Sheets integration-boundary tests alongside the existing cookie-policy tests.
 - Add Vercel project configuration docs if the deployment is managed outside this repository.

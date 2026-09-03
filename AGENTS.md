@@ -44,6 +44,7 @@ Do not assume persistence unless you add it explicitly.
 
 - `src/App.js`: main app, auth flow, client-side routing, quotation builder, preview, PDF generation
 - `src/config/api.js`: hostname/env-based API selection
+- `vercel.json`: production `/api/*` rewrite to the Render backend
 - `src/App.css`: styling for login, dashboard, modal, and quotation document
 - `src/App.test.js`: basic login screen render test
 - `.env.example`: frontend env reference
@@ -68,6 +69,7 @@ Do not assume persistence unless you add it explicitly.
 - Frontend local dev runs on `http://localhost:3000`
 - Backend local dev runs on `http://localhost:8000`
 - Frontend sends cookies with `credentials: 'include'`
+- Production frontend requests use the same-origin Vercel `/api/*` rewrite before reaching Render.
 - Backend must allow the frontend origin in CORS
 - Production frontend is on Vercel
 - Production backend is on Render
@@ -116,6 +118,8 @@ Do not assume persistence unless you add it explicitly.
 ### If asked to change API environments
 
 - Update `my-app/src/config/api.js`
+- Preserve the production API base URL as an empty string so calls use the Vercel rewrite.
+- Update `my-app/vercel.json` if the Render backend URL changes.
 - Check `render.yaml`
 - If new frontend domains are introduced, update backend CORS config
 
@@ -136,7 +140,8 @@ Do not assume persistence unless you add it explicitly.
 ## Safe Edit Guidance
 
 - Preserve `credentials: 'include'` on auth fetches unless intentionally redesigning auth.
-- Preserve CORS alignment between frontend origins and backend allowed origins.
+- Preserve CORS alignment between non-production frontend origins and backend allowed origins.
+- Preserve the Vercel API rewrite; external Render cookies can be blocked by browser third-party-cookie policies.
 - Be careful with `COOKIE_SECURE`; local HTTP development needs it `false`, hosted HTTPS should use `true`.
 - Avoid breaking the hostname-to-environment mapping in `my-app/src/config/api.js`.
 - Keep secrets out of committed files. `.env` and `service-account.json` are intentionally ignored.
@@ -172,6 +177,6 @@ When updating documentation for this repo:
 ## Current Gaps Worth Flagging
 
 - Plain-text credential validation from Google Sheets is operational but weak for long-term security
-- No automated backend tests are present yet
+- Backend coverage currently tests cookie policy only; add route and Google Sheets boundary coverage as behavior grows.
 - No saved quotation history exists
-- Vercel configuration is implied by code and hosting notes, not codified in this repository
+- The Vercel rewrite requires `my-app/` to remain the Vercel project root directory.
