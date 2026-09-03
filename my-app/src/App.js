@@ -137,7 +137,8 @@ function useAppRouter() {
 
 function App() {
   const { pathname, navigate } = useAppRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authStatus, setAuthStatus] = useState('checking');
+  const [authExpiresAt, setAuthExpiresAt] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [items, setItems] = useState([{ ...lineItemTemplate }]);
@@ -183,22 +184,61 @@ function App() {
 
   useEffect(() => {
     fetch(apiUrl('/api/v1/auth/me'), { credentials: 'include' })
-      .then((response) => {
-        if (response.ok) setIsAuthenticated(true);
+      .then(async (response) => {
+        if (!response.ok) {
+          setAuthStatus('unauthenticated');
+          setAuthExpiresAt(null);
+          return;
+        }
+        const result = await response.json();
+        setAuthExpiresAt(result.expiresAt ?? null);
+        setAuthStatus('authenticated');
       })
       .catch(() => {
         // Keep the login screen usable while the API is starting.
+        setAuthStatus('unauthenticated');
+        setAuthExpiresAt(null);
       });
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated && pathname !== '/login') {
+    if (authStatus === 'checking') {
+      return;
+    }
+    if (authStatus !== 'authenticated' && pathname !== '/login') {
       navigate('/login', true);
     }
-    if (isAuthenticated && pathname === '/login') {
+    if (authStatus === 'authenticated' && pathname === '/login') {
       navigate('/', true);
     }
-  }, [isAuthenticated, navigate, pathname]);
+  }, [authStatus, navigate, pathname]);
+
+  useEffect(() => {
+    if (!authExpiresAt || authStatus !== 'authenticated') {
+      return undefined;
+    }
+
+    const millisecondsUntilExpiry = authExpiresAt * 1000 - Date.now();
+    if (millisecondsUntilExpiry <= 0) {
+      setAuthExpiresAt(null);
+      setAuthStatus('unauthenticated');
+      navigate('/login', true);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        await fetch(apiUrl('/api/v1/auth/logout'), { method: 'POST', credentials: 'include' });
+      } catch {
+        // The cookie expiry is still the source of truth if the API is unreachable.
+      }
+      setAuthExpiresAt(null);
+      setAuthStatus('unauthenticated');
+      navigate('/login', true);
+    }, millisecondsUntilExpiry);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [authExpiresAt, authStatus, navigate]);
 
   const login = async ({ username, password }) => {
     setIsLoggingIn(true);
@@ -215,7 +255,8 @@ function App() {
         setLoginError(result.error || 'Unable to sign in. Please try again.');
         return;
       }
-      setIsAuthenticated(true);
+      setAuthExpiresAt(result.expiresAt ?? null);
+      setAuthStatus('authenticated');
       navigate('/', true);
     } catch {
       setLoginError('The login service is unavailable. Please try again shortly.');
@@ -226,7 +267,8 @@ function App() {
 
   const logout = async () => {
     await fetch(apiUrl('/api/v1/auth/logout'), { method: 'POST', credentials: 'include' });
-    setIsAuthenticated(false);
+    setAuthExpiresAt(null);
+    setAuthStatus('unauthenticated');
     navigate('/login', true);
   };
 
@@ -483,7 +525,11 @@ function App() {
     window.setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
-  if (!isAuthenticated) {
+  if (authStatus === 'checking') {
+    return null;
+  }
+
+  if (authStatus !== 'authenticated') {
     return <LoginScreen onLogin={login} isLoggingIn={isLoggingIn} error={loginError} />;
   }
 

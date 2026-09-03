@@ -17,6 +17,7 @@ import (
 )
 
 const sessionCookieName = "quotify_session"
+const sessionDuration = 10 * time.Minute
 
 type loginRequest struct {
 	Username string `json:"username" binding:"required"`
@@ -44,13 +45,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := createToken(request.Username)
+	token, expiresAt, err := createToken(request.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to start a session."})
 		return
 	}
-	setSessionCookie(c, token, int((12 * time.Hour).Seconds()))
-	c.JSON(http.StatusOK, gin.H{"username": request.Username})
+	setSessionCookie(c, token, int(sessionDuration.Seconds()))
+	c.JSON(http.StatusOK, gin.H{"username": request.Username, "expiresAt": expiresAt})
 }
 
 func Health(c *gin.Context) {
@@ -68,12 +69,12 @@ func Me(c *gin.Context) {
 		return
 	}
 
-	username, valid := readToken(cookie)
+	username, expiresAt, valid := readToken(cookie)
 	if !valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"username": username})
+	c.JSON(http.StatusOK, gin.H{"username": username, "expiresAt": expiresAt})
 }
 
 func Logout(c *gin.Context) {
@@ -87,41 +88,42 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 	c.SetCookie(sessionCookieName, value, maxAge, "/", "", secure, true)
 }
 
-func createToken(username string) (string, error) {
-	payload := fmt.Sprintf("%s|%d", username, time.Now().Add(12*time.Hour).Unix())
+func createToken(username string) (string, int64, error) {
+	expiresAt := time.Now().Add(sessionDuration).Unix()
+	payload := fmt.Sprintf("%s|%d", username, expiresAt)
 	encodedPayload := base64.RawURLEncoding.EncodeToString([]byte(payload))
 	mac := hmac.New(sha256.New, sessionSecret())
 	if _, err := mac.Write([]byte(encodedPayload)); err != nil {
-		return "", err
+		return "", 0, err
 	}
-	return encodedPayload + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), nil
+	return encodedPayload + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), expiresAt, nil
 }
 
-func readToken(token string) (string, bool) {
+func readToken(token string) (string, int64, bool) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 2 {
-		return "", false
+		return "", 0, false
 	}
 	mac := hmac.New(sha256.New, sessionSecret())
 	_, _ = mac.Write([]byte(parts[0]))
 	expectedSignature := mac.Sum(nil)
 	providedSignature, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil || subtle.ConstantTimeCompare(expectedSignature, providedSignature) != 1 {
-		return "", false
+		return "", 0, false
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
-		return "", false
+		return "", 0, false
 	}
 	values := strings.Split(string(payload), "|")
 	if len(values) != 2 || values[0] == "" {
-		return "", false
+		return "", 0, false
 	}
 	expiresAt, err := strconv.ParseInt(values[1], 10, 64)
 	if err != nil || time.Now().Unix() > expiresAt {
-		return "", false
+		return "", 0, false
 	}
-	return values[0], true
+	return values[0], expiresAt, true
 }
 
 func sessionSecret() []byte {

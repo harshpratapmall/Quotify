@@ -1,0 +1,177 @@
+# AGENTS.md
+
+This file gives LLM agents a reliable mental model of the Quotify repository.
+
+## Repo Summary
+
+Quotify is a two-service web app:
+
+- Frontend: React app in `my-app/`, deployed on Vercel
+- Backend: Go + Gin API in `backend-go/`, deployed on Render
+
+Primary business flow:
+
+1. User opens the frontend.
+2. Frontend checks `GET /api/v1/auth/me` with cookies included.
+3. If unauthenticated, user logs in.
+4. Backend validates credentials from Google Sheets.
+5. Backend sets a signed session cookie.
+6. Authenticated user creates and exports a quotation.
+
+## What Exists Today
+
+- Browser-based login form
+- Cookie-based auth session
+- Google Sheets-backed username/password validation
+- Quotation form with client details, scope, line items, and GST
+- Browser preview
+- Print flow
+- Client-side PDF generation
+
+## What Does Not Exist
+
+- Database
+- Server-side quotation storage
+- User management UI
+- Password hashing layer in app code
+- API for creating or saving quotations
+
+Do not assume persistence unless you add it explicitly.
+
+## Key Directories
+
+### `my-app/`
+
+- `src/App.js`: main app, auth flow, client-side routing, quotation builder, preview, PDF generation
+- `src/config/api.js`: hostname/env-based API selection
+- `src/App.css`: styling for login, dashboard, modal, and quotation document
+- `src/App.test.js`: basic login screen render test
+- `.env.example`: frontend env reference
+
+### `backend-go/`
+
+- `cmd/server/main.go`: bootstraps env loading and starts Gin
+- `internal/routes/routes.go`: route registration and CORS middleware
+- `internal/handlers/auth.go`: login, health, me, logout, session cookie logic
+- `internal/handlers/ping.go`: simple ping endpoint
+- `internal/sheets/credentials.go`: Google service account auth and sheet lookup
+- `.env.example`: backend env reference
+
+### Root
+
+- `render.yaml`: Render deployment config for backend
+- `README.md`: repo-level documentation
+- `AGENTS.md`: this file
+
+## Runtime Assumptions
+
+- Frontend local dev runs on `http://localhost:3000`
+- Backend local dev runs on `http://localhost:8000`
+- Frontend sends cookies with `credentials: 'include'`
+- Backend must allow the frontend origin in CORS
+- Production frontend is on Vercel
+- Production backend is on Render
+
+## Environment Variables
+
+### Frontend
+
+- `REACT_APP_ENV`
+  - Optional
+  - Accepted values: `local`, `development`, `production`
+  - If omitted, the app infers environment from `window.location.hostname`
+
+### Backend
+
+- `GOOGLE_SHEET_ID`
+- `GOOGLE_SHEET_RANGE`
+- `GOOGLE_SERVICE_ACCOUNT_FILE`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `AUTH_SESSION_SECRET`
+- `COOKIE_SECURE`
+- `CORS_ALLOWED_ORIGINS`
+- `AUTH_DEBUG`
+- `PORT`
+
+## Important Behavior Invariants
+
+- Auth depends on the Google Sheet range containing username in column A and password in column B.
+- `GOOGLE_SHEET_ID` is the spreadsheet ID, not the worksheet name.
+- `GOOGLE_SHEET_RANGE` defaults to `login!A:B` if unset.
+- `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
+- The app uses a cookie named `quotify_session`.
+- Session tokens are HMAC-signed and expire after 12 hours.
+- Quotation state is entirely frontend-local.
+- PDF generation is entirely client-side in `my-app/src/App.js`.
+
+## Common Agent Tasks
+
+### If asked to change login behavior
+
+- Inspect `backend-go/internal/handlers/auth.go`
+- Inspect `backend-go/internal/sheets/credentials.go`
+- Check whether CORS or cookie behavior also needs changes in `backend-go/internal/routes/routes.go`
+- Verify the frontend fetch calls in `my-app/src/App.js` still use `credentials: 'include'`
+
+### If asked to change API environments
+
+- Update `my-app/src/config/api.js`
+- Check `render.yaml`
+- If new frontend domains are introduced, update backend CORS config
+
+### If asked to change quotation layout or export behavior
+
+- Main logic is in `my-app/src/App.js`
+- Styling is in `my-app/src/App.css`
+- There are two export paths:
+  - Print window HTML export
+  - Custom generated PDF bytes
+
+### If asked to add persistence
+
+- There is currently no storage layer
+- You will need to introduce new backend routes and a storage choice
+- Do not describe quotation save/load as existing behavior unless it is implemented
+
+## Safe Edit Guidance
+
+- Preserve `credentials: 'include'` on auth fetches unless intentionally redesigning auth.
+- Preserve CORS alignment between frontend origins and backend allowed origins.
+- Be careful with `COOKIE_SECURE`; local HTTP development needs it `false`, hosted HTTPS should use `true`.
+- Avoid breaking the hostname-to-environment mapping in `my-app/src/config/api.js`.
+- Keep secrets out of committed files. `.env` and `service-account.json` are intentionally ignored.
+
+## Local Commands
+
+Frontend:
+
+```bash
+cd my-app
+npm start
+npm test
+npm run build
+```
+
+Backend:
+
+```bash
+cd backend-go
+go run ./cmd/server
+go test ./...
+```
+
+## Documentation Expectations
+
+When updating documentation for this repo:
+
+- Treat the root `README.md` as the source of truth for end-to-end setup
+- Keep deployment notes aligned with Vercel for frontend and Render for backend
+- Mention Google Sheets auth explicitly
+- Mention that quotation generation is client-side
+
+## Current Gaps Worth Flagging
+
+- Plain-text credential validation from Google Sheets is operational but weak for long-term security
+- No automated backend tests are present yet
+- No saved quotation history exists
+- Vercel configuration is implied by code and hosting notes, not codified in this repository
