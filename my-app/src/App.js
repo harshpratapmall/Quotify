@@ -325,7 +325,7 @@ function App() {
     setSaveStatus(validationError);
     setPreviewOnly(false);
     navigate('/quotation/new', true);
-  }, [pathname, quotation, items, includeGst, gstRate, navigate]);
+  }, [pathname, quotation, items, includeGst, gstRate, navigate, quotationValidationError]);
 
   useEffect(() => {
     if (authStatus === 'checking') {
@@ -447,7 +447,8 @@ function App() {
       return safeValue.length > maxLength ? `${safeValue.slice(0, maxLength - 3)}...` : safeValue;
     };
 
-    const quoteNumber = `D2D-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}`;
+    const quoteSuffix = activeQuotationId ? activeQuotationId.slice(-6).toUpperCase() : 'DRAFT';
+    const quoteNumber = `D2D-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
     const hasScope = quotation.scopeOfWork.trim().length > 0;
     rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
     rectangle(22, 22, 551, 798, [1, 1, 1]);

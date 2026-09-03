@@ -3,7 +3,11 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
+	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"backend-go/internal/sheets"
@@ -128,7 +132,62 @@ func bindQuotation(c *gin.Context) (sheets.Quotation, bool) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quotation."})
 		return sheets.Quotation{}, false
 	}
+	if err := validateQuotation(quote); err != "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return sheets.Quotation{}, false
+	}
 	return quote, true
+}
+
+func validateQuotation(quote sheets.Quotation) string {
+	if strings.TrimSpace(quote.Client) == "" {
+		return "Client name is required."
+	}
+	if strings.TrimSpace(quote.Project) == "" {
+		return "Project name is required."
+	}
+	if strings.TrimSpace(quote.Location) == "" {
+		return "Site location is required."
+	}
+	if math.IsNaN(quote.Subtotal) || math.IsInf(quote.Subtotal, 0) || quote.Subtotal <= 0 {
+		return "Quotation subtotal must be greater than zero."
+	}
+	if math.IsNaN(quote.Total) || math.IsInf(quote.Total, 0) || quote.Total <= 0 {
+		return "Quotation total must be greater than zero."
+	}
+	var payload struct {
+		Items []struct {
+			Description string      `json:"description"`
+			Quantity    interface{} `json:"quantity"`
+			Rate        interface{} `json:"rate"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(quote.Payload, &payload); err != nil {
+		return "Quotation items are invalid."
+	}
+	for _, item := range payload.Items {
+		if strings.TrimSpace(item.Description) != "" && positiveNumber(item.Quantity) && positiveNumber(item.Rate) {
+			return ""
+		}
+	}
+	return "Add at least one item with a description, quantity, and rate."
+}
+
+func positiveNumber(value interface{}) bool {
+	var number float64
+	switch typedValue := value.(type) {
+	case float64:
+		number = typedValue
+	case string:
+		parsed, err := strconv.ParseFloat(typedValue, 64)
+		if err != nil {
+			return false
+		}
+		number = parsed
+	default:
+		return false
+	}
+	return !math.IsNaN(number) && !math.IsInf(number, 0) && number > 0
 }
 func newQuotationID() string {
 	bytes := make([]byte, 8)

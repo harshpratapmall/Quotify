@@ -636,8 +636,9 @@ textarea {
 
 .line-item-row {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) 120px 160px;
+  grid-template-columns: minmax(0, 2.2fr) 120px 160px auto;
   gap: 1rem;
+  align-items: end;
 }
 
 .line-item-row label {
@@ -649,6 +650,22 @@ textarea {
 .line-item-row input {
   color: var(--text);
   font-weight: 400;
+}
+
+.remove-item-action {
+  min-height: 46px;
+  border: 1px solid rgba(165, 76, 67, 0.32);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  color: #8b352d;
+  background: rgba(165, 76, 67, 0.08);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.remove-item-action:hover {
+  color: var(--white);
+  background: #a54c43;
 }
 
 .gst-controls {
