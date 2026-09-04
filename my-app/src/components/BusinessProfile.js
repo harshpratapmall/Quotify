@@ -1,5 +1,8 @@
 import { useState } from 'react';
 
+// Google Sheets allows at most 50,000 characters per cell; base64 expands source files.
+const MAX_LOGO_FILE_SIZE_BYTES = 36 * 1024;
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,6 +37,12 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
   const handleLogoChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
+      event.target.value = '';
+      setMessage('Logo must be 36 KB or smaller to save with your business profile.');
       return;
     }
 

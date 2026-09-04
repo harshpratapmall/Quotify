@@ -55,4 +55,28 @@ describe('BusinessProfile', () => {
       screen.getByText(/logo selected\. save business profile to apply it\./i)
     ).toBeInTheDocument();
   });
+
+  test('rejects a logo that cannot fit in a Google Sheets cell', () => {
+    const saveProfile = jest.fn();
+
+    render(
+      <BusinessProfile
+        profile={{ businessName: 'Door2Door Experts' }}
+        setProfile={jest.fn()}
+        saveProfile={saveProfile}
+        navigate={jest.fn()}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/business logo/i), {
+      target: {
+        files: [new File([new Uint8Array(36 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
+      },
+    });
+
+    expect(
+      screen.getByText(/logo must be 36 KB or smaller to save with your business profile/i)
+    ).toBeInTheDocument();
+    expect(saveProfile).not.toHaveBeenCalled();
+  });
 });

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -199,7 +200,8 @@ func writeValues(ctx context.Context, method, target string, values [][]string) 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("Google Sheets returned %s", resp.Status)
+		responseBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("Google Sheets returned %s: %s", resp.Status, strings.TrimSpace(string(responseBody)))
 	}
 	return nil
 }
