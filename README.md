@@ -210,7 +210,7 @@ Important Render environment variables:
 
 - Sessions are stored in an HTTP-only cookie named `quotify_session`.
 - Session tokens are signed with `AUTH_SESSION_SECRET`.
-- Cookie lifetime is 10 minutes.
+- Cookie lifetime is 1 hour.
 - `COOKIE_SECURE` should be `true` in HTTPS environments such as Render behind a public domain.
 - Production API requests use a Vercel rewrite so the cookie is first-party. Local and development environments still require CORS and browser credentials mode to stay aligned.
 

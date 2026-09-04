@@ -17,7 +17,7 @@ import (
 )
 
 const sessionCookieName = "quotify_session"
-const sessionDuration = 10 * time.Minute
+const sessionDuration = time.Hour
 
 type loginRequest struct {
 	Username string `json:"username" binding:"required"`
