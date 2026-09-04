@@ -15,11 +15,7 @@ import (
 )
 
 func quotationOwner(c *gin.Context) (string, bool) {
-	cookie, err := c.Cookie(sessionCookieName)
-	if err != nil {
-		return "", false
-	}
-	user, _, valid := readToken(cookie)
+	user, _, valid := authenticatedUser(c)
 	return user.ID, valid
 }
 

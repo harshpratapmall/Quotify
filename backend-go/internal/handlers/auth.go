@@ -63,18 +63,36 @@ func Health(c *gin.Context) {
 }
 
 func Me(c *gin.Context) {
-	cookie, err := c.Cookie(sessionCookieName)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
-		return
-	}
-
-	user, expiresAt, valid := readToken(cookie)
+	user, expiresAt, valid := authenticatedUser(c)
 	if !valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
+}
+
+func RequireAdmin(c *gin.Context) {
+	user, _, valid := authenticatedUser(c)
+	if !valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		c.Abort()
+		return
+	}
+	if !strings.EqualFold(user.Role, "admin") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Administrator access is required."})
+		c.Abort()
+		return
+	}
+	c.Set("authenticatedUser", user)
+	c.Next()
+}
+
+func authenticatedUser(c *gin.Context) (sheets.User, int64, bool) {
+	cookie, err := c.Cookie(sessionCookieName)
+	if err != nil {
+		return sheets.User{}, 0, false
+	}
+	return readToken(cookie)
 }
 
 func Logout(c *gin.Context) {

@@ -26,6 +26,12 @@ func SetupRouter() *gin.Engine {
 		v1.GET("/quotations/:id", handlers.GetQuotation)
 		v1.PUT("/quotations/:id", handlers.UpdateQuotation)
 		v1.DELETE("/quotations/:id", handlers.DeleteQuotation)
+		admin := v1.Group("/admin")
+		admin.Use(handlers.RequireAdmin)
+		admin.GET("/users", handlers.ListUsers)
+		admin.POST("/users", handlers.CreateUser)
+		admin.PATCH("/users/:id/status", handlers.UpdateUserStatus)
+		admin.POST("/users/:id/reset-password", handlers.ResetUserPassword)
 	}
 	return router
 }

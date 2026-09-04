@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import companyLogo from './assets/d2d-experts-logo.webp';
 import Dashboard from './components/Dashboard';
+import AdminUsers from './components/AdminUsers';
 import LoginScreen from './components/LoginScreen';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
 import QuotationWorkspaceModal from './components/QuotationWorkspaceModal';
@@ -254,7 +255,11 @@ function App() {
     if (authStatus === 'authenticated' && pathname === APP_ROUTES.login) {
       navigate(APP_ROUTES.home, true);
     }
-  }, [authStatus, navigate, pathname]);
+
+    if (authStatus === 'authenticated' && pathname === APP_ROUTES.adminUsers && currentUser?.role !== 'admin') {
+      navigate(APP_ROUTES.home, true);
+    }
+  }, [authStatus, currentUser, navigate, pathname]);
 
   useEffect(() => {
     if (!authExpiresAt || authStatus !== 'authenticated') {
@@ -363,6 +368,10 @@ function App() {
 
   if (authStatus !== 'authenticated') {
     return <LoginScreen onLogin={login} isLoggingIn={isLoggingIn} error={loginError} />;
+  }
+
+  if (pathname === APP_ROUTES.adminUsers && currentUser?.role === 'admin') {
+    return <AdminUsers navigate={navigate} currentUser={currentUser} />;
   }
 
   return (

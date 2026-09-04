@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -44,7 +45,17 @@ type User struct {
 	Username    string `json:"username"`
 	DisplayName string `json:"displayName"`
 	Role        string `json:"role"`
+	Status      string `json:"status"`
 }
+
+type UserRecord struct {
+	User
+	PasswordHash string
+	Password     string
+	Row          int
+}
+
+var userMutationMu sync.Mutex
 
 // ValidateConfiguration checks only local setup and never makes a Google request.
 func ValidateConfiguration() error {
@@ -59,65 +70,107 @@ func Authenticate(ctx context.Context, username, password string) (User, error) 
 	if err := ValidateConfiguration(); err != nil {
 		return User{}, err
 	}
-	spreadsheetID := os.Getenv("GOOGLE_SHEET_ID")
-	account, err := loadServiceAccount()
+	users, err := ListUsers(ctx)
 	if err != nil {
-		return User{}, err
-	}
-	accessToken, err := accessToken(ctx, account)
-	if err != nil {
-		return User{}, err
-	}
-
-	rangeName := os.Getenv("GOOGLE_SHEET_RANGE")
-	if rangeName == "" {
-		rangeName = "Users!A:G"
-	}
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s", url.PathEscape(spreadsheetID), url.PathEscape(rangeName))
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return User{}, err
-	}
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	response, err := newHTTPClient().Do(request)
-	if err != nil {
-		return User{}, err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return User{}, fmt.Errorf("Google Sheets returned %s", response.Status)
-	}
-
-	var sheet valuesResponse
-	if err := json.NewDecoder(response.Body).Decode(&sheet); err != nil {
 		return User{}, err
 	}
 	debugAuthentication := os.Getenv("AUTH_DEBUG") == "true"
 	if debugAuthentication {
-		log.Printf("auth debug: fetched %d sheet rows; submitted username=%q password_length=%d", len(sheet.Values), username, len(password))
+		log.Printf("auth debug: fetched %d sheet rows; submitted username=%q password_length=%d", len(users), username, len(password))
 	}
-	for rowIndex, row := range sheet.Values {
-		if len(row) < 6 {
-			if debugAuthentication {
-				log.Printf("auth debug: row=%d skipped because it has fewer than two columns", rowIndex+1)
-			}
-			continue
-		}
-		sheetUserID := strings.TrimSpace(row[0])
-		sheetUsername := strings.TrimSpace(row[1])
-		sheetPasswordHash := strings.TrimSpace(row[2])
-		usernameMatches := strings.EqualFold(strings.TrimSpace(username), sheetUsername)
-		passwordMatches := bcrypt.CompareHashAndPassword([]byte(sheetPasswordHash), []byte(password)) == nil
+	for rowIndex, record := range users {
+		usernameMatches := strings.EqualFold(strings.TrimSpace(username), record.Username)
+		passwordMatches := bcrypt.CompareHashAndPassword([]byte(record.PasswordHash), []byte(password)) == nil
 		if debugAuthentication {
-			log.Printf("auth debug: row=%d sheet_username=%q username_match=%t password_hash_length=%d password_match=%t", rowIndex+1, sheetUsername, usernameMatches, len(sheetPasswordHash), passwordMatches)
+			log.Printf("auth debug: row=%d sheet_username=%q username_match=%t password_hash_length=%d password_match=%t", rowIndex+2, record.Username, usernameMatches, len(record.PasswordHash), passwordMatches)
 		}
 		if usernameMatches && passwordMatches {
-			if strings.EqualFold(strings.TrimSpace(row[5]), "active") {
-				return User{ID: sheetUserID, Username: sheetUsername, DisplayName: strings.TrimSpace(row[3]), Role: strings.TrimSpace(row[4])}, nil
+			if strings.EqualFold(record.Status, "active") {
+				return record.User, nil
 			}
 		}
 	}
 	return User{}, nil
+}
+
+func ListUsers(ctx context.Context) ([]UserRecord, error) {
+	values, err := readValues(ctx, "Users!A2:H")
+	if err != nil {
+		return nil, err
+	}
+	users := make([]UserRecord, 0, len(values))
+	for index, row := range values {
+		if len(row) < 6 || strings.TrimSpace(row[0]) == "" {
+			continue
+		}
+		get := func(column int) string {
+			if column < len(row) {
+				return strings.TrimSpace(row[column])
+			}
+			return ""
+		}
+		users = append(users, UserRecord{
+			User:         User{ID: get(0), Username: get(1), DisplayName: get(3), Role: get(4), Status: get(5)},
+			PasswordHash: get(2),
+			Password:     get(7),
+			Row:          index + 2,
+		})
+	}
+	return users, nil
+}
+
+func CreateUser(ctx context.Context, user User, password string) error {
+	userMutationMu.Lock()
+	defer userMutationMu.Unlock()
+	users, err := ListUsers(ctx)
+	if err != nil {
+		return err
+	}
+	for _, existing := range users {
+		if strings.EqualFold(existing.Username, user.Username) || existing.ID == user.ID {
+			return errors.New("user already exists")
+		}
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return writeValues(ctx, http.MethodPost, "Users!A:H:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, string(hash), user.DisplayName, "user", "active", time.Now().UTC().Format(time.RFC3339), password}})
+}
+
+func UpdateUserStatus(ctx context.Context, id, status string) (User, error) {
+	userMutationMu.Lock()
+	defer userMutationMu.Unlock()
+	users, err := ListUsers(ctx)
+	if err != nil {
+		return User{}, err
+	}
+	for _, record := range users {
+		if record.ID == id {
+			return record.User, writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:H%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, record.PasswordHash, record.DisplayName, record.Role, status, time.Now().UTC().Format(time.RFC3339), record.Password}})
+		}
+	}
+	return User{}, errors.New("user not found")
+}
+
+func ResetUserPassword(ctx context.Context, id, password string) (User, error) {
+	userMutationMu.Lock()
+	defer userMutationMu.Unlock()
+	users, err := ListUsers(ctx)
+	if err != nil {
+		return User{}, err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return User{}, err
+	}
+	for _, record := range users {
+		if record.ID == id {
+			err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:H%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, string(hash), record.DisplayName, record.Role, "active", time.Now().UTC().Format(time.RFC3339), password}})
+			return record.User, err
+		}
+	}
+	return User{}, errors.New("user not found")
 }
 
 func loadServiceAccount() (serviceAccount, error) {

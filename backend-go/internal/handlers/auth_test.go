@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -19,6 +20,24 @@ func TestSessionTokenPreservesStableUserIdentity(t *testing.T) {
 	decoded, decodedExpiry, valid := readToken(token)
 	if !valid || decoded != user || decodedExpiry != expiresAt || time.Now().Unix() > decodedExpiry {
 		t.Fatalf("readToken() = %#v, %d, %t; want %#v, %d, true", decoded, decodedExpiry, valid, user, expiresAt)
+	}
+}
+
+func TestRequireAdminBlocksRegularUsers(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/admin", RequireAdmin, func(context *gin.Context) { context.Status(http.StatusNoContent) })
+
+	userToken, _, err := createToken(sheets.User{ID: "usr_user", Username: "user", Role: "user"})
+	if err != nil {
+		t.Fatalf("createToken() error = %v", err)
+	}
+	request := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	request.AddCookie(&http.Cookie{Name: sessionCookieName, Value: userToken})
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("regular user status = %d; want %d", recorder.Code, http.StatusForbidden)
 	}
 }
 

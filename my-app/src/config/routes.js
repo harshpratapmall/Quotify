@@ -3,4 +3,5 @@ export const APP_ROUTES = {
   login: '/login',
   quotationNew: '/quotation/new',
   quotationPreview: '/quotation/preview',
+  adminUsers: '/admin/users',
 };
