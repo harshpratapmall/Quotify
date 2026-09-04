@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import companyLogo from './assets/d2d-experts-logo.webp';
 import Dashboard from './components/Dashboard';
 import LoginScreen from './components/LoginScreen';
@@ -27,6 +27,7 @@ import './App.css';
 
 function App() {
   const { pathname, navigate } = useAppRouter();
+  const initialPathname = useRef(pathname);
   const [draftState] = useState(() => createDraftState(null, pathname === APP_ROUTES.quotationNew));
   const [authStatus, setAuthStatus] = useState('checking');
   const [currentUser, setCurrentUser] = useState(null);
@@ -190,11 +191,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (authStatus !== 'authenticated') {
+    if (authStatus !== 'authenticated' || !currentUser?.id) {
       return;
     }
 
-    const nextState = createDraftState(loadQuotationDraft(currentUser.id), pathname === APP_ROUTES.quotationNew);
+    const nextState = createDraftState(loadQuotationDraft(currentUser.id), initialPathname.current === APP_ROUTES.quotationNew);
     setQuotation(nextState.quotation);
     setItems(nextState.items);
     setIncludeGst(nextState.includeGst);
