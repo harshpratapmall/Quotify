@@ -257,9 +257,9 @@ textarea {
 }
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 1.5rem;
   padding: 1.2rem clamp(1.2rem, 4vw, 3rem);
   position: sticky;
@@ -270,13 +270,74 @@ textarea {
   border-bottom: 1px solid rgba(16, 37, 66, 0.08);
 }
 
-.header-logo {
-  width: clamp(180px, 20vw, 250px);
-  max-height: 66px;
-  margin-right: auto;
-  padding: 0.35rem 0.6rem;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.92);
+.topbar-user {
+  justify-self: start;
+  color: var(--navy);
+  font-weight: 800;
+  letter-spacing: 0.015em;
+  font-size: 1rem;
+}
+
+.topbar-brand {
+  width: clamp(108px, 13vw, 170px);
+  height: 48px;
+  display: grid;
+  place-items: center;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgba(16, 37, 66, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(16, 37, 66, 0.08);
+}
+
+.topbar-brand img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.topbar-actions {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.topbar-icon-action {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(16, 37, 66, 0.14);
+  border-radius: 50%;
+  color: var(--navy);
+  background: rgba(255, 255, 255, 0.84);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.topbar-icon-action:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  box-shadow: 0 9px 18px rgba(16, 37, 66, 0.14);
+}
+
+.topbar-create-action {
+  color: var(--white);
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+}
+
+.topbar-create-action:hover {
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+}
+
+.topbar-logout-action {
+  color: #9d4138;
+}
+
+.topbar-admin-action {
+  padding: 0.7rem 0.95rem;
 }
 
 .brand-mark {
@@ -808,19 +869,6 @@ textarea {
   display: inline-flex;
 }
 
-.logout-action {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.45rem;
-  border: 1px solid rgba(16, 37, 66, 0.13);
-  border-radius: 999px;
-  padding: 0.75rem 1rem;
-  color: var(--navy);
-  background: rgba(255, 255, 255, 0.55);
-  cursor: pointer;
-  font-weight: 800;
-}
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1114,8 +1162,14 @@ textarea {
   }
 
   .topbar {
-    align-items: flex-start;
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.8rem;
+  }
+
+  .topbar-brand {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
   }
 
   .brand-mark {

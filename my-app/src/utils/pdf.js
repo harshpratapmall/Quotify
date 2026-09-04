@@ -30,33 +30,47 @@ const wrapText = (value, maxLength = 82) => {
 const loadLogoForPdf = (source) =>
   new Promise((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = 'anonymous';
     image.onload = () => {
-      const width = 900;
-      const height = Math.round((image.naturalHeight / image.naturalWidth) * width);
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext('2d');
+      try {
+        const width = 900;
+        const height = Math.round((image.naturalHeight / image.naturalWidth) * width);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
 
-      if (!context) {
+        if (!context) {
+          reject(new Error('Unable to prepare the company logo.'));
+          return;
+        }
+
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        const encoded = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+        resolve({
+          width,
+          height,
+          bytes: Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0)),
+        });
+      } catch (error) {
         reject(new Error('Unable to prepare the company logo.'));
-        return;
       }
-
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, width, height);
-      context.drawImage(image, 0, 0, width, height);
-
-      const encoded = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
-      resolve({
-        width,
-        height,
-        bytes: Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0)),
-      });
     };
     image.onerror = () => reject(new Error('Unable to load the company logo.'));
     image.src = source;
   });
+
+const loadPdfLogo = async (logoSource) => {
+  try {
+    return await loadLogoForPdf(logoSource || '/quotify-mark.svg');
+  } catch (error) {
+    if (!logoSource) throw error;
+    return loadLogoForPdf('/quotify-mark.svg');
+  }
+};
 
 export const downloadQuotationPdf = async ({
   quotation,
@@ -70,7 +84,7 @@ export const downloadQuotationPdf = async ({
   logoSource,
   businessProfile = {},
 }) => {
-  const logo = await loadLogoForPdf(logoSource || '/quotify-mark.svg');
+  const logo = await loadPdfLogo(logoSource);
   const printableItems = getPrintableItems(items);
   const itemsPerPage = printableItems.length > 9 ? 14 : 9;
   const rowHeight = printableItems.length > 9 ? 24 : 31;

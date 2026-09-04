@@ -354,19 +354,24 @@ function App() {
       return;
     }
 
-    await downloadQuotationPdf({
-      quotation,
-      items,
-      includeGst,
-      gstPercentage,
-      subtotal,
-      tax,
-      total,
-      activeQuotationId,
-      logoSource: businessProfile.logoUrl,
-      businessProfile,
-    });
-    trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source });
+    try {
+      await downloadQuotationPdf({
+        quotation,
+        items,
+        includeGst,
+        gstPercentage,
+        subtotal,
+        tax,
+        total,
+        activeQuotationId,
+        logoSource: businessProfile.logoUrl,
+        businessProfile,
+      });
+      trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source });
+    } catch (error) {
+      setSaveStatus('Unable to download the PDF. Please try again.');
+      trackAction(ANALYTICS_EVENTS.quotationPdfDownloadFailed, { source, reason: 'generation' });
+    }
   };
 
   if (authStatus === 'checking') {

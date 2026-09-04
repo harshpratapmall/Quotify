@@ -15,18 +15,16 @@ function Dashboard({
   return (
     <div className="app-shell">
       <header className="topbar">
-        <img className="company-logo header-logo" src={quotifyLogo} alt="Quotify" />
-        <span>{user?.displayName || user?.username}</span>
-        <button type="button" className="secondary-action" onClick={() => navigate('/business-profile')}>Business profile</button>
-        {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
-        <button
-          type="button"
-          className="primary-action desktop-only"
-          onClick={() => startNewQuotation('header')}
-        >
-          <ActionIcon type="plus" /> Create New Quotation
-        </button>
-        <button type="button" className="logout-action" onClick={logout}><ActionIcon type="logout" /> Log out</button>
+        <div className="topbar-user">{user?.displayName || user?.username}</div>
+        <div className="topbar-brand">
+          <img src={profile?.logoUrl || quotifyLogo} alt={profile?.logoUrl ? `${profile.businessName || 'Business'} logo` : 'Quotify'} />
+        </div>
+        <div className="topbar-actions">
+          <button type="button" className="topbar-icon-action" aria-label="Business profile" title="Business profile" onClick={() => navigate('/business-profile')}><ActionIcon type="profile" /></button>
+          {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action topbar-admin-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
+          <button type="button" className="topbar-icon-action topbar-create-action" aria-label="Create new quotation" title="Create new quotation" onClick={() => startNewQuotation('header')}><ActionIcon type="plus" /></button>
+          <button type="button" className="topbar-icon-action topbar-logout-action" aria-label="Log out" title="Log out" onClick={logout}><ActionIcon type="logout" /></button>
+        </div>
       </header>
 
       <main className="page-content">

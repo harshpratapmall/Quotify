@@ -8,3 +8,7 @@ jest.mock('@vercel/analytics', () => ({
   inject: jest.fn(),
   track: jest.fn(),
 }));
+
+jest.mock('@vercel/blob/client', () => ({
+  upload: jest.fn(),
+}), { virtual: true });
