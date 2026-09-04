@@ -1,24 +1,17 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { upload } from '@vercel/blob/client';
 import BusinessProfile from './BusinessProfile';
 
-class MockFileReader {
-  readAsDataURL(file) {
-    this.result = `data:${file.type};base64,TEST_DATA`;
-    if (this.onload) {
-      this.onload();
-    }
-  }
-}
+jest.mock('@vercel/blob/client', () => ({
+  upload: jest.fn(),
+}), { virtual: true });
 
 describe('BusinessProfile', () => {
-  const originalFileReader = window.FileReader;
-
   beforeEach(() => {
-    window.FileReader = MockFileReader;
+    upload.mockResolvedValue({ url: 'https://example.public.blob.vercel-storage.com/business-logos/logo.webp' });
   });
 
   afterEach(() => {
-    window.FileReader = originalFileReader;
     jest.clearAllMocks();
   });
 
@@ -45,18 +38,26 @@ describe('BusinessProfile', () => {
       expect(setProfile).toHaveBeenCalledWith(
         expect.objectContaining({
           businessName: 'Door2Door Experts',
-          logoUrl: 'data:image/webp;base64,TEST_DATA',
+          logoUrl: 'https://example.public.blob.vercel-storage.com/business-logos/logo.webp',
         })
       );
     });
 
     expect(saveProfile).not.toHaveBeenCalled();
+    expect(upload).toHaveBeenCalledWith(
+      'business-logos/logo.webp',
+      expect.any(File),
+      expect.objectContaining({
+        access: 'public',
+        handleUploadUrl: '/api/blob/upload',
+      })
+    );
     expect(
       screen.getByText(/logo selected\. save business profile to apply it\./i)
     ).toBeInTheDocument();
   });
 
-  test('rejects a logo that cannot fit in a Google Sheets cell', () => {
+  test('rejects logos larger than the upload limit', () => {
     const saveProfile = jest.fn();
 
     render(
@@ -70,12 +71,12 @@ describe('BusinessProfile', () => {
 
     fireEvent.change(screen.getByLabelText(/business logo/i), {
       target: {
-        files: [new File([new Uint8Array(36 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
+        files: [new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
       },
     });
 
     expect(
-      screen.getByText(/logo must be 36 KB or smaller to save with your business profile/i)
+      screen.getByText(/logo must be 2 MB or smaller/i)
     ).toBeInTheDocument();
     expect(saveProfile).not.toHaveBeenCalled();
   });

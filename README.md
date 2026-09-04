@@ -237,7 +237,7 @@ The backend stores one quotation per row. `items_json` contains the complete edi
 
 Business profiles use the `BusinessProfiles` worksheet in the Quotely spreadsheet. Row 1 must retain these columns in order: `user_id`, `business_name`, `logo_url`, `phone`, `email`, `address`, `gstin`, `quote_prefix`, `terms`, `updated_at`.
 
-The backend stores one profile per authenticated user and updates that user's existing row. Business logos are stored as image data URLs in `logo_url`, so selecting a logo in the app does not trigger a separate upload request.
+The backend stores one profile per authenticated user and updates that user's existing row. Business logos are uploaded to Vercel Blob; `logo_url` stores the public Blob URL, not image data.
 
 ## Quotation Behavior
 

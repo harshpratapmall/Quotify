@@ -1,15 +1,12 @@
 import { useState } from 'react';
+import { upload } from '@vercel/blob/client';
 
-// Google Sheets allows at most 50,000 characters per cell; base64 expands source files.
-const MAX_LOGO_FILE_SIZE_BYTES = 36 * 1024;
+const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024;
 
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-    reader.onerror = () => reject(new Error('Unable to read logo file.'));
-    reader.readAsDataURL(file);
-  });
+const logoPath = (file) => {
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'image';
+  return `business-logos/logo.${extension}`;
+};
 
 function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -42,21 +39,24 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
 
     if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
       event.target.value = '';
-      setMessage('Logo must be 36 KB or smaller to save with your business profile.');
+      setMessage('Logo must be 2 MB or smaller.');
       return;
     }
 
     setIsPreparingLogo(true);
 
     try {
-      const logoUrl = await readFileAsDataUrl(file);
+      const blob = await upload(logoPath(file), file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob/upload',
+      });
       setProfile({
         ...profile,
-        logoUrl,
+        logoUrl: blob.url,
       });
       setMessage('Logo selected. Save business profile to apply it.');
     } catch {
-      setMessage('Unable to read logo. Please try a different image.');
+      setMessage('Unable to upload logo. Please try again.');
     } finally {
       setIsPreparingLogo(false);
     }

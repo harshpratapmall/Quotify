@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/blob/upload",
+      "destination": "/api/blob-upload"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://quotify-i62o.onrender.com/api/:path*"
     }
