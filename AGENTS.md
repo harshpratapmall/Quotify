@@ -113,7 +113,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 - New quotation dates are derived in the `Asia/Kolkata` business timezone at workspace creation.
 - The active quotation draft is stored in browser session storage.
 - Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
-- The `Users` worksheet stores user identity, bcrypt hash, role, status, and administrative password reference columns.
+- The `Users` worksheet stores user identity, bcrypt hash, role, status, and a sensitive password compatibility column.
 - Only users with `role=admin` may access `/api/v1/admin/*`; regular users must be redirected away from `/admin/users`.
 - PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.
 - Analytics events must not include credentials, client details, quotation content, or other personal data.
@@ -150,7 +150,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 
 - Inspect `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`, and `my-app/src/components/AdminUsers.js`.
 - Preserve server-side admin authorization; hiding the frontend route is not sufficient.
-- Keep the `Users` sheet columns aligned with `GOOGLE_SHEET_RANGE=Users!A:G` and do not expose password hashes in API responses.
+- Keep the `Users` sheet columns aligned with `GOOGLE_SHEET_RANGE=Users!A:G`; column H is a sensitive password fallback and must never appear in API responses.
 
 ## Safe Edit Guidance
 

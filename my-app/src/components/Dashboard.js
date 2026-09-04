@@ -16,7 +16,7 @@ function Dashboard({
       <header className="topbar">
         <img className="company-logo header-logo" src={companyLogo} alt="Door2Door Experts" />
         <span>{user?.displayName || user?.username}</span>
-        {user?.role === 'admin' && <button type="button" className="secondary-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
+        {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
         <button
           type="button"
           className="primary-action desktop-only"

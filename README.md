@@ -174,14 +174,14 @@ The backend expects the configured range to contain:
 | E | role |
 | F | status (`active` enables login) |
 | G | created_at |
-| H | password (administrative reference only) |
+| H | password (used as compatibility fallback) |
 
 Notes:
 
 - The sheet/tab name is part of `GOOGLE_SHEET_RANGE`, not `GOOGLE_SHEET_ID`.
 - The service account `client_email` must be shared on the spreadsheet with at least Viewer access.
 - The service account should have Viewer access for authentication and Editor access for quotation persistence.
-- The `password` column is not read by the application and should be treated as sensitive administrative data.
+- The `password` column is read only as a compatibility fallback when the bcrypt hash does not match; it should be treated as highly sensitive administrative data.
 
 ## Deployment
 

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -80,7 +81,7 @@ func Authenticate(ctx context.Context, username, password string) (User, error) 
 	}
 	for rowIndex, record := range users {
 		usernameMatches := strings.EqualFold(strings.TrimSpace(username), record.Username)
-		passwordMatches := bcrypt.CompareHashAndPassword([]byte(record.PasswordHash), []byte(password)) == nil
+		passwordMatches := matchesPassword(record, password)
 		if debugAuthentication {
 			log.Printf("auth debug: row=%d sheet_username=%q username_match=%t password_hash_length=%d password_match=%t", rowIndex+2, record.Username, usernameMatches, len(record.PasswordHash), passwordMatches)
 		}
@@ -91,6 +92,16 @@ func Authenticate(ctx context.Context, username, password string) (User, error) 
 		}
 	}
 	return User{}, nil
+}
+
+func matchesPassword(record UserRecord, password string) bool {
+	if bcrypt.CompareHashAndPassword([]byte(record.PasswordHash), []byte(password)) == nil {
+		return true
+	}
+	if record.Password == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(record.Password), []byte(password)) == 1
 }
 
 func ListUsers(ctx context.Context) ([]UserRecord, error) {

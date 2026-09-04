@@ -26,6 +26,8 @@ import { createDraftState, loadQuotationDraft, saveQuotationDraft } from './util
 import { ANALYTICS_EVENTS, trackAction, trackRoute } from './utils/analytics';
 import './App.css';
 
+const isAdminUser = (user) => user?.role?.toLowerCase() === 'admin';
+
 function App() {
   const { pathname, navigate } = useAppRouter();
   const initialPathname = useRef(pathname);
@@ -43,7 +45,7 @@ function App() {
   const [activeQuotationId, setActiveQuotationId] = useState(draftState.activeQuotationId);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
-  const authenticatedHome = currentUser?.role === 'admin' ? APP_ROUTES.adminUsers : APP_ROUTES.home;
+  const authenticatedHome = isAdminUser(currentUser) ? APP_ROUTES.adminUsers : APP_ROUTES.home;
 
   const { subtotal, gstPercentage, tax, total } = useMemo(
     () => calculateQuotationTotals(items, includeGst, gstRate),
@@ -257,7 +259,7 @@ function App() {
       navigate(authenticatedHome, true);
     }
 
-    if (authStatus === 'authenticated' && pathname === APP_ROUTES.adminUsers && currentUser?.role !== 'admin') {
+    if (authStatus === 'authenticated' && pathname === APP_ROUTES.adminUsers && !isAdminUser(currentUser)) {
       navigate(APP_ROUTES.home, true);
     }
   }, [authStatus, authenticatedHome, currentUser, navigate, pathname]);
@@ -306,7 +308,7 @@ function App() {
       setAuthExpiresAt(data?.expiresAt ?? null);
       setAuthStatus('authenticated');
       trackAction(ANALYTICS_EVENTS.loginSucceeded);
-      navigate(data?.user?.role === 'admin' ? APP_ROUTES.adminUsers : APP_ROUTES.home, true);
+      navigate(isAdminUser(data?.user) ? APP_ROUTES.adminUsers : APP_ROUTES.home, true);
     } catch {
       setLoginError('The login service is unavailable. Please try again shortly.');
       trackAction(ANALYTICS_EVENTS.loginFailed, { reason: 'unavailable' });
@@ -371,7 +373,7 @@ function App() {
     return <LoginScreen onLogin={login} isLoggingIn={isLoggingIn} error={loginError} />;
   }
 
-  if (pathname === APP_ROUTES.adminUsers && currentUser?.role === 'admin') {
+  if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
     return <AdminUsers navigate={navigate} currentUser={currentUser} />;
   }
 

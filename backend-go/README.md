@@ -30,8 +30,8 @@ worksheet tab name, not the spreadsheet ID. Copy the template to `.env` for
 local development; the server loads it automatically.
 
 The optional `password` column may be kept in the `Users` sheet for
-administrative reference, but authentication uses the bcrypt `password_hash`
-column.
+administrative reference and as a compatibility fallback when the bcrypt hash
+does not match. Both password columns are highly sensitive.
 
 `GOOGLE_SERVICE_ACCOUNT_JSON` can be used instead of the file path for hosted
 environments. Share the spreadsheet with the service account's `client_email`
