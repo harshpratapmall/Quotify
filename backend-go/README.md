@@ -43,6 +43,10 @@ Endpoints:
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
 - `POST /api/v1/auth/logout`
+- `GET /api/v1/admin/users` (administrator only)
+- `POST /api/v1/admin/users` (administrator only)
+- `PATCH /api/v1/admin/users/:id/status` (administrator only)
+- `POST /api/v1/admin/users/:id/reset-password` (administrator only)
 
 ## Starter endpoint
 
