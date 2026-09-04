@@ -1,6 +1,7 @@
 import { getTodayDate } from '../config/quotation';
 import { APP_ROUTES } from '../config/routes';
 import { currency } from '../utils/formatters';
+import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 
 function QuotationPreviewModal({
   pathname,
@@ -21,20 +22,20 @@ function QuotationPreviewModal({
     return null;
   }
 
-  const closePreview = () => navigate(
-    previewOnly ? APP_ROUTES.home : APP_ROUTES.quotationNew,
-    true
-  );
+  const closePreview = (source) => {
+    trackAction(ANALYTICS_EVENTS.previewClosed, { source, mode: previewOnly ? 'saved' : 'editable' });
+    navigate(previewOnly ? APP_ROUTES.home : APP_ROUTES.quotationNew, true);
+  };
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={closePreview}>
+    <div className="modal-backdrop" role="presentation" onMouseDown={() => closePreview('backdrop')}>
       <section className="quotation-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-preview-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-actions">
           <div>
             <p className="eyebrow">Ready to share</p>
             <h2 id="quotation-preview-title">Quotation Preview</h2>
           </div>
-          <button type="button" className="close-button" aria-label="Close quotation preview" onClick={closePreview}>x</button>
+          <button type="button" className="close-button" aria-label="Close quotation preview" onClick={() => closePreview('button')}>x</button>
         </div>
         <article className="quotation-document">
           <div className="document-header">
@@ -48,8 +49,8 @@ function QuotationPreviewModal({
           <p className="document-footer">Thank you for choosing Door2Door Interiors. This quotation is valid for 15 days.</p>
         </article>
         <div className="preview-export-actions">
-          <button type="button" className="secondary-action" onClick={saveQuotation}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
-          <button type="button" className="primary-action" onClick={downloadPdf}>Download as PDF</button>
+          <button type="button" className="secondary-action" onClick={() => saveQuotation('preview')}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
+          <button type="button" className="primary-action" onClick={() => downloadPdf('preview')}>Download as PDF</button>
         </div>
       </section>
     </div>

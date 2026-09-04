@@ -22,6 +22,7 @@ import {
   parseSavedQuotationPayload,
 } from './utils/quotation';
 import { createDraftState, loadQuotationDraft, saveQuotationDraft } from './utils/storage';
+import { ANALYTICS_EVENTS, trackAction, trackRoute } from './utils/analytics';
 import './App.css';
 
 function App() {
@@ -88,15 +89,17 @@ function App() {
     setPreviewOnly(false);
   }, []);
 
-  const startNewQuotation = useCallback(() => {
+  const startNewQuotation = useCallback((source) => {
+    trackAction(ANALYTICS_EVENTS.quotationStarted, { source });
     clearQuotation();
     navigate(APP_ROUTES.quotationNew);
   }, [clearQuotation, navigate]);
 
-  const saveQuotation = useCallback(async () => {
+  const saveQuotation = useCallback(async (source) => {
     const validationError = quotationValidationError();
     if (validationError) {
       setSaveStatus(validationError);
+      trackAction(ANALYTICS_EVENTS.quotationSaveFailed, { source, reason: 'validation' });
       return false;
     }
 
@@ -120,9 +123,14 @@ function App() {
       setActiveQuotationId(data.id);
       setSavedQuotations((current) => [data, ...current.filter((entry) => entry.id !== data.id)]);
       setSaveStatus('Saved');
+      trackAction(ANALYTICS_EVENTS.quotationSaveSucceeded, {
+        source,
+        action: activeQuotationId ? 'updated' : 'created',
+      });
       return true;
     } catch {
       setSaveStatus('Unable to save. Please try again.');
+      trackAction(ANALYTICS_EVENTS.quotationSaveFailed, { source, reason: 'request' });
       return false;
     }
   }, [activeQuotationId, gstRate, includeGst, items, quotation, quotationValidationError, subtotal, tax, total]);
@@ -141,10 +149,12 @@ function App() {
     setActiveQuotationId(saved.id);
     setSaveStatus('');
     setPreviewOnly(preview);
+    trackAction(ANALYTICS_EVENTS.quotationOpened, { mode: preview ? 'preview' : 'edit' });
     navigate(preview ? APP_ROUTES.quotationPreview : APP_ROUTES.quotationNew);
   }, [navigate]);
 
   const deleteSavedQuotation = useCallback(async (id) => {
+    trackAction(ANALYTICS_EVENTS.quotationDeleteRequested);
     if (!window.confirm('Delete this saved quotation?')) {
       return;
     }
@@ -156,6 +166,7 @@ function App() {
         clearQuotation();
       }
       setSaveStatus('Quotation deleted');
+      trackAction(ANALYTICS_EVENTS.quotationDeleted);
     } else {
       setSaveStatus('Unable to delete quotation. Please try again.');
     }
@@ -188,6 +199,12 @@ function App() {
       .then((quotes) => setSavedQuotations(quotes))
       .catch(() => setSavedQuotations([]));
   }, [authStatus]);
+
+  useEffect(() => {
+    if (authStatus !== 'checking') {
+      trackRoute(pathname);
+    }
+  }, [authStatus, pathname]);
 
   useEffect(() => {
     saveQuotationDraft({
@@ -258,25 +275,30 @@ function App() {
   const login = async ({ username, password }) => {
     setIsLoggingIn(true);
     setLoginError('');
+    trackAction(ANALYTICS_EVENTS.loginSubmitted);
 
     try {
       const { response, data } = await loginRequest({ username, password });
       if (!response.ok) {
         setLoginError(data?.error || 'Unable to sign in. Please try again.');
+        trackAction(ANALYTICS_EVENTS.loginFailed, { reason: 'rejected' });
         return;
       }
 
       setAuthExpiresAt(data?.expiresAt ?? null);
       setAuthStatus('authenticated');
+      trackAction(ANALYTICS_EVENTS.loginSucceeded);
       navigate(APP_ROUTES.home, true);
     } catch {
       setLoginError('The login service is unavailable. Please try again shortly.');
+      trackAction(ANALYTICS_EVENTS.loginFailed, { reason: 'unavailable' });
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const logout = async () => {
+    trackAction(ANALYTICS_EVENTS.logoutRequested);
     await logoutRequest();
     setAuthExpiresAt(null);
     setAuthStatus('unauthenticated');
@@ -288,17 +310,20 @@ function App() {
     const validationError = quotationValidationError();
     if (validationError) {
       setSaveStatus(validationError);
+      trackAction(ANALYTICS_EVENTS.quotationPreviewFailed, { reason: 'validation' });
       return;
     }
 
+    trackAction(ANALYTICS_EVENTS.quotationPreviewed);
     setPreviewOnly(false);
     navigate(APP_ROUTES.quotationPreview);
   };
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = async (source) => {
     const validationError = quotationValidationError();
     if (validationError) {
       setSaveStatus(validationError);
+      trackAction(ANALYTICS_EVENTS.quotationPdfDownloadFailed, { source, reason: 'validation' });
       navigate(APP_ROUTES.quotationNew, true);
       return;
     }
@@ -314,6 +339,7 @@ function App() {
       activeQuotationId,
       logoSource: companyLogo,
     });
+    trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source });
   };
 
   if (authStatus === 'checking') {

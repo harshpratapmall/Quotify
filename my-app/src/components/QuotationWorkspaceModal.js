@@ -1,5 +1,6 @@
 import { APP_ROUTES } from '../config/routes';
 import ActionIcon from './ActionIcon';
+import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 
 function QuotationWorkspaceModal({
   pathname,
@@ -32,8 +33,33 @@ function QuotationWorkspaceModal({
     return null;
   }
 
+  const closeWorkspace = (source) => {
+    trackAction(ANALYTICS_EVENTS.workspaceClosed, { source });
+    navigate(APP_ROUTES.home, true);
+  };
+
+  const resetWorkspace = () => {
+    trackAction(ANALYTICS_EVENTS.workspaceReset);
+    clearQuotation();
+  };
+
+  const addItem = () => {
+    trackAction(ANALYTICS_EVENTS.lineItemAdded);
+    addLineItem();
+  };
+
+  const removeItem = (index) => {
+    trackAction(ANALYTICS_EVENTS.lineItemRemoved);
+    removeLineItem(index);
+  };
+
+  const toggleGst = (enabled) => {
+    trackAction(ANALYTICS_EVENTS.gstToggled, { enabled });
+    setIncludeGst(enabled);
+  };
+
   return (
-    <div className="form-modal-backdrop" role="presentation" onMouseDown={() => navigate(APP_ROUTES.home, true)}>
+    <div className="form-modal-backdrop" role="presentation" onMouseDown={() => closeWorkspace('backdrop')}>
       <section className="form-card form-workspace-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="section-heading">
           <div>
@@ -44,7 +70,7 @@ function QuotationWorkspaceModal({
             Fill in project details, add pricing lines, and review totals
             instantly.
           </p>
-          <button type="button" className="workspace-close" aria-label="Close quotation workspace" onClick={() => navigate(APP_ROUTES.home, true)}>x</button>
+          <button type="button" className="workspace-close" aria-label="Close quotation workspace" onClick={() => closeWorkspace('button')}>x</button>
         </div>
 
         <form className="quotation-form" onSubmit={generateQuotation}>
@@ -124,7 +150,7 @@ function QuotationWorkspaceModal({
                   <button
                     type="button"
                     className="remove-item-action"
-                    onClick={() => removeLineItem(index)}
+                    onClick={() => removeItem(index)}
                     aria-label={`Remove item ${index + 1}`}
                     title="Remove item"
                   >
@@ -136,7 +162,7 @@ function QuotationWorkspaceModal({
             <button
               type="button"
               className="add-item-action"
-              onClick={addLineItem}
+              onClick={addItem}
             >
               + Add another item
             </button>
@@ -144,7 +170,7 @@ function QuotationWorkspaceModal({
 
           <div className="gst-controls">
             <label className="gst-toggle">
-              <input type="checkbox" checked={includeGst} onChange={(event) => setIncludeGst(event.target.checked)} />
+              <input type="checkbox" checked={includeGst} onChange={(event) => toggleGst(event.target.checked)} />
               <span>Include GST in this quotation</span>
             </label>
             {includeGst && (
@@ -176,10 +202,10 @@ function QuotationWorkspaceModal({
           </div>
 
           <div className="footer-actions">
-            <button type="button" className="clean-slate-action" onClick={clearQuotation}>
+            <button type="button" className="clean-slate-action" onClick={resetWorkspace}>
               Clean Slate
             </button>
-            <button type="button" className="secondary-action" onClick={saveQuotation}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
+            <button type="button" className="secondary-action" onClick={() => saveQuotation('workspace')}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
             <button type="submit" className="primary-action">
               Generate Quotation
             </button>

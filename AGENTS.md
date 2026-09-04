@@ -46,6 +46,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 - `src/hooks/useAppRouter.js`: history-based client-side router
 - `src/services/`: centralized authenticated API requests
 - `src/utils/`: formatters, draft storage, quotation calculations/validation, and PDF generation
+- `src/utils/analytics.js`: centralized Vercel Analytics route and user-action events
 - `src/index.js`: React bootstrapping and Vercel Analytics initialization
 - `vercel.json`: production `/api/*` rewrite to the Render backend
 - `src/App.css`: styling for login, dashboard, modal, and quotation document
@@ -111,6 +112,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 - The active quotation draft is stored in browser session storage.
 - Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
 - PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.
+- Analytics events must not include credentials, client details, quotation content, or other personal data.
 
 ## Common Agent Tasks
 

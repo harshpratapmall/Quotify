@@ -41,6 +41,7 @@ flowchart TD
 - Generates the quotation preview and downloadable PDF entirely in the browser.
 - Chooses the API base URL from the browser hostname or `REACT_APP_ENV`.
 - Uses `@vercel/analytics` for Vercel Web Analytics; it is initialized from `src/index.js`.
+- Tracks route views and button actions with privacy-safe custom events; no credentials, client details, or quotation content is included.
 
 Key files:
 

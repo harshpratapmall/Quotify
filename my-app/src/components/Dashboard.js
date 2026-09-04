@@ -16,7 +16,7 @@ function Dashboard({
         <button
           type="button"
           className="primary-action desktop-only"
-          onClick={startNewQuotation}
+          onClick={() => startNewQuotation('header')}
         >
           <ActionIcon type="plus" /> Create New Quotation
         </button>
@@ -37,7 +37,7 @@ function Dashboard({
               <button
                 type="button"
                 className="primary-action"
-                onClick={startNewQuotation}
+                onClick={() => startNewQuotation('hero')}
               >
                 <ActionIcon type="plus" /> Create New Quotation
               </button>
@@ -60,7 +60,7 @@ function Dashboard({
         <section className="saved-panel">
           <div className="section-heading">
             <div><p className="eyebrow">Saved Quotations</p><h3>Quotation library</h3></div>
-            <button type="button" className="primary-action new-quotation-action" onClick={startNewQuotation}><ActionIcon type="plus" /> New quotation</button>
+            <button type="button" className="primary-action new-quotation-action" onClick={() => startNewQuotation('library')}><ActionIcon type="plus" /> New quotation</button>
           </div>
           {savedQuotations.length === 0 ? <p className="section-text">No saved quotations yet. Create one and save it for later.</p> : (
             <div className="saved-quotation-list">
