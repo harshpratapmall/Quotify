@@ -11,7 +11,7 @@ services:
       - key: GOOGLE_SHEET_ID
         sync: false
       - key: GOOGLE_SHEET_RANGE
-        value: login!A:B
+        value: Users!A:G
       - key: GOOGLE_SERVICE_ACCOUNT_JSON
         sync: false
       - key: AUTH_SESSION_SECRET

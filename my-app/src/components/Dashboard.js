@@ -2,6 +2,7 @@ import ActionIcon from './ActionIcon';
 
 function Dashboard({
   companyLogo,
+  user,
   logout,
   startNewQuotation,
   openSavedQuotation,
@@ -13,6 +14,7 @@ function Dashboard({
     <div className="app-shell">
       <header className="topbar">
         <img className="company-logo header-logo" src={companyLogo} alt="Door2Door Experts" />
+        <span>{user?.displayName || user?.username}</span>
         <button
           type="button"
           className="primary-action desktop-only"

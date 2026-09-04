@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -20,6 +19,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const sheetsScope = "https://www.googleapis.com/auth/spreadsheets"
@@ -38,6 +39,13 @@ type valuesResponse struct {
 	Values [][]string `json:"values"`
 }
 
+type User struct {
+	ID          string `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Role        string `json:"role"`
+}
+
 // ValidateConfiguration checks only local setup and never makes a Google request.
 func ValidateConfiguration() error {
 	if os.Getenv("GOOGLE_SHEET_ID") == "" {
@@ -47,66 +55,69 @@ func ValidateConfiguration() error {
 	return err
 }
 
-func ValidateCredentials(ctx context.Context, username, password string) (bool, error) {
+func Authenticate(ctx context.Context, username, password string) (User, error) {
 	if err := ValidateConfiguration(); err != nil {
-		return false, err
+		return User{}, err
 	}
 	spreadsheetID := os.Getenv("GOOGLE_SHEET_ID")
 	account, err := loadServiceAccount()
 	if err != nil {
-		return false, err
+		return User{}, err
 	}
 	accessToken, err := accessToken(ctx, account)
 	if err != nil {
-		return false, err
+		return User{}, err
 	}
 
 	rangeName := os.Getenv("GOOGLE_SHEET_RANGE")
 	if rangeName == "" {
-		rangeName = "login!A:B"
+		rangeName = "Users!A:G"
 	}
 	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s", url.PathEscape(spreadsheetID), url.PathEscape(rangeName))
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return false, err
+		return User{}, err
 	}
 	request.Header.Set("Authorization", "Bearer "+accessToken)
 	response, err := newHTTPClient().Do(request)
 	if err != nil {
-		return false, err
+		return User{}, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("Google Sheets returned %s", response.Status)
+		return User{}, fmt.Errorf("Google Sheets returned %s", response.Status)
 	}
 
 	var sheet valuesResponse
 	if err := json.NewDecoder(response.Body).Decode(&sheet); err != nil {
-		return false, err
+		return User{}, err
 	}
 	debugAuthentication := os.Getenv("AUTH_DEBUG") == "true"
 	if debugAuthentication {
 		log.Printf("auth debug: fetched %d sheet rows; submitted username=%q password_length=%d", len(sheet.Values), username, len(password))
 	}
 	for rowIndex, row := range sheet.Values {
-		if len(row) < 2 {
+		if len(row) < 6 {
 			if debugAuthentication {
 				log.Printf("auth debug: row=%d skipped because it has fewer than two columns", rowIndex+1)
 			}
 			continue
 		}
-		sheetUsername := strings.TrimSpace(row[0])
-		sheetPassword := strings.TrimSpace(row[1])
-		usernameMatches := subtle.ConstantTimeCompare([]byte(strings.TrimSpace(username)), []byte(sheetUsername)) == 1
-		passwordMatches := subtle.ConstantTimeCompare([]byte(password), []byte(sheetPassword)) == 1
+		sheetUserID := strings.TrimSpace(row[0])
+		sheetUsername := strings.TrimSpace(row[1])
+		sheetPasswordHash := strings.TrimSpace(row[2])
+		usernameMatches := strings.EqualFold(strings.TrimSpace(username), sheetUsername)
+		passwordMatches := bcrypt.CompareHashAndPassword([]byte(sheetPasswordHash), []byte(password)) == nil
 		if debugAuthentication {
-			log.Printf("auth debug: row=%d sheet_username=%q username_match=%t sheet_password_length=%d password_match=%t", rowIndex+1, sheetUsername, usernameMatches, len(sheetPassword), passwordMatches)
+			log.Printf("auth debug: row=%d sheet_username=%q username_match=%t password_hash_length=%d password_match=%t", rowIndex+1, sheetUsername, usernameMatches, len(sheetPasswordHash), passwordMatches)
 		}
 		if usernameMatches && passwordMatches {
-			return true, nil
+			if strings.EqualFold(strings.TrimSpace(row[5]), "active") {
+				return User{ID: sheetUserID, Username: sheetUsername, DisplayName: strings.TrimSpace(row[3]), Role: strings.TrimSpace(row[4])}, nil
+			}
 		}
 	}
-	return false, nil
+	return User{}, nil
 }
 
 func loadServiceAccount() (serviceAccount, error) {

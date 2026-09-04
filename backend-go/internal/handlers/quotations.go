@@ -19,8 +19,8 @@ func quotationOwner(c *gin.Context) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	username, _, valid := readToken(cookie)
-	return username, valid
+	user, _, valid := readToken(cookie)
+	return user.ID, valid
 }
 
 func ListQuotations(c *gin.Context) {

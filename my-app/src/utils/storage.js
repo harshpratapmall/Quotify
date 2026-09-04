@@ -3,16 +3,19 @@ import {
   defaultGstRate,
   getTodayDate,
   lineItemTemplate,
-  quotationDraftKey,
+  getQuotationDraftKey,
 } from '../config/quotation';
 
-export const loadQuotationDraft = () => {
+export const loadQuotationDraft = (userId) => {
   if (typeof window === 'undefined') {
     return null;
   }
 
   try {
-    const savedDraft = JSON.parse(window.sessionStorage.getItem(quotationDraftKey) || 'null');
+    if (!userId) {
+      return null;
+    }
+    const savedDraft = JSON.parse(window.sessionStorage.getItem(getQuotationDraftKey(userId)) || 'null');
     if (!savedDraft || typeof savedDraft !== 'object') {
       return null;
     }
@@ -23,12 +26,14 @@ export const loadQuotationDraft = () => {
   }
 };
 
-export const saveQuotationDraft = (draft) => {
+export const saveQuotationDraft = (userId, draft) => {
   if (typeof window === 'undefined') {
     return;
   }
 
-  window.sessionStorage.setItem(quotationDraftKey, JSON.stringify(draft));
+  if (userId) {
+    window.sessionStorage.setItem(getQuotationDraftKey(userId), JSON.stringify(draft));
+  }
 };
 
 export const createDraftState = (draft, resetNewQuotationDate = false) => {

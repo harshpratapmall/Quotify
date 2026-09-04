@@ -19,7 +19,7 @@ flowchart TD
     E --> F[POST /api/v1/auth/login]
     F --> G[Render-hosted Go API]
     G --> H[Load Google service account credentials]
-    H --> I[Read username and password rows from Google Sheets]
+    H --> I[Read active user and bcrypt hash from Users sheet]
     I -->|Match found| J[Create signed session cookie]
     I -->|No match| K[Return 401]
     J --> L[Browser stores cookie]
@@ -57,7 +57,7 @@ Key files:
 
 - Built with Go 1.22 and Gin.
 - Exposes auth endpoints and a ping endpoint.
-- Verifies credentials against the first two columns of a Google Sheet.
+- Verifies active users against the `Users` worksheet using bcrypt password hashes.
 - Issues an HMAC-signed session cookie after successful login.
 - Allows cross-origin requests from approved frontend domains.
 
@@ -111,7 +111,7 @@ Key files:
 - Node.js and npm
 - Go 1.22+
 - A Google Cloud service account with Sheets read access
-- A Google Sheet containing login credentials in the first two columns of the selected range
+- A Google Sheet containing the configured `Users` worksheet and user columns
 
 ### 1. Backend setup
 
@@ -119,7 +119,7 @@ From [backend-go/.env.example](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/.e
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
-GOOGLE_SHEET_RANGE=login!A:B
+GOOGLE_SHEET_RANGE=Users!A:G
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=replace-with-a-long-random-secret
 COOKIE_SECURE=false
@@ -160,15 +160,23 @@ The app runs on `http://localhost:3000`.
 
 The backend expects the configured range to contain:
 
-| Column A | Column B |
+| Column | Field |
 | --- | --- |
-| username | password |
+| A | user_id |
+| B | username |
+| C | password_hash (bcrypt) |
+| D | display_name |
+| E | role |
+| F | status (`active` enables login) |
+| G | created_at |
+| H | password (administrative reference only) |
 
 Notes:
 
 - The sheet/tab name is part of `GOOGLE_SHEET_RANGE`, not `GOOGLE_SHEET_ID`.
 - The service account `client_email` must be shared on the spreadsheet with at least Viewer access.
-- Credentials are currently matched against sheet values directly.
+- The service account should have Viewer access for authentication and Editor access for quotation persistence.
+- The `password` column is not read by the application and should be treated as sensitive administrative data.
 
 ## Deployment
 
@@ -216,14 +224,14 @@ Important Render environment variables:
 
 ## Saved Quotations
 
-Saved quotations use the `Quotations` worksheet in the existing Quotely spreadsheet. Row 1 must retain these columns in order: `quotation_id`, `created_at`, `updated_at`, `owner`, `client_name`, `project_name`, `phone`, `email`, `site_location`, `quote_date`, `scope_of_work`, `include_gst`, `gst_rate`, `items_json`, `subtotal`, `tax`, `total`.
+Saved quotations use the `Quotations` worksheet in the existing Quotely spreadsheet. Row 1 must retain these columns in order: `quotation_id`, `created_at`, `updated_at`, `owner_user_id`, `client_name`, `project_name`, `phone`, `email`, `site_location`, `quote_date`, `scope_of_work`, `include_gst`, `gst_rate`, `items_json`, `subtotal`, `tax`, `total`.
 
 The backend stores one quotation per row. `items_json` contains the complete editable quotation payload; the remaining columns make the sheet easy to review and filter. The Google service account configured by `GOOGLE_SERVICE_ACCOUNT_JSON` must be shared as an **Editor** on Quotely, and the Google Sheets API must be enabled for that service account's Google Cloud project.
 
 ## Quotation Behavior
 
 - The active quotation draft lives in browser session storage.
-- Saved quotations are persisted in the Google Sheets `Quotations` worksheet.
+- Saved quotations are persisted in the Google Sheets `Quotations` worksheet and filtered by `owner_user_id`.
 - New quotation dates use the `Asia/Kolkata` business calendar.
 - Totals are calculated in the browser from line items and GST settings.
 - Preview rendering and direct PDF generation happen client-side.
@@ -247,7 +255,7 @@ go test ./...
 ## Known Constraints
 
 - Authentication depends on Google Sheets availability.
-- Credentials in the sheet are compared as plain text.
+- Google Sheets remains a lightweight datastore; use a database when concurrency or volume grows.
 - There is no database or server-side quotation history.
 - The app currently focuses on authentication and quotation generation only.
 

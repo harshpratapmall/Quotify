@@ -27,11 +27,9 @@ import './App.css';
 
 function App() {
   const { pathname, navigate } = useAppRouter();
-  const [draftState] = useState(() => createDraftState(
-    loadQuotationDraft(),
-    pathname === APP_ROUTES.quotationNew
-  ));
+  const [draftState] = useState(() => createDraftState(null, pathname === APP_ROUTES.quotationNew));
   const [authStatus, setAuthStatus] = useState('checking');
+  const [currentUser, setCurrentUser] = useState(null);
   const [authExpiresAt, setAuthExpiresAt] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -181,6 +179,7 @@ function App() {
           return;
         }
 
+        setCurrentUser(data?.user ?? null);
         setAuthExpiresAt(data?.expiresAt ?? null);
         setAuthStatus('authenticated');
       })
@@ -195,10 +194,18 @@ function App() {
       return;
     }
 
+    const nextState = createDraftState(loadQuotationDraft(currentUser.id), pathname === APP_ROUTES.quotationNew);
+    setQuotation(nextState.quotation);
+    setItems(nextState.items);
+    setIncludeGst(nextState.includeGst);
+    setGstRate(nextState.gstRate);
+    setActiveQuotationId(nextState.activeQuotationId);
+    setPreviewOnly(false);
+    setSaveStatus('');
     listQuotations()
       .then((quotes) => setSavedQuotations(quotes))
       .catch(() => setSavedQuotations([]));
-  }, [authStatus]);
+  }, [authStatus, currentUser]);
 
   useEffect(() => {
     if (authStatus !== 'checking') {
@@ -207,14 +214,17 @@ function App() {
   }, [authStatus, pathname]);
 
   useEffect(() => {
-    saveQuotationDraft({
+    if (!currentUser?.id) {
+      return;
+    }
+    saveQuotationDraft(currentUser.id, {
       quotation,
       items,
       includeGst,
       gstRate,
       activeQuotationId,
     });
-  }, [quotation, items, includeGst, gstRate, activeQuotationId]);
+  }, [currentUser, quotation, items, includeGst, gstRate, activeQuotationId]);
 
   useEffect(() => {
     if (pathname !== APP_ROUTES.quotationPreview) {
@@ -285,6 +295,7 @@ function App() {
         return;
       }
 
+      setCurrentUser(data?.user ?? null);
       setAuthExpiresAt(data?.expiresAt ?? null);
       setAuthStatus('authenticated');
       trackAction(ANALYTICS_EVENTS.loginSucceeded);
@@ -300,6 +311,9 @@ function App() {
   const logout = async () => {
     trackAction(ANALYTICS_EVENTS.logoutRequested);
     await logoutRequest();
+    clearQuotation();
+    setCurrentUser(null);
+    setSavedQuotations([]);
     setAuthExpiresAt(null);
     setAuthStatus('unauthenticated');
     navigate(APP_ROUTES.login, true);
@@ -354,6 +368,7 @@ function App() {
     <>
       <Dashboard
         companyLogo={companyLogo}
+        user={currentUser}
         navigate={navigate}
         logout={logout}
         startNewQuotation={startNewQuotation}

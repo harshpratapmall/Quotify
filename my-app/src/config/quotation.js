@@ -1,5 +1,7 @@
 export const lineItemTemplate = { description: '', quantity: '1', rate: '' };
 export const quotationDraftKey = 'quotify_active_quotation';
+
+export const getQuotationDraftKey = (userId) => `${quotationDraftKey}_${userId}`;
 export const defaultGstRate = '18';
 export const businessTimeZone = 'Asia/Kolkata';
 

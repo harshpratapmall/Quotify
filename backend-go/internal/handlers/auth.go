@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
@@ -35,23 +35,23 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	valid, err := sheets.ValidateCredentials(c.Request.Context(), request.Username, request.Password)
+	user, err := sheets.Authenticate(c.Request.Context(), request.Username, request.Password)
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Login service is temporarily unavailable. Please try again.", "code": "login_dependency_unavailable"})
 		return
 	}
-	if !valid {
+	if user.ID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect username or password."})
 		return
 	}
 
-	token, expiresAt, err := createToken(request.Username)
+	token, expiresAt, err := createToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to start a session."})
 		return
 	}
 	setSessionCookie(c, token, int(sessionDuration.Seconds()))
-	c.JSON(http.StatusOK, gin.H{"username": request.Username, "expiresAt": expiresAt})
+	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
 }
 
 func Health(c *gin.Context) {
@@ -69,12 +69,12 @@ func Me(c *gin.Context) {
 		return
 	}
 
-	username, expiresAt, valid := readToken(cookie)
+	user, expiresAt, valid := readToken(cookie)
 	if !valid {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"username": username, "expiresAt": expiresAt})
+	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
 }
 
 func Logout(c *gin.Context) {
@@ -94,9 +94,16 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 	c.SetCookie(sessionCookieName, value, maxAge, "/", "", secure, true)
 }
 
-func createToken(username string) (string, int64, error) {
+func createToken(user sheets.User) (string, int64, error) {
 	expiresAt := time.Now().Add(sessionDuration).Unix()
-	payload := fmt.Sprintf("%s|%d", username, expiresAt)
+	payloadBytes, err := json.Marshal(struct {
+		User      sheets.User `json:"user"`
+		ExpiresAt int64       `json:"expiresAt"`
+	}{User: user, ExpiresAt: expiresAt})
+	if err != nil {
+		return "", 0, err
+	}
+	payload := string(payloadBytes)
 	encodedPayload := base64.RawURLEncoding.EncodeToString([]byte(payload))
 	mac := hmac.New(sha256.New, sessionSecret())
 	if _, err := mac.Write([]byte(encodedPayload)); err != nil {
@@ -105,31 +112,33 @@ func createToken(username string) (string, int64, error) {
 	return encodedPayload + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), expiresAt, nil
 }
 
-func readToken(token string) (string, int64, bool) {
+func readToken(token string) (sheets.User, int64, bool) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 2 {
-		return "", 0, false
+		return sheets.User{}, 0, false
 	}
 	mac := hmac.New(sha256.New, sessionSecret())
 	_, _ = mac.Write([]byte(parts[0]))
 	expectedSignature := mac.Sum(nil)
 	providedSignature, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil || subtle.ConstantTimeCompare(expectedSignature, providedSignature) != 1 {
-		return "", 0, false
+		return sheets.User{}, 0, false
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
-		return "", 0, false
+		return sheets.User{}, 0, false
 	}
-	values := strings.Split(string(payload), "|")
-	if len(values) != 2 || values[0] == "" {
-		return "", 0, false
+	var claims struct {
+		User      sheets.User `json:"user"`
+		ExpiresAt int64       `json:"expiresAt"`
 	}
-	expiresAt, err := strconv.ParseInt(values[1], 10, 64)
-	if err != nil || time.Now().Unix() > expiresAt {
-		return "", 0, false
+	if err := json.Unmarshal(payload, &claims); err != nil || claims.User.ID == "" {
+		return sheets.User{}, 0, false
 	}
-	return values[0], expiresAt, true
+	if time.Now().Unix() > claims.ExpiresAt {
+		return sheets.User{}, 0, false
+	}
+	return claims.User, claims.ExpiresAt, true
 }
 
 func sessionSecret() []byte {
