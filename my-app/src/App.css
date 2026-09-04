@@ -200,6 +200,13 @@ textarea {
   color: #8290a3;
   font-weight: 400;
   opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.login-card input:focus::placeholder,
+.quotation-form input:focus::placeholder,
+.quotation-form textarea:focus::placeholder {
+  opacity: 0;
 }
 
 .login-card input:focus {

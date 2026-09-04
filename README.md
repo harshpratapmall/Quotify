@@ -223,6 +223,7 @@ The backend stores one quotation per row. `items_json` contains the complete edi
 
 - The active quotation draft lives in browser session storage.
 - Saved quotations are persisted in the Google Sheets `Quotations` worksheet.
+- New quotation dates use the `Asia/Kolkata` business calendar.
 - Totals are calculated in the browser from line items and GST settings.
 - Preview rendering and direct PDF generation happen client-side.
 

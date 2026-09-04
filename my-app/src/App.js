@@ -26,7 +26,10 @@ import './App.css';
 
 function App() {
   const { pathname, navigate } = useAppRouter();
-  const [draftState] = useState(() => createDraftState(loadQuotationDraft()));
+  const [draftState] = useState(() => createDraftState(
+    loadQuotationDraft(),
+    pathname === APP_ROUTES.quotationNew
+  ));
   const [authStatus, setAuthStatus] = useState('checking');
   const [authExpiresAt, setAuthExpiresAt] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -84,6 +87,11 @@ function App() {
     setSaveStatus('');
     setPreviewOnly(false);
   }, []);
+
+  const startNewQuotation = useCallback(() => {
+    clearQuotation();
+    navigate(APP_ROUTES.quotationNew);
+  }, [clearQuotation, navigate]);
 
   const saveQuotation = useCallback(async () => {
     const validationError = quotationValidationError();
@@ -322,7 +330,7 @@ function App() {
         companyLogo={companyLogo}
         navigate={navigate}
         logout={logout}
-        clearQuotation={clearQuotation}
+        startNewQuotation={startNewQuotation}
         openSavedQuotation={openSavedQuotation}
         deleteSavedQuotation={deleteSavedQuotation}
         savedQuotations={savedQuotations}

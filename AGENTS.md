@@ -107,6 +107,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 - `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
 - The app uses a cookie named `quotify_session`.
 - Session tokens are HMAC-signed and expire after 10 minutes.
+- New quotation dates are derived in the `Asia/Kolkata` business timezone at workspace creation.
 - The active quotation draft is stored in browser session storage.
 - Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
 - PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.

@@ -21,15 +21,20 @@ function QuotationPreviewModal({
     return null;
   }
 
+  const closePreview = () => navigate(
+    previewOnly ? APP_ROUTES.home : APP_ROUTES.quotationNew,
+    true
+  );
+
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={() => navigate(APP_ROUTES.quotationNew, true)}>
+    <div className="modal-backdrop" role="presentation" onMouseDown={closePreview}>
       <section className="quotation-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-preview-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-actions">
           <div>
             <p className="eyebrow">Ready to share</p>
             <h2 id="quotation-preview-title">Quotation Preview</h2>
           </div>
-          <button type="button" className="close-button" aria-label="Close quotation preview" onClick={() => navigate(previewOnly ? APP_ROUTES.home : APP_ROUTES.quotationNew, true)}>x</button>
+          <button type="button" className="close-button" aria-label="Close quotation preview" onClick={closePreview}>x</button>
         </div>
         <article className="quotation-document">
           <div className="document-header">

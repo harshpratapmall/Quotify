@@ -1,6 +1,7 @@
 import {
   createEmptyQuotation,
   defaultGstRate,
+  getTodayDate,
   lineItemTemplate,
   quotationDraftKey,
 } from '../config/quotation';
@@ -30,10 +31,17 @@ export const saveQuotationDraft = (draft) => {
   window.sessionStorage.setItem(quotationDraftKey, JSON.stringify(draft));
 };
 
-export const createDraftState = (draft) => ({
-  items: draft?.items || [{ ...lineItemTemplate }],
-  includeGst: draft?.includeGst ?? true,
-  gstRate: draft?.gstRate ?? defaultGstRate,
-  quotation: draft?.quotation || createEmptyQuotation(),
-  activeQuotationId: draft?.activeQuotationId || null,
-});
+export const createDraftState = (draft, resetNewQuotationDate = false) => {
+  const activeQuotationId = draft?.activeQuotationId || null;
+  const quotation = draft?.quotation || createEmptyQuotation();
+
+  return {
+    items: draft?.items || [{ ...lineItemTemplate }],
+    includeGst: draft?.includeGst ?? true,
+    gstRate: draft?.gstRate ?? defaultGstRate,
+    quotation: resetNewQuotationDate && !activeQuotationId
+      ? { ...quotation, quoteDate: getTodayDate() }
+      : quotation,
+    activeQuotationId,
+  };
+};
