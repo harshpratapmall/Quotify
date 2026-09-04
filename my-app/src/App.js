@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import companyLogo from './assets/d2d-experts-logo.webp';
 import Dashboard from './components/Dashboard';
 import AdminUsers from './components/AdminUsers';
+import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
 import QuotationWorkspaceModal from './components/QuotationWorkspaceModal';
@@ -16,6 +16,7 @@ import {
   saveQuotationRequest,
 } from './services/quotations';
 import { downloadQuotationPdf } from './utils/pdf';
+import { fetchBusinessProfile, saveBusinessProfile, uploadBusinessLogo } from './services/businessProfile';
 import {
   buildQuotationPayload,
   calculateQuotationTotals,
@@ -45,6 +46,7 @@ function App() {
   const [activeQuotationId, setActiveQuotationId] = useState(draftState.activeQuotationId);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
+  const [businessProfile, setBusinessProfile] = useState({});
   const authenticatedHome = isAdminUser(currentUser) ? APP_ROUTES.adminUsers : APP_ROUTES.home;
 
   const { subtotal, gstPercentage, tax, total } = useMemo(
@@ -210,6 +212,7 @@ function App() {
     listQuotations()
       .then((quotes) => setSavedQuotations(quotes))
       .catch(() => setSavedQuotations([]));
+    fetchBusinessProfile().then(({ response, data }) => response.ok && setBusinessProfile(data || {}));
   }, [authStatus, currentUser]);
 
   useEffect(() => {
@@ -360,7 +363,8 @@ function App() {
       tax,
       total,
       activeQuotationId,
-      logoSource: companyLogo,
+      logoSource: businessProfile.logoUrl,
+      businessProfile,
     });
     trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source });
   };
@@ -376,11 +380,12 @@ function App() {
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
+  if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} uploadLogo={async (file) => { const { response, data } = await uploadBusinessLogo(file); return response.ok ? data : null; }} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 
   return (
     <>
       <Dashboard
-        companyLogo={companyLogo}
+        profile={businessProfile}
         user={currentUser}
         navigate={navigate}
         logout={logout}
@@ -428,6 +433,7 @@ function App() {
         saveQuotation={saveQuotation}
         downloadPdf={handleDownloadPdf}
         navigate={navigate}
+        businessProfile={businessProfile}
       />
     </>
   );

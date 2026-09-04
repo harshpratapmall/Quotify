@@ -21,6 +21,8 @@ func SetupRouter() *gin.Engine {
 		v1.POST("/auth/login", handlers.Login)
 		v1.POST("/auth/logout", handlers.Logout)
 		v1.GET("/auth/me", handlers.Me)
+		v1.GET("/business-profile", handlers.BusinessProfile)
+		v1.PUT("/business-profile", handlers.SaveBusinessProfile)
 		v1.GET("/quotations", handlers.ListQuotations)
 		v1.POST("/quotations", handlers.CreateQuotation)
 		v1.GET("/quotations/:id", handlers.GetQuotation)

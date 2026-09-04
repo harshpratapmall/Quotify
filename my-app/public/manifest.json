@@ -1,11 +1,11 @@
 {
-  "short_name": "Door2Door",
-  "name": "Door2Door Experts Quotations",
+  "short_name": "Quotify",
+  "name": "Quotify Quotations",
   "icons": [
     {
-      "src": "door2door-mark.png",
-      "type": "image/png",
-      "sizes": "1254x1254"
+      "src": "quotify-mark.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
     }
   ],
   "start_url": ".",

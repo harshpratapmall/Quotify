@@ -13,8 +13,8 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-test('renders the Door2Door login screen', async () => {
+test('renders the Quotify login screen', async () => {
   render(<App />);
-  expect(await screen.findByAltText(/Door2Door Experts/i)).toBeInTheDocument();
+  expect(await screen.findByAltText(/Quotify/i)).toBeInTheDocument();
   expect(await screen.findByRole('button', { name: /sign in/i })).toBeInTheDocument();
 });

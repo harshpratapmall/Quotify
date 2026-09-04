@@ -68,8 +68,9 @@ export const downloadQuotationPdf = async ({
   total,
   activeQuotationId,
   logoSource,
+  businessProfile = {},
 }) => {
-  const logo = await loadLogoForPdf(logoSource);
+  const logo = await loadLogoForPdf(logoSource || '/quotify-mark.svg');
   const printableItems = getPrintableItems(items);
   const itemsPerPage = printableItems.length > 9 ? 14 : 9;
   const rowHeight = printableItems.length > 9 ? 24 : 31;
@@ -104,7 +105,7 @@ export const downloadQuotationPdf = async ({
 
   const today = getTodayDate();
   const quoteSuffix = activeQuotationId ? activeQuotationId.slice(-6).toUpperCase() : 'DRAFT';
-  const quoteNumber = `D2D-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
+  const quoteNumber = `${businessProfile.quotePrefix || 'QUOTE'}-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
   const hasScope = quotation.scopeOfWork.trim().length > 0;
 
   rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
@@ -190,9 +191,8 @@ export const downloadQuotationPdf = async ({
   }
 
   line(48, 78, 547, 78, [0.72, 0.58, 0.35]);
-  text('Call Us: 8739033003, 7007690998  |  Email: help@door2doorexperts.com', 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
-  text('Near Millennium City Rapti Nagar Phase -4 Chargawa, 273013', 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
-  text('Gorakhpur, Uttar Pradesh', 58, 40, 7, 'F1', [0.37, 0.44, 0.53]);
+  text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
+  text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
   text(`Page 1 of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
 
   const pageContents = [commands.join('\n')];
@@ -251,9 +251,8 @@ export const downloadQuotationPdf = async ({
     }
 
     line(48, 78, 547, 78, [0.72, 0.58, 0.35]);
-    text('Call Us: 8739033003, 7007690998  |  Email: help@door2doorexperts.com', 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
-    text('Near Millennium City Rapti Nagar Phase -4 Chargawa, 273013', 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
-    text('Gorakhpur, Uttar Pradesh', 58, 40, 7, 'F1', [0.37, 0.44, 0.53]);
+    text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
+    text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
     text(`Page ${pageIndex + 2} of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
     pageContents.push(commands.join('\n'));
   });
@@ -307,7 +306,7 @@ export const downloadQuotationPdf = async ({
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Door2Door-Quotation-${quotation.clientName || 'Draft'}.pdf`;
+  link.download = `${businessProfile.quotePrefix || 'Quotation'}-${quotation.clientName || 'Draft'}.pdf`;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 100);
 };

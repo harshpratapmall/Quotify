@@ -4,4 +4,5 @@ export const APP_ROUTES = {
   quotationNew: '/quotation/new',
   quotationPreview: '/quotation/preview',
   adminUsers: '/admin/users',
+  businessProfile: '/business-profile',
 };

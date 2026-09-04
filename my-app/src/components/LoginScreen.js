@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import companyLogo from '../assets/d2d-experts-logo.webp';
+import quotifyLogo from '../assets/quotify-logo.svg';
 
 function LoginScreen({ onLogin, isLoggingIn, error }) {
   const [username, setUsername] = useState('');
@@ -14,12 +14,12 @@ function LoginScreen({ onLogin, isLoggingIn, error }) {
     <main className="login-page">
       <section className="login-showcase">
         <div className="login-brand">
-          <img className="company-logo login-logo" src={companyLogo} alt="Door2Door Experts" />
+          <img className="company-logo login-logo" src={quotifyLogo} alt="Quotify" />
         </div>
         <div className="login-copy">
           <p className="eyebrow">Welcome back</p>
-          <h2>Every beautiful space starts with a confident proposal.</h2>
-          <p>Sign in to build tailored estimates, review project pricing, and create client-ready quotations.</p>
+          <h2>Professional quotations, made for your business.</h2>
+          <p>Build, save, and share clear client-ready quotations from one secure workspace.</p>
         </div>
         <div className="login-swatches" aria-hidden="true"><span /><span /><span /></div>
       </section>
@@ -28,7 +28,7 @@ function LoginScreen({ onLogin, isLoggingIn, error }) {
         <form className="login-card" onSubmit={submitLogin}>
           <p className="eyebrow">Secure access</p>
           <h2>Sign in to your workspace</h2>
-          <p className="login-help">Use the account shared with you by Door2Door Interiors.</p>
+          <p className="login-help">Use the Quotify account shared with you by your administrator.</p>
           <label>
             Username
             <input type="text" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Enter your username" required />

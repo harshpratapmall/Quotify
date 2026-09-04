@@ -1,7 +1,8 @@
 import ActionIcon from './ActionIcon';
+import quotifyLogo from '../assets/quotify-logo.svg';
 
 function Dashboard({
-  companyLogo,
+  profile,
   user,
   navigate,
   logout,
@@ -14,8 +15,9 @@ function Dashboard({
   return (
     <div className="app-shell">
       <header className="topbar">
-        <img className="company-logo header-logo" src={companyLogo} alt="Door2Door Experts" />
+        <img className="company-logo header-logo" src={quotifyLogo} alt="Quotify" />
         <span>{user?.displayName || user?.username}</span>
+        <button type="button" className="secondary-action" onClick={() => navigate('/business-profile')}>Business profile</button>
         {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
         <button
           type="button"
@@ -30,12 +32,11 @@ function Dashboard({
       <main className="page-content">
         <section className="hero-card">
           <div className="hero-copy">
-            <p className="eyebrow">Elegant proposals for inspired spaces</p>
-            <h2>Design quotations that feel as premium as your interiors.</h2>
+            <p className="eyebrow">Your business, professionally presented</p>
+            <h2>Create quotations your clients can trust.</h2>
             <p className="hero-text">
-              Build client-ready estimates for modular kitchens, wardrobes,
-              living spaces, and complete home transformations from one clean
-              screen.
+              Add your details once, then create polished quotations with your own
+              logo, contact information, and terms.
             </p>
             <div className="hero-actions">
               <button
@@ -51,10 +52,10 @@ function Dashboard({
           <div className="hero-panel">
             <div className="proposal-panel">
               <p className="eyebrow">Proposal workflow</p>
-              <h3>From room brief to a client-ready estimate.</h3>
+              <h3>From client brief to a client-ready estimate.</h3>
               <div className="proposal-steps">
                 <div><span>01</span><p>Capture the project brief and site details.</p></div>
-                <div><span>02</span><p>Build a clear, itemized interior estimate.</p></div>
+                <div><span>02</span><p>Build a clear, itemized estimate.</p></div>
                 <div><span>03</span><p>Share a polished quotation with confidence.</p></div>
               </div>
             </div>
