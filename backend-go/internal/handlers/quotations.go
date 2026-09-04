@@ -123,12 +123,16 @@ func DeleteQuotation(c *gin.Context) {
 }
 
 func bindQuotation(c *gin.Context) (sheets.Quotation, bool) {
+	return bindDocument(c, "Quotation")
+}
+
+func bindDocument(c *gin.Context, documentName string) (sheets.Quotation, bool) {
 	var quote sheets.Quotation
 	if err := c.ShouldBindJSON(&quote); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quotation."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid " + strings.ToLower(documentName) + "."})
 		return sheets.Quotation{}, false
 	}
-	if err := validateQuotation(quote); err != "" {
+	if err := validateDocument(quote, documentName); err != "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return sheets.Quotation{}, false
 	}
@@ -136,6 +140,10 @@ func bindQuotation(c *gin.Context) (sheets.Quotation, bool) {
 }
 
 func validateQuotation(quote sheets.Quotation) string {
+	return validateDocument(quote, "Quotation")
+}
+
+func validateDocument(quote sheets.Quotation, documentName string) string {
 	if strings.TrimSpace(quote.Client) == "" {
 		return "Client name is required."
 	}
@@ -146,10 +154,10 @@ func validateQuotation(quote sheets.Quotation) string {
 		return "Site location is required."
 	}
 	if math.IsNaN(quote.Subtotal) || math.IsInf(quote.Subtotal, 0) || quote.Subtotal <= 0 {
-		return "Quotation subtotal must be greater than zero."
+		return documentName + " subtotal must be greater than zero."
 	}
 	if math.IsNaN(quote.Total) || math.IsInf(quote.Total, 0) || quote.Total <= 0 {
-		return "Quotation total must be greater than zero."
+		return documentName + " total must be greater than zero."
 	}
 	var payload struct {
 		Items []struct {
@@ -159,7 +167,7 @@ func validateQuotation(quote sheets.Quotation) string {
 		} `json:"items"`
 	}
 	if err := json.Unmarshal(quote.Payload, &payload); err != nil {
-		return "Quotation items are invalid."
+		return documentName + " items are invalid."
 	}
 	for _, item := range payload.Items {
 		if strings.TrimSpace(item.Description) != "" && positiveNumber(item.Quantity) && positiveNumber(item.Rate) {

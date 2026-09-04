@@ -1,6 +1,6 @@
-# backend-go
+# Quotify API
 
-Starter Gin API service for the Quotify project.
+Go 1.22/Gin service for authentication and saved quotations. End-to-end setup, Google Sheets schema, deployment, and shared contracts are in the root `README.md`; agent routing notes are in `AGENTS.md`.
 
 ## Run
 
@@ -9,54 +9,35 @@ go mod tidy
 go run ./cmd/server
 ```
 
-The server starts on `http://localhost:8000` by default.
+The default address is `http://localhost:8000`.
 
-## Login configuration
+## Required Configuration
 
-The login endpoint reads the `Users` sheet as stable user IDs, usernames, and
-bcrypt password hashes. Keep service-account credentials outside source control
-and configure the server before running it:
-
-```bash
-GOOGLE_SHEET_ID=your-spreadsheet-id
+```env
+GOOGLE_SHEET_ID=your-google-spreadsheet-id
 GOOGLE_SHEET_RANGE=Users!A:G
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=use-a-long-random-value
+COOKIE_SECURE=false
+CORS_ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-See `.env.example` for the complete configuration. `GOOGLE_SHEET_ID` is the
-long value between `/d/` and `/edit` in the Google Sheets URL; `Users` is the
-worksheet tab name, not the spreadsheet ID. Copy the template to `.env` for
-local development; the server loads it automatically.
+Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path when appropriate. Share the spreadsheet with the service account as an Editor. User records are read from `Users!A2:H`: bcrypt hashes are in column C and the legacy plaintext fallback is in column H. Quotation CRUD writes to `Quotations`; business profiles write to `BusinessProfiles`.
 
-The optional `password` column may be kept in the `Users` sheet for
-administrative reference and as a compatibility fallback when the bcrypt hash
-does not match. Both password columns are highly sensitive.
+## Endpoints
 
-`GOOGLE_SERVICE_ACCOUNT_JSON` can be used instead of the file path for hosted
-environments. Share the spreadsheet with the service account's `client_email`
-as a Viewer. For production, use HTTPS and set `COOKIE_SECURE=true`.
-
-Endpoints:
-
+- `GET /api/v1/ping`
 - `GET /api/v1/auth/health`
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
 - `POST /api/v1/auth/logout`
-- `GET /api/v1/admin/users` (administrator only)
-- `POST /api/v1/admin/users` (administrator only)
+- `GET|PUT /api/v1/business-profile`
+- `GET|POST /api/v1/quotations`
+- `GET|PUT|DELETE /api/v1/quotations/:id`
+- `GET|POST /api/v1/bills`
+- `GET|PUT|DELETE /api/v1/bills/:id`
+- `GET|POST /api/v1/admin/users` (administrator only)
 - `PATCH /api/v1/admin/users/:id/status` (administrator only)
 - `POST /api/v1/admin/users/:id/reset-password` (administrator only)
 
-## Starter endpoint
-
-`GET /api/v1/ping`
-
-Example response:
-
-```json
-{
-  "message": "pong",
-  "status": "ok"
-}
-```
+Quotation access is restricted to the owner encoded in the signed session cookie. Run `go test ./...` before backend changes.

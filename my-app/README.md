@@ -1,6 +1,6 @@
 # Frontend
 
-This folder contains the Quotify React frontend used to log in, create quotations, preview them, and export PDFs.
+This folder contains the Quotify React frontend used to log in, create quotations and bills, preview them, and export PDFs.
 
 ## Run
 
@@ -30,7 +30,8 @@ If `REACT_APP_ENV` is omitted, the app falls back to hostname-based environment 
 - Browser preview
 - Print export
 - Direct PDF generation in the browser
-- Admin-only user management with user search
+- Business profile editing and Vercel Blob logo uploads
+- Separate quotation and bill libraries with shared line-item pricing workflows
 
 ## Important Files
 
@@ -38,6 +39,11 @@ If `REACT_APP_ENV` is omitted, the app falls back to hostname-based environment 
 - `src/config/api.js`
 - `src/App.css`
 - `src/App.test.js`
+- `api/blob-upload.js`: authenticated Vercel Blob upload authorization
+
+## Logo Uploads
+
+Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to confirm the signed session before an upload is authorized.
 
 ## Scripts
 

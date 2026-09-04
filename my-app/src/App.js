@@ -5,16 +5,17 @@ import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
 import QuotationWorkspaceModal from './components/QuotationWorkspaceModal';
+import DocumentLibraryModal from './components/DocumentLibraryModal';
 import { createEmptyQuotation, defaultGstRate, lineItemTemplate } from './config/quotation';
 import { APP_ROUTES } from './config/routes';
 import { useAppRouter } from './hooks/useAppRouter';
 import { fetchSession, loginRequest, logoutRequest } from './services/auth';
 import {
-  deleteQuotationRequest,
-  fetchQuotationById,
-  listQuotations,
-  saveQuotationRequest,
-} from './services/quotations';
+  deleteDocumentRequest,
+  fetchDocumentById,
+  listDocuments,
+  saveDocumentRequest,
+} from './services/documents';
 import { downloadQuotationPdf } from './utils/pdf';
 import { fetchBusinessProfile, saveBusinessProfile } from './services/businessProfile';
 import {
@@ -25,6 +26,7 @@ import {
 } from './utils/quotation';
 import { createDraftState, loadQuotationDraft, saveQuotationDraft } from './utils/storage';
 import { ANALYTICS_EVENTS, trackAction, trackRoute } from './utils/analytics';
+import { DOCUMENT_TYPES, documentCopy } from './config/documents';
 import './App.css';
 
 const isAdminUser = (user) => user?.role?.toLowerCase() === 'admin';
@@ -32,7 +34,7 @@ const isAdminUser = (user) => user?.role?.toLowerCase() === 'admin';
 function App() {
   const { pathname, navigate } = useAppRouter();
   const initialPathname = useRef(pathname);
-  const [draftState] = useState(() => createDraftState(null, pathname === APP_ROUTES.quotationNew));
+  const [draftState] = useState(() => createDraftState(null, pathname === APP_ROUTES.quotationNew || pathname === APP_ROUTES.billNew));
   const [authStatus, setAuthStatus] = useState('checking');
   const [currentUser, setCurrentUser] = useState(null);
   const [authExpiresAt, setAuthExpiresAt] = useState(null);
@@ -42,12 +44,14 @@ function App() {
   const [includeGst, setIncludeGst] = useState(draftState.includeGst);
   const [gstRate, setGstRate] = useState(draftState.gstRate);
   const [quotation, setQuotation] = useState(draftState.quotation);
-  const [savedQuotations, setSavedQuotations] = useState([]);
+  const [savedDocuments, setSavedDocuments] = useState({ quotation: [], bill: [] });
   const [activeQuotationId, setActiveQuotationId] = useState(draftState.activeQuotationId);
+  const [documentType, setDocumentType] = useState(pathname === APP_ROUTES.billNew ? DOCUMENT_TYPES.bill : DOCUMENT_TYPES.quotation);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
   const [businessProfile, setBusinessProfile] = useState({});
   const authenticatedHome = isAdminUser(currentUser) ? APP_ROUTES.adminUsers : APP_ROUTES.home;
+  const document = documentCopy(documentType);
 
   const { subtotal, gstPercentage, tax, total } = useMemo(
     () => calculateQuotationTotals(items, includeGst, gstRate),
@@ -94,10 +98,11 @@ function App() {
     setPreviewOnly(false);
   }, []);
 
-  const startNewQuotation = useCallback((source) => {
-    trackAction(ANALYTICS_EVENTS.quotationStarted, { source });
+  const startNewDocument = useCallback((type, source) => {
+    setDocumentType(type);
+    trackAction(ANALYTICS_EVENTS.quotationStarted, { source, documentType: type });
     clearQuotation();
-    navigate(APP_ROUTES.quotationNew);
+    navigate(type === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew);
   }, [clearQuotation, navigate]);
 
   const saveQuotation = useCallback(async (source) => {
@@ -120,13 +125,16 @@ function App() {
         tax,
         total,
       });
-      const { response, data } = await saveQuotationRequest(activeQuotationId, payload);
+      const { response, data } = await saveDocumentRequest(documentType, activeQuotationId, payload);
       if (!response.ok) {
-        throw new Error(data?.error || 'Unable to save quotation.');
+        throw new Error(data?.error || `Unable to save ${document.singular.toLowerCase()}.`);
       }
 
       setActiveQuotationId(data.id);
-      setSavedQuotations((current) => [data, ...current.filter((entry) => entry.id !== data.id)]);
+      setSavedDocuments((current) => ({
+        ...current,
+        [documentType]: [data, ...current[documentType].filter((entry) => entry.id !== data.id)],
+      }));
       setSaveStatus('Saved');
       trackAction(ANALYTICS_EVENTS.quotationSaveSucceeded, {
         source,
@@ -138,10 +146,10 @@ function App() {
       trackAction(ANALYTICS_EVENTS.quotationSaveFailed, { source, reason: 'request' });
       return false;
     }
-  }, [activeQuotationId, gstRate, includeGst, items, quotation, quotationValidationError, subtotal, tax, total]);
+  }, [activeQuotationId, document.singular, documentType, gstRate, includeGst, items, quotation, quotationValidationError, subtotal, tax, total]);
 
-  const openSavedQuotation = useCallback(async (id, preview = false) => {
-    const saved = await fetchQuotationById(id);
+  const openSavedDocument = useCallback(async (type, id, preview = false) => {
+    const saved = await fetchDocumentById(type, id);
     if (!saved) {
       return;
     }
@@ -152,30 +160,32 @@ function App() {
     setIncludeGst(nextState.includeGst);
     setGstRate(nextState.gstRate);
     setActiveQuotationId(saved.id);
+    setDocumentType(type);
     setSaveStatus('');
     setPreviewOnly(preview);
-    trackAction(ANALYTICS_EVENTS.quotationOpened, { mode: preview ? 'preview' : 'edit' });
-    navigate(preview ? APP_ROUTES.quotationPreview : APP_ROUTES.quotationNew);
+    trackAction(ANALYTICS_EVENTS.quotationOpened, { mode: preview ? 'preview' : 'edit', documentType: type });
+    navigate(preview ? (type === DOCUMENT_TYPES.bill ? APP_ROUTES.billPreview : APP_ROUTES.quotationPreview) : (type === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew));
   }, [navigate]);
 
-  const deleteSavedQuotation = useCallback(async (id) => {
-    trackAction(ANALYTICS_EVENTS.quotationDeleteRequested);
-    if (!window.confirm('Delete this saved quotation?')) {
+  const deleteSavedDocument = useCallback(async (type, id) => {
+    const copy = documentCopy(type);
+    trackAction(ANALYTICS_EVENTS.quotationDeleteRequested, { documentType: type });
+    if (!window.confirm(`Delete this saved ${copy.singular.toLowerCase()}?`)) {
       return;
     }
 
-    const response = await deleteQuotationRequest(id);
+    const response = await deleteDocumentRequest(type, id);
     if (response.ok) {
-      setSavedQuotations((current) => current.filter((entry) => entry.id !== id));
-      if (activeQuotationId === id) {
+      setSavedDocuments((current) => ({ ...current, [type]: current[type].filter((entry) => entry.id !== id) }));
+      if (activeQuotationId === id && documentType === type) {
         clearQuotation();
       }
-      setSaveStatus('Quotation deleted');
-      trackAction(ANALYTICS_EVENTS.quotationDeleted);
+      setSaveStatus(`${copy.singular} deleted`);
+      trackAction(ANALYTICS_EVENTS.quotationDeleted, { documentType: type });
     } else {
-      setSaveStatus('Unable to delete quotation. Please try again.');
+      setSaveStatus(`Unable to delete ${copy.singular.toLowerCase()}. Please try again.`);
     }
-  }, [activeQuotationId, clearQuotation]);
+  }, [activeQuotationId, clearQuotation, documentType]);
 
   useEffect(() => {
     fetchSession()
@@ -201,17 +211,19 @@ function App() {
       return;
     }
 
-    const nextState = createDraftState(loadQuotationDraft(currentUser.id), initialPathname.current === APP_ROUTES.quotationNew);
+    const initialType = initialPathname.current === APP_ROUTES.billNew ? DOCUMENT_TYPES.bill : DOCUMENT_TYPES.quotation;
+    const nextState = createDraftState(loadQuotationDraft(currentUser.id, initialType), initialPathname.current === APP_ROUTES.quotationNew || initialPathname.current === APP_ROUTES.billNew);
     setQuotation(nextState.quotation);
     setItems(nextState.items);
     setIncludeGst(nextState.includeGst);
     setGstRate(nextState.gstRate);
     setActiveQuotationId(nextState.activeQuotationId);
+    setDocumentType(initialType);
     setPreviewOnly(false);
     setSaveStatus('');
-    listQuotations()
-      .then((quotes) => setSavedQuotations(quotes))
-      .catch(() => setSavedQuotations([]));
+    Promise.all([listDocuments(DOCUMENT_TYPES.quotation), listDocuments(DOCUMENT_TYPES.bill)])
+      .then(([quotations, bills]) => setSavedDocuments({ quotation: quotations, bill: bills }))
+      .catch(() => setSavedDocuments({ quotation: [], bill: [] }));
     fetchBusinessProfile().then(({ response, data }) => response.ok && setBusinessProfile(data || {}));
   }, [authStatus, currentUser]);
 
@@ -231,11 +243,11 @@ function App() {
       includeGst,
       gstRate,
       activeQuotationId,
-    });
-  }, [currentUser, quotation, items, includeGst, gstRate, activeQuotationId]);
+    }, documentType);
+  }, [currentUser, quotation, items, includeGst, gstRate, activeQuotationId, documentType]);
 
   useEffect(() => {
-    if (pathname !== APP_ROUTES.quotationPreview) {
+    if (pathname !== APP_ROUTES.quotationPreview && pathname !== APP_ROUTES.billPreview) {
       return;
     }
 
@@ -246,7 +258,7 @@ function App() {
 
     setSaveStatus(validationError);
     setPreviewOnly(false);
-    navigate(APP_ROUTES.quotationNew, true);
+    navigate(pathname === APP_ROUTES.billPreview ? APP_ROUTES.billNew : APP_ROUTES.quotationNew, true);
   }, [navigate, pathname, quotationValidationError]);
 
   useEffect(() => {
@@ -325,7 +337,7 @@ function App() {
     await logoutRequest();
     clearQuotation();
     setCurrentUser(null);
-    setSavedQuotations([]);
+    setSavedDocuments({ quotation: [], bill: [] });
     setAuthExpiresAt(null);
     setAuthStatus('unauthenticated');
     navigate(APP_ROUTES.login, true);
@@ -336,13 +348,13 @@ function App() {
     const validationError = quotationValidationError();
     if (validationError) {
       setSaveStatus(validationError);
-      trackAction(ANALYTICS_EVENTS.quotationPreviewFailed, { reason: 'validation' });
+      trackAction(ANALYTICS_EVENTS.quotationPreviewFailed, { reason: 'validation', documentType });
       return;
     }
 
-    trackAction(ANALYTICS_EVENTS.quotationPreviewed);
+    trackAction(ANALYTICS_EVENTS.quotationPreviewed, { documentType });
     setPreviewOnly(false);
-    navigate(APP_ROUTES.quotationPreview);
+    navigate(documentType === DOCUMENT_TYPES.bill ? APP_ROUTES.billPreview : APP_ROUTES.quotationPreview);
   };
 
   const handleDownloadPdf = async (source) => {
@@ -366,8 +378,9 @@ function App() {
         activeQuotationId,
         logoSource: businessProfile.logoUrl,
         businessProfile,
+        documentType,
       });
-      trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source });
+      trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source, documentType });
     } catch (error) {
       setSaveStatus('Unable to download the PDF. Please try again.');
       trackAction(ANALYTICS_EVENTS.quotationPdfDownloadFailed, { source, reason: 'generation' });
@@ -392,16 +405,16 @@ function App() {
       <Dashboard
         profile={businessProfile}
         user={currentUser}
+        pathname={pathname}
         navigate={navigate}
         logout={logout}
-        startNewQuotation={startNewQuotation}
-        openSavedQuotation={openSavedQuotation}
-        deleteSavedQuotation={deleteSavedQuotation}
-        savedQuotations={savedQuotations}
-        saveStatus={saveStatus}
+        startNewDocument={startNewDocument}
+        savedDocuments={savedDocuments}
       />
+      <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} navigate={navigate} saveStatus={saveStatus} />
       <QuotationWorkspaceModal
         pathname={pathname}
+        documentType={documentType}
         previewOnly={previewOnly}
         navigate={navigate}
         activeQuotationId={activeQuotationId}
@@ -426,6 +439,7 @@ function App() {
       />
       <QuotationPreviewModal
         pathname={pathname}
+        documentType={documentType}
         previewOnly={previewOnly}
         quotation={quotation}
         items={items}

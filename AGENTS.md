@@ -1,196 +1,70 @@
-# AGENTS.md
+# Quotify Agent Notes
 
-This file gives LLM agents a reliable mental model of the Quotify repository.
+Keep this file operational and short. The root `README.md` is the source of truth for setup and deployment; inspect code before trusting either document.
 
-## Repo Summary
+## Product
 
-Quotify is a two-service web app:
+Two-service quotation app for Door2Door Interiors:
 
-- Frontend: React app in `my-app/`, deployed on Vercel
-- Backend: Go + Gin API in `backend-go/`, deployed on Render
+- `my-app/`: React 19 frontend, deployed from Vercel.
+- `backend-go/`: Go/Gin API, deployed on Render.
+- Google Sheets stores users, saved quotations, bills, and business profiles.
+- Vercel Blob stores uploaded business logos; Google Sheets stores only their public URLs.
+- The browser calculates, previews, and exports PDFs.
 
-Primary business flow:
+## Request Routing
 
-1. User opens the frontend.
-2. Frontend checks `GET /api/v1/auth/me` with cookies included.
-3. If unauthenticated, user logs in.
-4. Backend validates credentials from Google Sheets.
-5. Backend sets a signed session cookie.
-6. Authenticated user creates and exports a quotation.
+- Auth/session: `backend-go/internal/handlers/auth.go`, `backend-go/internal/sheets/credentials.go`.
+- Quotation API/ownership: `backend-go/internal/handlers/quotations.go`, `backend-go/internal/sheets/quotations.go`.
+- Bill API/ownership: `backend-go/internal/handlers/bills.go`, `backend-go/internal/sheets/bills.go`.
+- Business profiles: `backend-go/internal/handlers/business_profile.go`, `backend-go/internal/sheets/business_profiles.go`.
+- Admin users: `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`.
+- Routes/CORS: `backend-go/internal/routes/routes.go`.
+- Frontend orchestration: `my-app/src/App.js`.
+- Frontend API calls: `my-app/src/services/`.
+- Draft persistence: `my-app/src/utils/storage.js`.
+- Quotation rules: `my-app/src/config/quotation.js` and `my-app/src/utils/quotation.js`.
+- UI: `my-app/src/components/` and `my-app/src/App.css`.
+- PDF: `my-app/src/utils/pdf.js`.
+- Logo upload authorization: `my-app/api/blob-upload.js`.
 
-## What Exists Today
+## Current Contracts
 
-- Browser-based login form
-- Cookie-based auth session
-- Google Sheets-backed username/password validation
-- Quotation form with client details, scope, line items, and GST
-- Browser preview
-- Client-side PDF generation
-- Google Sheets-backed saved quotation CRUD
-- Admin-only user management with user search, activation/deactivation, and password reset
-- Vercel Web Analytics through `@vercel/analytics`
+- Cookie: `quotify_session`, HTTP-only, HMAC-signed, one-hour lifetime.
+- Login reads `Users!A2:H`; deployment config defaults `GOOGLE_SHEET_RANGE` to `Users!A:G`. Columns are `id, username, bcrypt_hash, display_name, role, status, updated_at, legacy_password`.
+- Authentication verifies bcrypt hashes first and uses the legacy plaintext password column only as a compatibility fallback.
+- Authenticated quotation requests derive the owner from the signed cookie; list/get/update/delete operations only use rows owned by that username.
+- Quotation rows use `Quotations!A:Q`: `quotation_id, created_at, updated_at, owner, client_name, project_name, phone, email, site_location, quote_date, scope_of_work, include_gst, gst_rate, items_json, subtotal, tax, total`.
+- `items_json` contains the full editable quotation payload.
+- Bill rows use `Bills!A:Q`: `bill_id, created_at, updated_at, owner, client_name, project_name, phone, email, site_location, bill_date, billing_notes, include_gst, gst_rate, items_json, subtotal, tax, total`.
+- Business profile rows use `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`.
+- Business logos accept JPEG, PNG, and WebP files up to 2 MB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
+- New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
+- Preserve `credentials: 'include'` on frontend requests.
+- Production frontend calls `/api/*` through `my-app/vercel.json`; do not replace the same-origin rewrite without checking cookie behavior.
+- Analytics must not include credentials, client data, or quotation content.
 
-## Current Limitations
+## Configuration
 
-- No self-service registration or account recovery flow
-- Saved quotations and users are persisted in Google Sheets, not a database
+Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`.
 
-Saved quotations are persisted to Google Sheets, not a database.
+Frontend: optional `REACT_APP_ENV` (`local`, `development`, `production`). Vercel requires `BLOB_READ_WRITE_TOKEN` for logo uploads; Vercel creates it when the Blob store is connected. `QUOTIFY_API_URL` optionally overrides the backend URL used by the upload authorization function.
 
-## Key Directories
+The service account needs Editor access to the spreadsheet for user administration, quotations, and business profiles. Keep `.env` and service-account files out of source control.
 
-### `my-app/`
+## Guardrails
 
-- `src/App.js`: application state and orchestration for auth, quotation actions, and routing
-- `src/components/`: login, dashboard, admin user management, quotation workspace, preview, and shared presentational components
-- `src/config/`: API, route, and quotation defaults
-- `src/hooks/useAppRouter.js`: history-based client-side router
-- `src/services/`: centralized authenticated API requests
-- `src/utils/`: formatters, draft storage, quotation calculations/validation, and PDF generation
-- `src/utils/analytics.js`: centralized Vercel Analytics route and user-action events
-- `src/index.js`: React bootstrapping and Vercel Analytics initialization
-- `vercel.json`: production `/api/*` rewrite to the Render backend
-- `src/App.css`: styling for login, dashboard, modal, and quotation document
-- `src/App.test.js`: basic login screen render test
-- `.env.example`: frontend env reference
+- Do not claim or implement admin/user-management features without checking that routes, handlers, and components exist in this checkout.
+- Preserve the existing `Quotations` column order and `items_json` compatibility.
+- Preserve the `Bills!A:Q` column order and `items_json` compatibility.
+- Preserve the `BusinessProfiles!A:J` column order; never store image data in the sheet.
+- For multi-user work, keep server-side owner enforcement and make browser draft state user-scoped; never rely on frontend hiding alone.
+- Local: `http://localhost:3000` frontend, `http://localhost:8000` backend; local cookies require `COOKIE_SECURE=false`.
 
-### `backend-go/`
+## Checks
 
-- `cmd/server/main.go`: bootstraps env loading and starts Gin
-- `internal/routes/routes.go`: route registration and CORS middleware
-- `internal/handlers/auth.go`: login, health, me, logout, session cookie logic
-- `internal/handlers/ping.go`: simple ping endpoint
-- `internal/handlers/admin_users.go`: administrator-only user management handlers
-- `internal/sheets/quotations.go`: quotation row serialization and Google Sheets CRUD
-- `internal/sheets/credentials.go`: user authentication and user-management sheet operations
-- `.env.example`: backend env reference
-
-### Root
-
-- `render.yaml`: Render deployment config for backend
-- `README.md`: repo-level documentation
-- `AGENTS.md`: this file
-
-## Runtime Assumptions
-
-- Frontend local dev runs on `http://localhost:3000`
-- Backend local dev runs on `http://localhost:8000`
-- Frontend sends cookies with `credentials: 'include'`
-- Production frontend requests use the same-origin Vercel `/api/*` rewrite before reaching Render.
-- Backend must allow the frontend origin in CORS
-- Production frontend is on Vercel
-- Production backend is on Render
-
-## Environment Variables
-
-### Frontend
-
-- `REACT_APP_ENV`
-  - Optional
-  - Accepted values: `local`, `development`, `production`
-  - If omitted, the app infers environment from `window.location.hostname`
-
-### Backend
-
-- `GOOGLE_SHEET_ID`
-- `GOOGLE_SHEET_RANGE`
-- `GOOGLE_SERVICE_ACCOUNT_FILE`
-- `GOOGLE_SERVICE_ACCOUNT_JSON`
-- `AUTH_SESSION_SECRET`
-- `COOKIE_SECURE`
-- `CORS_ALLOWED_ORIGINS`
-- `AUTH_DEBUG`
-- `PORT`
-
-## Important Behavior Invariants
-
-- Auth depends on the `Users` worksheet range containing the user ID, username, bcrypt hash, role, and status columns.
-- `GOOGLE_SHEET_ID` is the spreadsheet ID, not the worksheet name.
-- `GOOGLE_SHEET_RANGE` defaults to `Users!A:G` if unset.
-- `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
-- The app uses a cookie named `quotify_session`.
-- Session tokens are HMAC-signed and expire after 1 hour.
-- New quotation dates are derived in the `Asia/Kolkata` business timezone at workspace creation.
-- The active quotation draft is stored in browser session storage.
-- Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
-- The `Users` worksheet stores user identity, bcrypt hash, role, status, and a sensitive password compatibility column.
-- Only users with `role=admin` may access `/api/v1/admin/*`; regular users must be redirected away from `/admin/users`.
-- PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.
-- Analytics events must not include credentials, client details, quotation content, or other personal data.
-
-## Common Agent Tasks
-
-### If asked to change login behavior
-
-- Inspect `backend-go/internal/handlers/auth.go`
-- Inspect `backend-go/internal/sheets/credentials.go`
-- Check whether CORS or cookie behavior also needs changes in `backend-go/internal/routes/routes.go`
-- Verify the frontend API services still use `credentials: 'include'`
-
-### If asked to change API environments
-
-- Update `my-app/src/config/api.js`
-- Preserve the production API base URL as an empty string so calls use the Vercel rewrite.
-- Update `my-app/vercel.json` if the Render backend URL changes.
-- Check `render.yaml`
-- If new frontend domains are introduced, update backend CORS config
-
-### If asked to change quotation layout or export behavior
-
-- App orchestration is in `my-app/src/App.js`; UI is in `src/components/`
-- Styling is in `my-app/src/App.css`
-- PDF generation is in `my-app/src/utils/pdf.js`
-
-### If asked to change saved quotations
-
-- Inspect `backend-go/internal/handlers/quotations.go` and `backend-go/internal/sheets/quotations.go`.
-- Preserve the `Quotations` sheet schema and `items_json` payload compatibility.
-
-### If asked to change user management
-
-- Inspect `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`, and `my-app/src/components/AdminUsers.js`.
-- Preserve server-side admin authorization; hiding the frontend route is not sufficient.
-- Keep the `Users` sheet columns aligned with `GOOGLE_SHEET_RANGE=Users!A:G`; column H is a sensitive password fallback and must never appear in API responses.
-
-## Safe Edit Guidance
-
-- Preserve `credentials: 'include'` on auth fetches unless intentionally redesigning auth.
-- Preserve CORS alignment between non-production frontend origins and backend allowed origins.
-- Preserve the Vercel API rewrite; external Render cookies can be blocked by browser third-party-cookie policies.
-- Be careful with `COOKIE_SECURE`; local HTTP development needs it `false`, hosted HTTPS should use `true`.
-- Avoid breaking the hostname-to-environment mapping in `my-app/src/config/api.js`.
-- Keep secrets out of committed files. `.env` and `service-account.json` are intentionally ignored.
-
-## Local Commands
-
-Frontend:
-
-```bash
-cd my-app
-npm start
-npm test
-npm run build
+```text
+cd my-app && npm test
+cd my-app && npm run build
+cd backend-go && go test ./...
 ```
-
-Backend:
-
-```bash
-cd backend-go
-go run ./cmd/server
-go test ./...
-```
-
-## Documentation Expectations
-
-When updating documentation for this repo:
-
-- Treat the root `README.md` as the source of truth for end-to-end setup
-- Keep deployment notes aligned with Vercel for frontend and Render for backend
-- Mention Google Sheets auth explicitly
-- Mention that quotation generation is client-side
-
-## Current Gaps Worth Flagging
-
-- Plain-text credential validation from Google Sheets is operational but weak for long-term security
-- Backend coverage currently tests cookie policy only; add route and Google Sheets boundary coverage as behavior grows.
-- The Vercel rewrite requires `my-app/` to remain the Vercel project root directory.

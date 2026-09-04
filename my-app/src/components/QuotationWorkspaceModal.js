@@ -1,9 +1,11 @@
 import { APP_ROUTES } from '../config/routes';
 import ActionIcon from './ActionIcon';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
+import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
 function QuotationWorkspaceModal({
   pathname,
+  documentType,
   previewOnly,
   navigate,
   activeQuotationId,
@@ -28,18 +30,22 @@ function QuotationWorkspaceModal({
 }) {
   if (
     pathname !== APP_ROUTES.quotationNew &&
-    !(pathname === APP_ROUTES.quotationPreview && !previewOnly)
+    pathname !== APP_ROUTES.billNew &&
+    !(pathname === APP_ROUTES.quotationPreview && !previewOnly) &&
+    !(pathname === APP_ROUTES.billPreview && !previewOnly)
   ) {
     return null;
   }
 
+  const copy = documentCopy(documentType);
+
   const closeWorkspace = (source) => {
-    trackAction(ANALYTICS_EVENTS.workspaceClosed, { source });
+    trackAction(ANALYTICS_EVENTS.workspaceClosed, { source, documentType });
     navigate(APP_ROUTES.home, true);
   };
 
   const resetWorkspace = () => {
-    trackAction(ANALYTICS_EVENTS.workspaceReset);
+    trackAction(ANALYTICS_EVENTS.workspaceReset, { documentType });
     clearQuotation();
   };
 
@@ -59,12 +65,12 @@ function QuotationWorkspaceModal({
   };
 
   return (
-    <div className="form-modal-backdrop" role="presentation" onMouseDown={() => closeWorkspace('backdrop')}>
-      <section className="form-card form-workspace-modal" role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
+    <div className={`form-modal-backdrop ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace-backdrop' : ''}`} role="presentation" onMouseDown={() => closeWorkspace('backdrop')}>
+      <section className={`form-card form-workspace-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace' : ''}`} role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Quotation Workspace</p>
-            <h3 id="quotation-workspace-title">{activeQuotationId ? 'Edit saved quotation' : 'Create a new quotation'}</h3>
+            <p className="eyebrow">{copy.singular} Workspace</p>
+            <h3 id="quotation-workspace-title">{activeQuotationId ? `Edit saved ${copy.singular.toLowerCase()}` : `Create a new ${copy.singular.toLowerCase()}`}</h3>
           </div>
           <p className="section-text">
             Fill in project details, add pricing lines, and review totals
@@ -96,18 +102,18 @@ function QuotationWorkspaceModal({
               <input type="text" value={quotation.siteLocation} onChange={(event) => handleQuotationChange('siteLocation', event.target.value)} placeholder="Project address" />
             </label>
             <label>
-              Quote Date
+              {copy.dateLabel}
               <input type="date" value={quotation.quoteDate} onChange={(event) => handleQuotationChange('quoteDate', event.target.value)} />
             </label>
           </div>
 
           <label className="full-width">
-            Scope of Work
+            {copy.noteLabel}
             <textarea
               rows="4"
               value={quotation.scopeOfWork}
               onChange={(event) => handleQuotationChange('scopeOfWork', event.target.value)}
-              placeholder="Describe rooms, finishes, materials, and installation details."
+              placeholder={copy.notePlaceholder}
             />
           </label>
 
@@ -171,7 +177,7 @@ function QuotationWorkspaceModal({
           <div className="gst-controls">
             <label className="gst-toggle">
               <input type="checkbox" checked={includeGst} onChange={(event) => toggleGst(event.target.checked)} />
-              <span>Include GST in this quotation</span>
+              <span>Include GST in this {copy.singular.toLowerCase()}</span>
             </label>
             {includeGst && (
               <label className="gst-rate">
@@ -191,7 +197,7 @@ function QuotationWorkspaceModal({
               <strong>₹ {tax.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</strong>
             </div>
             <div className="summary-total">
-              <span>Total Estimate</span>
+              <span>{copy.totalLabel}</span>
               <strong>
                 ₹{' '}
                 {total.toLocaleString('en-IN', {
@@ -205,9 +211,9 @@ function QuotationWorkspaceModal({
             <button type="button" className="clean-slate-action" onClick={resetWorkspace}>
               Clean Slate
             </button>
-            <button type="button" className="secondary-action" onClick={() => saveQuotation('workspace')}>{activeQuotationId ? 'Update Saved Quotation' : 'Save Quotation'}</button>
-            <button type="submit" className="primary-action">
-              Generate Quotation
+            <button type="button" className="secondary-action" onClick={() => saveQuotation('workspace')}>{activeQuotationId ? `Update Saved ${copy.singular}` : `Save ${copy.singular}`}</button>
+            <button type="submit" className={documentType === DOCUMENT_TYPES.bill ? 'bill-primary-action' : 'primary-action'}>
+              Generate {copy.singular}
             </button>
           </div>
           {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}

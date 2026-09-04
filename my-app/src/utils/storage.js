@@ -6,7 +6,10 @@ import {
   getQuotationDraftKey,
 } from '../config/quotation';
 
-export const loadQuotationDraft = (userId) => {
+export const getDocumentDraftKey = (userId, type = 'quotation') =>
+  type === 'quotation' ? getQuotationDraftKey(userId) : `${getQuotationDraftKey(userId)}_${type}`;
+
+export const loadQuotationDraft = (userId, type = 'quotation') => {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -15,7 +18,7 @@ export const loadQuotationDraft = (userId) => {
     if (!userId) {
       return null;
     }
-    const savedDraft = JSON.parse(window.sessionStorage.getItem(getQuotationDraftKey(userId)) || 'null');
+    const savedDraft = JSON.parse(window.sessionStorage.getItem(getDocumentDraftKey(userId, type)) || 'null');
     if (!savedDraft || typeof savedDraft !== 'object') {
       return null;
     }
@@ -26,13 +29,13 @@ export const loadQuotationDraft = (userId) => {
   }
 };
 
-export const saveQuotationDraft = (userId, draft) => {
+export const saveQuotationDraft = (userId, draft, type = 'quotation') => {
   if (typeof window === 'undefined') {
     return;
   }
 
   if (userId) {
-    window.sessionStorage.setItem(getQuotationDraftKey(userId), JSON.stringify(draft));
+    window.sessionStorage.setItem(getDocumentDraftKey(userId, type), JSON.stringify(draft));
   }
 };
 

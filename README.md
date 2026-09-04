@@ -1,126 +1,92 @@
 # Quotify
 
-Quotify is a lightweight quotation workspace for Door2Door Interiors. The app lets team members sign in with credentials stored in Google Sheets, prepare itemized interior quotations, preview them in the browser, and export them as printable PDFs.
+Quotify is a quotation workspace for Door2Door Interiors. Users sign in with credentials held in Google Sheets, create itemized quotations, preview them, save them to Google Sheets, and export printable PDFs in the browser.
 
-The repository contains:
+## Structure
 
-- `my-app/`: React frontend, hosted on Vercel
-- `backend-go/`: Go API using Gin, hosted on Render
-- `render.yaml`: Render service definition for the backend
+- `my-app/`: React 19 frontend; deploy from this directory to Vercel.
+- `backend-go/`: Go 1.22/Gin API; deploy from this directory to Render.
+- `render.yaml`: Render service definition.
 
-## Product Flow
+The frontend checks `GET /api/v1/auth/me`, sends API requests with cookies, and uses `my-app/vercel.json` to proxy production `/api/*` requests to Render.
 
-```mermaid
-flowchart TD
-    A[User opens Vercel frontend] --> B[React app loads]
-    B --> C[Check session via GET /api/v1/auth/me]
-    C -->|Valid cookie| D[Show quotation workspace]
-    C -->|No session| E[Show login screen]
-    E --> F[POST /api/v1/auth/login]
-    F --> G[Render-hosted Go API]
-    G --> H[Load Google service account credentials]
-    H --> I[Read active user and bcrypt hash from Users sheet]
-    I -->|Match found| J[Create signed session cookie]
-    I -->|No match| K[Return 401]
-    J --> L[Browser stores cookie]
-    L --> D
-    D --> M[User enters client details, scope, items, GST]
-    M --> N[React calculates subtotal, tax, and total]
-    N --> O[Preview quotation in browser]
-    O --> P[Generate PDF in the client]
-```
-
-## Architecture
-
-### Frontend
-
-- Built with React 19 and Create React App tooling.
-- Uses a simple client-side router based on `window.history`.
-- Calls the backend with `credentials: 'include'` so the session cookie is sent on each auth request.
-- In production, sends `/api/*` calls to a Vercel rewrite that forwards them to Render and keeps the session cookie first-party.
-- Generates the quotation preview and downloadable PDF entirely in the browser.
-- Chooses the API base URL from the browser hostname or `REACT_APP_ENV`.
-- Uses `@vercel/analytics` for Vercel Web Analytics; it is initialized from `src/index.js`.
-- Tracks route views and button actions with privacy-safe custom events; no credentials, client details, or quotation content is included.
-
-Key files:
-
-- [my-app/src/App.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/App.js)
-- [my-app/src/config/api.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/config/api.js)
-- [my-app/src/config/quotation.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/config/quotation.js)
-- [my-app/src/components/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/components/)
-- [my-app/src/services/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/services/)
-- [my-app/src/utils/](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/utils/)
-- [my-app/src/App.css](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/App.css)
-
-### Backend
-
-- Built with Go 1.22 and Gin.
-- Exposes auth endpoints and a ping endpoint.
-- Verifies active users against the `Users` worksheet using bcrypt password hashes.
-- Issues an HMAC-signed session cookie after successful login.
-- Allows cross-origin requests from approved frontend domains.
-- Provides an admin-only user management route for user creation, status changes, and password resets.
-
-Key files:
-
-- [backend-go/cmd/server/main.go](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/cmd/server/main.go)
-- [backend-go/internal/routes/routes.go](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/internal/routes/routes.go)
-- [backend-go/internal/handlers/auth.go](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/internal/handlers/auth.go)
-- [backend-go/internal/sheets/credentials.go](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/internal/sheets/credentials.go)
-
-## Repository Layout
-
-```text
-.
-|-- backend-go/
-|   |-- cmd/server/main.go
-|   |-- internal/handlers/
-|   |-- internal/routes/
-|   |-- internal/sheets/
-|   |-- .env.example
-|   `-- README.md
-|-- my-app/
-|   |-- public/
-|   |-- src/
-|   |-- .env.example
-|   `-- README.md
-|-- render.yaml
-|-- AGENTS.md
-`-- README.md
-```
-
-## API Endpoints
+## API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/v1/ping` | Basic uptime check |
-| `GET` | `/api/v1/auth/health` | Verifies auth configuration is usable |
-| `POST` | `/api/v1/auth/login` | Validates credentials and creates a session |
-| `GET` | `/api/v1/auth/me` | Returns current authenticated user if cookie is valid |
-| `POST` | `/api/v1/auth/logout` | Clears the session cookie |
-| `GET` | `/api/v1/quotations` | Lists the signed-in user's saved quotations |
-| `POST` | `/api/v1/quotations` | Creates a saved quotation |
-| `GET` | `/api/v1/quotations/:id` | Reads one saved quotation |
-| `PUT` | `/api/v1/quotations/:id` | Updates one saved quotation |
-| `DELETE` | `/api/v1/quotations/:id` | Deletes one saved quotation |
-| `GET` | `/api/v1/admin/users` | Lists users for administrators |
-| `POST` | `/api/v1/admin/users` | Creates a regular user for administrators |
-| `PATCH` | `/api/v1/admin/users/:id/status` | Activates or deactivates a user |
-| `POST` | `/api/v1/admin/users/:id/reset-password` | Resets a user password |
+| GET | `/api/v1/ping` | Uptime check |
+| GET | `/api/v1/auth/health` | Check auth configuration |
+| POST | `/api/v1/auth/login` | Validate credentials and start session |
+| GET | `/api/v1/auth/me` | Read current session |
+| POST | `/api/v1/auth/logout` | Clear session |
+| GET | `/api/v1/business-profile` | Read the current user's business profile |
+| PUT | `/api/v1/business-profile` | Create or update the current user's business profile |
+| GET | `/api/v1/quotations` | List current owner's quotations |
+| POST | `/api/v1/quotations` | Create quotation |
+| GET | `/api/v1/quotations/:id` | Read current owner's quotation |
+| PUT | `/api/v1/quotations/:id` | Update current owner's quotation |
+| DELETE | `/api/v1/quotations/:id` | Delete current owner's quotation |
+| GET | `/api/v1/bills` | List current owner's bills |
+| POST | `/api/v1/bills` | Create bill |
+| GET | `/api/v1/bills/:id` | Read current owner's bill |
+| PUT | `/api/v1/bills/:id` | Update current owner's bill |
+| DELETE | `/api/v1/bills/:id` | Delete current owner's bill |
+| GET | `/api/v1/admin/users` | List users (administrator only) |
+| POST | `/api/v1/admin/users` | Create a user (administrator only) |
+| PATCH | `/api/v1/admin/users/:id/status` | Change a user's status (administrator only) |
+| POST | `/api/v1/admin/users/:id/reset-password` | Reset a user's password (administrator only) |
 
-## Local Development
+Quotation ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
 
-### Prerequisites
+## Google Sheets
 
-- Node.js and npm
-- Go 1.22+
-- A Google Cloud service account with Sheets read access
-- A Google Sheet containing the configured `Users` worksheet and user columns
+Use one spreadsheet shared with the service account. User records are read from `Users!A2:H`; deployment configuration sets `GOOGLE_SHEET_RANGE=Users!A:G` for compatibility with the required user columns:
 
-### 1. Backend setup
+| A | B | C | D | E | F | G | H |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password |
 
-From [backend-go/.env.example](/C:/Users/Imart/Desktop/POC/Quotify/backend-go/.env.example), create `backend-go/.env` and fill in:
+Passwords are verified with the bcrypt hash in column C. Column H is a legacy plaintext compatibility fallback and must not be exposed by the API; remove it after all existing accounts have been migrated.
+
+The `Quotations` tab must keep row 1 in this order:
+
+```text
+quotation_id, created_at, updated_at, owner, client_name, project_name, phone,
+email, site_location, quote_date, scope_of_work, include_gst, gst_rate,
+items_json, subtotal, tax, total
+```
+
+Each quotation occupies one row. `items_json` stores the complete editable payload; the other columns support review and filtering. The service account needs Editor access for quotation persistence.
+
+The `Bills` tab must keep row 1 in this order:
+
+```text
+bill_id, created_at, updated_at, owner, client_name, project_name, phone,
+email, site_location, bill_date, billing_notes, include_gst, gst_rate,
+items_json, subtotal, tax, total
+```
+
+Bills use the same line-item payload and owner enforcement as quotations, while remaining in a separate worksheet and API collection.
+
+The `BusinessProfiles` tab must keep row 1 in this order:
+
+```text
+user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at
+```
+
+Each user has one profile row. `logo_url` contains a public Vercel Blob URL, never image data. The service account needs Editor access for business profile persistence.
+
+## Business Logos
+
+Business logos are uploaded directly from the browser to Vercel Blob. The Vercel function at `/api/blob/upload` checks the existing signed session before issuing an upload token, permits JPEG, PNG, and WebP files up to 2 MB, and the profile save stores the returned public URL in `BusinessProfiles`.
+
+Connect a public Vercel Blob store to the `my-app/` Vercel project. Vercel creates `BLOB_READ_WRITE_TOKEN` automatically. Set `QUOTIFY_API_URL` only if the upload authorization function must use a backend URL other than its current Render default.
+
+## Local Setup
+
+Prerequisites: Node.js/npm, Go 1.22+, a Google Cloud service account with Sheets API access, and a shared spreadsheet.
+
+Create `backend-go/.env` from `backend-go/.env.example`:
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
@@ -132,148 +98,35 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 AUTH_DEBUG=false
 ```
 
-Then place the service account JSON at `backend-go/service-account.json`, or use `GOOGLE_SERVICE_ACCOUNT_JSON` instead.
+`GOOGLE_SHEET_ID` is the ID between `/d/` and `/edit` in the spreadsheet URL. Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Keep credentials out of source control.
 
-Run the backend:
-
-```bash
-cd backend-go
-go run ./cmd/server
-```
-
-The API starts on `http://localhost:8000` unless `PORT` is set.
-
-### 2. Frontend setup
-
-From [my-app/.env.example](/C:/Users/Imart/Desktop/POC/Quotify/my-app/.env.example), create `my-app/.env`:
-
-```env
-REACT_APP_ENV=local
-```
-
-Run the frontend:
+Run the services:
 
 ```bash
-cd my-app
-npm install
-npm start
+cd backend-go && go run ./cmd/server
+cd my-app && npm install && npm start
 ```
 
-The app runs on `http://localhost:3000`.
-
-### 3. Google Sheets format
-
-The backend expects the configured range to contain:
-
-| Column | Field |
-| --- | --- |
-| A | user_id |
-| B | username |
-| C | password_hash (bcrypt) |
-| D | display_name |
-| E | role |
-| F | status (`active` enables login) |
-| G | created_at |
-| H | password (used as compatibility fallback) |
-
-Notes:
-
-- The sheet/tab name is part of `GOOGLE_SHEET_RANGE`, not `GOOGLE_SHEET_ID`.
-- The service account `client_email` must be shared on the spreadsheet with at least Viewer access.
-- The service account should have Viewer access for authentication and Editor access for quotation persistence.
-- The `password` column is read only as a compatibility fallback when the bcrypt hash does not match; it should be treated as highly sensitive administrative data.
+The API runs on `http://localhost:8000`; the frontend runs on `http://localhost:3000`.
 
 ## Deployment
 
-### Frontend on Vercel
+Deploy `my-app/` to Vercel. Keep both its same-origin `/api/*` rewrite and the more-specific `/api/blob/upload` Vercel Function route in place. Connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
 
-The frontend is intended to be deployed from `my-app/`.
+## Behavior Notes
 
-`my-app/vercel.json` proxies production `/api/*` requests to the Render service. Keep this rewrite in place: it allows modern browsers to retain the HTTP-only session cookie without relying on third-party-cookie support.
+- Sessions use an HTTP-only `quotify_session` cookie signed with HMAC and expire after one hour.
+- New quotation dates use `Asia/Kolkata`.
+- The active draft is stored in browser session storage.
+- Totals, preview rendering, and PDF generation are client-side.
+- Analytics events are privacy-safe and must not contain credentials, client details, or quotation content.
 
-Current production hostname mapping in the code:
-
-- `quotify-net.vercel.app` -> production backend
-- `dev-quotify.intermesh.net` -> development backend
-- `quotify.intermesh.net` -> production backend
-
-The frontend API resolver lives in [my-app/src/config/api.js](/C:/Users/Imart/Desktop/POC/Quotify/my-app/src/config/api.js).
-
-### Backend on Render
-
-[render.yaml](/C:/Users/Imart/Desktop/POC/Quotify/render.yaml) defines a single Go web service:
-
-- Service name: `quotify-i62o`
-- Root directory: `backend-go`
-- Build command: `go build -tags netgo -ldflags '-s -w' -o app ./cmd/server`
-- Start command: `./app`
-- Health check: `/api/v1/auth/health`
-
-Important Render environment variables:
-
-- `GOOGLE_SHEET_ID`
-- `GOOGLE_SHEET_RANGE`
-- `GOOGLE_SERVICE_ACCOUNT_JSON`
-- `AUTH_SESSION_SECRET`
-- `COOKIE_SECURE=true`
-- `CORS_ALLOWED_ORIGINS=https://quotify-net.vercel.app`
-- `AUTH_DEBUG=false`
-
-## Authentication Notes
-
-- Sessions are stored in an HTTP-only cookie named `quotify_session`.
-- Session tokens are signed with `AUTH_SESSION_SECRET`.
-- Cookie lifetime is 1 hour.
-- `COOKIE_SECURE` should be `true` in HTTPS environments such as Render behind a public domain.
-- Production API requests use a Vercel rewrite so the cookie is first-party. Local and development environments still require CORS and browser credentials mode to stay aligned.
-
-## Saved Quotations
-
-Saved quotations use the `Quotations` worksheet in the existing Quotely spreadsheet. Row 1 must retain these columns in order: `quotation_id`, `created_at`, `updated_at`, `owner_user_id`, `client_name`, `project_name`, `phone`, `email`, `site_location`, `quote_date`, `scope_of_work`, `include_gst`, `gst_rate`, `items_json`, `subtotal`, `tax`, `total`.
-
-The backend stores one quotation per row. `items_json` contains the complete editable quotation payload; the remaining columns make the sheet easy to review and filter. The Google service account configured by `GOOGLE_SERVICE_ACCOUNT_JSON` must be shared as an **Editor** on Quotely, and the Google Sheets API must be enabled for that service account's Google Cloud project.
-
-## Business Profiles
-
-Business profiles use the `BusinessProfiles` worksheet in the Quotely spreadsheet. Row 1 must retain these columns in order: `user_id`, `business_name`, `logo_url`, `phone`, `email`, `address`, `gstin`, `quote_prefix`, `terms`, `updated_at`.
-
-The backend stores one profile per authenticated user and updates that user's existing row. Business logos are uploaded to Vercel Blob; `logo_url` stores the public Blob URL, not image data.
-
-## Quotation Behavior
-
-- The active quotation draft lives in browser session storage.
-- Saved quotations are persisted in the Google Sheets `Quotations` worksheet and filtered by `owner_user_id`.
-- New quotation dates use the `Asia/Kolkata` business calendar.
-- Totals are calculated in the browser from line items and GST settings.
-- Preview rendering and direct PDF generation happen client-side.
-
-## Testing
-
-Frontend:
+## Checks
 
 ```bash
-cd my-app
-npm test
+cd my-app && npm test
+cd my-app && npm run build
+cd backend-go && go test ./...
 ```
 
-Backend:
-
-```bash
-cd backend-go
-go test ./...
-```
-
-## Known Constraints
-
-- Authentication depends on Google Sheets availability.
-- Google Sheets remains a lightweight datastore; use a database when concurrency or volume grows.
-- The admin route is not shown to regular users, and every admin API request is enforced server-side by the signed session role.
-- There is no database or server-side quotation history.
-- The app currently focuses on authentication and quotation generation only.
-
-## Suggested Next Improvements
-
-- Move sheet-based credentials to a stronger auth system when ready.
-- Persist quotations for reuse, search, and audit history.
-- Add Google Sheets integration-boundary tests alongside the existing cookie-policy tests.
-- Add Vercel project configuration docs if the deployment is managed outside this repository.
+See `AGENTS.md` for concise code-routing notes. See `backend-go/README.md` for the backend-only quick reference.

@@ -1,91 +1,61 @@
+import { useState } from 'react';
 import ActionIcon from './ActionIcon';
 import quotifyLogo from '../assets/quotify-logo.svg';
+import { APP_ROUTES } from '../config/routes';
+import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
-function Dashboard({
-  profile,
-  user,
-  navigate,
-  logout,
-  startNewQuotation,
-  openSavedQuotation,
-  deleteSavedQuotation,
-  savedQuotations,
-  saveStatus,
-}) {
+function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument, savedDocuments }) {
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const launchDocument = (type, source) => {
+    setCreateMenuOpen(false);
+    startNewDocument(type, source);
+  };
+
   return (
-    <div className="app-shell">
+    <div className="app-shell workspace-shell">
       <header className="topbar">
         <div className="topbar-user">{user?.displayName || user?.username}</div>
-        <div className="topbar-brand">
-          <img src={profile?.logoUrl || quotifyLogo} alt={profile?.logoUrl ? `${profile.businessName || 'Business'} logo` : 'Quotify'} />
-        </div>
+        <div className="topbar-brand"><img src={profile?.logoUrl || quotifyLogo} alt={profile?.logoUrl ? `${profile.businessName || 'Business'} logo` : 'Quotify'} /></div>
         <div className="topbar-actions">
-          <button type="button" className="topbar-icon-action" aria-label="Business profile" title="Business profile" onClick={() => navigate('/business-profile')}><ActionIcon type="profile" /></button>
-          {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action topbar-admin-action" onClick={() => navigate('/admin/users')}>Manage users</button>}
-          <button type="button" className="topbar-icon-action topbar-create-action" aria-label="Create new quotation" title="Create new quotation" onClick={() => startNewQuotation('header')}><ActionIcon type="plus" /></button>
+          <button type="button" className="topbar-icon-action" aria-label="Business profile" title="Business profile" onClick={() => navigate(APP_ROUTES.businessProfile)}><ActionIcon type="profile" /></button>
+          {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action topbar-admin-action" onClick={() => navigate(APP_ROUTES.adminUsers)}>Manage users</button>}
+          <div className="topbar-create-menu">
+            <button type="button" className="topbar-icon-action topbar-create-action" aria-label="Create document" title="Create document" aria-expanded={createMenuOpen} onClick={() => setCreateMenuOpen((open) => !open)}><ActionIcon type="plus" /></button>
+            {createMenuOpen && <div className="create-document-menu" role="menu"><button type="button" role="menuitem" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'create-menu')}><ActionIcon type="quotation" /> New quotation</button><button type="button" role="menuitem" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'create-menu')}><ActionIcon type="bill" /> New bill</button></div>}
+          </div>
           <button type="button" className="topbar-icon-action topbar-logout-action" aria-label="Log out" title="Log out" onClick={logout}><ActionIcon type="logout" /></button>
         </div>
       </header>
 
-      <main className="page-content">
-        <section className="hero-card">
-          <div className="hero-copy">
-            <p className="eyebrow">Your business, professionally presented</p>
-            <h2>Create quotations your clients can trust.</h2>
-            <p className="hero-text">
-              Add your details once, then create polished quotations with your own
-              logo, contact information, and terms.
-            </p>
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="primary-action"
-                onClick={() => startNewQuotation('hero')}
-              >
-                <ActionIcon type="plus" /> Create New Quotation
-              </button>
-            </div>
-          </div>
+      <div className="dashboard-layout">
+        <aside className="dashboard-sidebar" aria-label="Workspace navigation">
+          <p className="sidebar-label">Workspace</p>
+          <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.home ? 'active' : ''}`} onClick={() => navigate(APP_ROUTES.home)}>Overview</button>
+          <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.quotations ? 'active' : ''}`} onClick={() => navigate(APP_ROUTES.quotations)}><ActionIcon type="quotation" /> Quotations</button>
+          <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.bills ? 'active bill-active' : ''}`} onClick={() => navigate(APP_ROUTES.bills)}><ActionIcon type="bill" /> Bills</button>
+          <div className="sidebar-divider" />
+          <p className="sidebar-label">Create</p>
+          <button type="button" className="sidebar-create quotation-create" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'sidebar')}><ActionIcon type="plus" /> New quotation</button>
+          <button type="button" className="sidebar-create bill-create" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'sidebar')}><ActionIcon type="plus" /> New bill</button>
+        </aside>
 
-          <div className="hero-panel">
-            <div className="proposal-panel">
-              <p className="eyebrow">Proposal workflow</p>
-              <h3>From client brief to a client-ready estimate.</h3>
-              <div className="proposal-steps">
-                <div><span>01</span><p>Capture the project brief and site details.</p></div>
-                <div><span>02</span><p>Build a clear, itemized estimate.</p></div>
-                <div><span>03</span><p>Share a polished quotation with confidence.</p></div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <main className="dashboard-main">
+          <section className="document-hero-card">
+            <p className="eyebrow">Document studio</p>
+            <h2>From first estimate to final payment.</h2>
+            <p>Build polished quotations and professional bills from one calm, organized workspace.</p>
+            <div className="document-hero-actions"><button type="button" className="primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'hero')}><ActionIcon type="quotation" /> Create quotation</button><button type="button" className="bill-primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'hero')}><ActionIcon type="bill" /> Create bill</button></div>
+          </section>
 
-        <section className="saved-panel">
-          <div className="section-heading">
-            <div><p className="eyebrow">Saved Quotations</p><h3>Quotation library</h3></div>
-            <button type="button" className="primary-action new-quotation-action" onClick={() => startNewQuotation('library')}><ActionIcon type="plus" /> New quotation</button>
-          </div>
-          {savedQuotations.length === 0 ? <p className="section-text">No saved quotations yet. Create one and save it for later.</p> : (
-            <div className="saved-quotation-list">
-              {savedQuotations.map((entry) => (
-                <article className="saved-quotation-card" key={entry.id}>
-                  <div>
-                    <strong>{entry.clientName || 'Untitled client'}</strong>
-                    <span>{entry.projectName || 'Untitled project'} · {entry.quoteDate || 'No date'}</span>
-                    <small>₹ {Number(entry.total || 0).toLocaleString('en-IN')}</small>
-                  </div>
-                  <div className="saved-actions">
-                    <button type="button" className="icon-action" aria-label="Open quotation" title="Open quotation" onClick={() => openSavedQuotation(entry.id, true)}><ActionIcon type="open" /></button>
-                    <button type="button" className="icon-action" aria-label="Edit quotation" title="Edit quotation" onClick={() => openSavedQuotation(entry.id)}><ActionIcon type="edit" /></button>
-                    <button type="button" className="icon-action delete-action" aria-label="Delete quotation" title="Delete quotation" onClick={() => deleteSavedQuotation(entry.id)}><ActionIcon type="delete" /></button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-          {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
-        </section>
-      </main>
+          <section className="document-library-summary">
+            {[DOCUMENT_TYPES.quotation, DOCUMENT_TYPES.bill].map((type) => {
+              const copy = documentCopy(type);
+              const documents = savedDocuments[type] || [];
+              return <article className={`document-summary-card ${type}`} key={type}><ActionIcon type={type} /><p>{copy.plural}</p><strong>{documents.length}</strong><span>saved {copy.plural.toLowerCase()}</span><button type="button" onClick={() => navigate(type === DOCUMENT_TYPES.bill ? APP_ROUTES.bills : APP_ROUTES.quotations)}>Open library <ActionIcon type="library" /></button></article>;
+            })}
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

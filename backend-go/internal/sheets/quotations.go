@@ -77,6 +77,10 @@ func UpdateQuotation(ctx context.Context, quote Quotation) error {
 }
 
 func DeleteQuotation(ctx context.Context, row int) error {
+	return deleteDocumentRow(ctx, row, "Quotations")
+}
+
+func deleteDocumentRow(ctx context.Context, row int, worksheet string) error {
 	account, err := loadServiceAccount()
 	if err != nil {
 		return err
@@ -85,7 +89,7 @@ func DeleteQuotation(ctx context.Context, row int) error {
 	if err != nil {
 		return err
 	}
-	sheetID, err := quotationSheetID(ctx, token)
+	sheetID, err := worksheetID(ctx, token, worksheet)
 	if err != nil {
 		return err
 	}
@@ -108,7 +112,7 @@ func DeleteQuotation(ctx context.Context, row int) error {
 	return nil
 }
 
-func quotationSheetID(ctx context.Context, token string) (int, error) {
+func worksheetID(ctx context.Context, token, worksheet string) (int, error) {
 	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -135,11 +139,11 @@ func quotationSheetID(ctx context.Context, token string) (int, error) {
 		return 0, err
 	}
 	for _, sheet := range metadata.Sheets {
-		if sheet.Properties.Title == "Quotations" {
+		if sheet.Properties.Title == worksheet {
 			return sheet.Properties.SheetID, nil
 		}
 	}
-	return 0, fmt.Errorf("Quotations worksheet not found")
+	return 0, fmt.Errorf("%s worksheet not found", worksheet)
 }
 
 func readValues(ctx context.Context, rangeName string) ([][]string, error) {

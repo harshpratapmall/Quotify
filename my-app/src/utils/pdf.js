@@ -83,8 +83,13 @@ export const downloadQuotationPdf = async ({
   activeQuotationId,
   logoSource,
   businessProfile = {},
+  documentType = 'quotation',
 }) => {
   const logo = await loadPdfLogo(logoSource);
+  const isBill = documentType === 'bill';
+  const documentTitle = isBill ? 'BILL' : 'QUOTATION';
+  const accent = isBill ? [0.2, 0.32, 0.63] : [0.72, 0.58, 0.35];
+  const header = isBill ? [0.09, 0.16, 0.35] : [0.11, 0.21, 0.26];
   const printableItems = getPrintableItems(items);
   const itemsPerPage = printableItems.length > 9 ? 14 : 9;
   const rowHeight = printableItems.length > 9 ? 24 : 31;
@@ -119,37 +124,37 @@ export const downloadQuotationPdf = async ({
 
   const today = getTodayDate();
   const quoteSuffix = activeQuotationId ? activeQuotationId.slice(-6).toUpperCase() : 'DRAFT';
-  const quoteNumber = `${businessProfile.quotePrefix || 'QUOTE'}-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
+  const quoteNumber = `${isBill ? 'BILL' : businessProfile.quotePrefix || 'QUOTE'}-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
   const hasScope = quotation.scopeOfWork.trim().length > 0;
 
   rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
   rectangle(22, 22, 551, 798, [1, 1, 1]);
   border(22, 22, 551, 798, [0.14, 0.22, 0.24], 1.1);
-  rectangle(22, 710, 551, 110, [0.11, 0.21, 0.26]);
-  rectangle(22, 710, 551, 5, [0.72, 0.58, 0.35]);
-  rectangle(48, 745, 235, 55, [1, 1, 1]);
-  border(48, 745, 235, 55, [0.72, 0.58, 0.35], 0.8);
-  commands.push('q 215 0 0 48 58 749 cm /Logo Do Q');
-  text('QUOTATION', 434, 780, 10, 'F2', [0.94, 0.88, 0.75]);
-  text(quoteNumber, 414, 763, 9, 'F1', [1, 1, 1]);
-  text(`Issued ${quotation.quoteDate || today}`, 426, 747, 8, 'F1', [0.74, 0.84, 0.82]);
+  rectangle(22, 710, 551, 110, header);
+  rectangle(22, 790, 551, 30, accent);
+  rectangle(48, 738, 178, 48, [1, 1, 1]);
+  commands.push('q 160 0 0 37 57 744 cm /Logo Do Q');
+  rectangle(411, 778, 125, 21, [1, 1, 1]);
+  text(documentTitle, 433, 785, 9, 'F2', header);
+  text(quoteNumber, 352, 757, 9, 'F2', [1, 1, 1]);
+  text(`Issued ${quotation.quoteDate || today}`, 413, 739, 8, 'F1', [0.78, 0.85, 0.9]);
 
   rectangle(48, 630, 499, 56, [0.97, 0.98, 0.96]);
   border(48, 630, 499, 56, [0.67, 0.75, 0.71]);
   rectangle(48, 630, 6, 56, [0.22, 0.43, 0.42]);
-  text('TO', 66, 669, 8, 'F2', [0.22, 0.43, 0.42]);
+  text('TO', 66, 669, 8, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
   text(shortText(quotation.clientName || 'Your Client', 26), 66, 652, 12, 'F2');
   text(shortText(quotation.phone || quotation.email || 'Mobile number to be added', 30), 66, 641, 8, 'F1', [0.37, 0.44, 0.53]);
-  text('ADDRESS', 248, 669, 7, 'F2', [0.22, 0.43, 0.42]);
+  text('ADDRESS', 248, 669, 7, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
   text(shortText(quotation.siteLocation || 'Site location to be added', 28), 248, 652, 9, 'F1', [0.19, 0.28, 0.31]);
-  text('PROJECT', 408, 669, 7, 'F2', [0.22, 0.43, 0.42]);
+  text('PROJECT', 408, 669, 7, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
   text(shortText(quotation.projectName || 'Interior Project', 22), 408, 652, 9, 'F1', [0.19, 0.28, 0.31]);
 
   if (hasScope) {
     rectangle(48, 579, 499, 42, [0.98, 0.99, 0.98]);
     border(48, 579, 499, 42, [0.72, 0.8, 0.77]);
-    rectangle(48, 579, 5, 42, [0.22, 0.43, 0.42]);
-    text('SCOPE OF WORK', 65, 604, 8, 'F2', [0.22, 0.43, 0.42]);
+    rectangle(48, 579, 5, 42, isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
+    text(isBill ? 'BILLING NOTES' : 'SCOPE OF WORK', 65, 604, 8, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
     const scopeLines = wrapText(quotation.scopeOfWork, 88).slice(0, 2);
     scopeLines.forEach((scopeLine, index) => {
       text(scopeLine, 65, 591 - index * 10, 8, 'F1', [0.37, 0.44, 0.53]);
@@ -157,7 +162,7 @@ export const downloadQuotationPdf = async ({
   }
 
   const tableTop = hasScope ? 538 : 591;
-  rectangle(48, tableTop, 499, 27, [0.11, 0.21, 0.26]);
+  rectangle(48, tableTop, 499, 27, header);
   text('DESCRIPTION', 61, tableTop + 10, 8, 'F2', [1, 1, 1]);
   text('QTY', 341, tableTop + 10, 8, 'F2', [1, 1, 1]);
   text('RATE', 396, tableTop + 10, 8, 'F2', [1, 1, 1]);
@@ -189,22 +194,15 @@ export const downloadQuotationPdf = async ({
     text(pdfAmount(subtotal), 464, totalsTop, 10, 'F2');
     text(includeGst ? `GST (${gstPercentage}%)` : 'GST (not included)', totalX, totalsTop - 19, 10, 'F1', [0.37, 0.44, 0.53]);
     text(pdfAmount(tax), 464, totalsTop - 19, 10, 'F2');
-    rectangle(totalX - 12, totalsTop - 62, 217, 36, [0.22, 0.43, 0.42]);
-    border(totalX - 12, totalsTop - 62, 217, 36, [0.12, 0.29, 0.29], 1);
-    text('TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
+    rectangle(totalX - 12, totalsTop - 62, 217, 36, isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
+    border(totalX - 12, totalsTop - 62, 217, 36, header, 1);
+    text(isBill ? 'TOTAL DUE' : 'TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
     text(pdfAmount(total), 464, totalsTop - 48, 12, 'F2', [1, 1, 1]);
-    const termsY = Math.min(totalsTop - 94, 142);
-    if (termsY > 122) {
-      rectangle(48, termsY - 41, 499, 45, [0.98, 0.97, 0.93]);
-      border(48, termsY - 41, 499, 45, [0.78, 0.69, 0.53]);
-      text('COMMERCIAL NOTES', 61, termsY - 10, 8, 'F2', [0.5, 0.4, 0.24]);
-      text('This quotation is valid for 15 days. Final quantities and scope are subject to site measurement.', 61, termsY - 25, 8, 'F1', [0.37, 0.44, 0.53]);
-    }
   } else {
     text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
   }
 
-  line(48, 78, 547, 78, [0.72, 0.58, 0.35]);
+  line(48, 78, 547, 78, accent);
   text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
   text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
   text(`Page 1 of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
@@ -216,15 +214,14 @@ export const downloadQuotationPdf = async ({
     rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
     rectangle(22, 22, 551, 798, [1, 1, 1]);
     border(22, 22, 551, 798, [0.14, 0.22, 0.24], 1.1);
-    rectangle(22, 710, 551, 110, [0.11, 0.21, 0.26]);
-    rectangle(22, 710, 551, 5, [0.72, 0.58, 0.35]);
-    rectangle(48, 745, 235, 55, [1, 1, 1]);
-    border(48, 745, 235, 55, [0.72, 0.58, 0.35], 0.8);
-    commands.push('q 215 0 0 48 58 749 cm /Logo Do Q');
-    text('QUOTATION - ITEMS CONTINUED', 365, 770, 9, 'F2', [0.94, 0.88, 0.75]);
-    text(quoteNumber, 414, 752, 8, 'F1', [1, 1, 1]);
+    rectangle(22, 710, 551, 110, header);
+    rectangle(22, 790, 551, 30, accent);
+    rectangle(48, 738, 178, 48, [1, 1, 1]);
+    commands.push('q 160 0 0 37 57 744 cm /Logo Do Q');
+    text(`${documentTitle} - ITEMS CONTINUED`, 348, 770, 9, 'F2', [1, 1, 1]);
+    text(quoteNumber, 414, 752, 8, 'F1', [0.78, 0.85, 0.9]);
     const continuationTop = 650;
-    rectangle(48, continuationTop, 499, 27, [0.11, 0.21, 0.26]);
+    rectangle(48, continuationTop, 499, 27, header);
     text('DESCRIPTION', 61, continuationTop + 10, 8, 'F2', [1, 1, 1]);
     text('QTY', 341, continuationTop + 10, 8, 'F2', [1, 1, 1]);
     text('RATE', 396, continuationTop + 10, 8, 'F2', [1, 1, 1]);
@@ -256,15 +253,15 @@ export const downloadQuotationPdf = async ({
       text(pdfAmount(subtotal), 464, totalsTop, 10, 'F2');
       text(includeGst ? `GST (${gstPercentage}%)` : 'GST (not included)', totalX, totalsTop - 19, 10, 'F1', [0.37, 0.44, 0.53]);
       text(pdfAmount(tax), 464, totalsTop - 19, 10, 'F2');
-      rectangle(totalX - 12, totalsTop - 62, 217, 36, [0.22, 0.43, 0.42]);
-      border(totalX - 12, totalsTop - 62, 217, 36, [0.12, 0.29, 0.29], 1);
-      text('TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
+      rectangle(totalX - 12, totalsTop - 62, 217, 36, isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
+      border(totalX - 12, totalsTop - 62, 217, 36, header, 1);
+      text(isBill ? 'TOTAL DUE' : 'TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
       text(pdfAmount(total), 464, totalsTop - 48, 12, 'F2', [1, 1, 1]);
     } else {
       text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
     }
 
-    line(48, 78, 547, 78, [0.72, 0.58, 0.35]);
+    line(48, 78, 547, 78, accent);
     text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
     text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
     text(`Page ${pageIndex + 2} of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
