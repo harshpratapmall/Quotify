@@ -233,6 +233,12 @@ Saved quotations use the `Quotations` worksheet in the existing Quotely spreadsh
 
 The backend stores one quotation per row. `items_json` contains the complete editable quotation payload; the remaining columns make the sheet easy to review and filter. The Google service account configured by `GOOGLE_SERVICE_ACCOUNT_JSON` must be shared as an **Editor** on Quotely, and the Google Sheets API must be enabled for that service account's Google Cloud project.
 
+## Business Profiles
+
+Business profiles use the `BusinessProfiles` worksheet in the Quotely spreadsheet. Row 1 must retain these columns in order: `user_id`, `business_name`, `logo_url`, `phone`, `email`, `address`, `gstin`, `quote_prefix`, `terms`, `updated_at`.
+
+The backend stores one profile per authenticated user and updates that user's existing row. Business logos are stored as image data URLs in `logo_url`, so selecting a logo in the app does not trigger a separate upload request.
+
 ## Quotation Behavior
 
 - The active quotation draft lives in browser session storage.

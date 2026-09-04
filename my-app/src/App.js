@@ -16,7 +16,7 @@ import {
   saveQuotationRequest,
 } from './services/quotations';
 import { downloadQuotationPdf } from './utils/pdf';
-import { fetchBusinessProfile, saveBusinessProfile, uploadBusinessLogo } from './services/businessProfile';
+import { fetchBusinessProfile, saveBusinessProfile } from './services/businessProfile';
 import {
   buildQuotationPayload,
   calculateQuotationTotals,
@@ -380,7 +380,7 @@ function App() {
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
-  if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} uploadLogo={async (file) => { const { response, data } = await uploadBusinessLogo(file); return response.ok ? data : null; }} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
+  if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 
   return (
     <>
