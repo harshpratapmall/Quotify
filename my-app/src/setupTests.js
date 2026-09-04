@@ -8,3 +8,7 @@ jest.mock('@vercel/analytics', () => ({
   inject: jest.fn(),
   track: jest.fn(),
 }));
+
+jest.mock('@vercel/speed-insights', () => ({
+  injectSpeedInsights: jest.fn(),
+}));
