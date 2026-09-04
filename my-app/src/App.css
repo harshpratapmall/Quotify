@@ -38,6 +38,7 @@
 .admin-card { padding: 1.5rem; border: 1px solid #d8e1dc; border-radius: 16px; background: #fffdf8; }
 .admin-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 0.75rem; align-items: end; }
 .admin-form input { width: 100%; padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 10px; }
+.admin-search { width: 100%; margin: 0.5rem 0 1rem; padding: 0.8rem 0.9rem; border: 1px solid var(--border); border-radius: 10px; }
 .admin-user-list { display: grid; gap: 0.75rem; }
 .admin-user-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid #d8e1dc; border-radius: 10px; background: #fff; }
 .admin-user-row strong, .admin-user-row span { display: block; }

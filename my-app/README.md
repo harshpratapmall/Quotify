@@ -30,6 +30,7 @@ If `REACT_APP_ENV` is omitted, the app falls back to hostname-based environment 
 - Browser preview
 - Print export
 - Direct PDF generation in the browser
+- Admin-only user management with user search
 
 ## Important Files
 

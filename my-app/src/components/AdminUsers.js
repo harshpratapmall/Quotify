@@ -7,6 +7,7 @@ function AdminUsers({ navigate, currentUser }) {
   const [form, setForm] = useState({ username: '', displayName: '', password: '' });
   const [message, setMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const refreshUsers = useCallback(async () => {
     const nextUsers = await listUsers();
@@ -51,6 +52,10 @@ function AdminUsers({ navigate, currentUser }) {
     setMessage(response.ok ? 'Password reset.' : (data?.error || 'Unable to reset password.'));
   };
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const visibleUsers = users.filter((user) => [user.username, user.displayName, user.role, user.status]
+    .some((value) => value?.toLowerCase().includes(normalizedSearchTerm)));
+
   return (
     <main className="admin-page">
       <header className="admin-header">
@@ -68,8 +73,9 @@ function AdminUsers({ navigate, currentUser }) {
       </section>
       <section className="admin-card">
         <h2>Users</h2>
+        <input className="admin-search" aria-label="Search users" placeholder="Search by name, username, role, or status" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
         <div className="admin-user-list">
-          {users.map((user) => (
+          {visibleUsers.map((user) => (
             <article className="admin-user-row" key={user.id}>
               <div><strong>{user.displayName || user.username}</strong><span>{user.username} · {user.role} · {user.status}</span></div>
               <div className="saved-actions">
@@ -79,6 +85,7 @@ function AdminUsers({ navigate, currentUser }) {
             </article>
           ))}
         </div>
+        {visibleUsers.length === 0 && <p className="section-text">No users match your search.</p>}
         {message && <p className="save-status" role="status">{message}</p>}
       </section>
     </main>

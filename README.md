@@ -60,6 +60,7 @@ Key files:
 - Verifies active users against the `Users` worksheet using bcrypt password hashes.
 - Issues an HMAC-signed session cookie after successful login.
 - Allows cross-origin requests from approved frontend domains.
+- Provides an admin-only user management route for user creation, status changes, and password resets.
 
 Key files:
 
@@ -103,6 +104,10 @@ Key files:
 | `GET` | `/api/v1/quotations/:id` | Reads one saved quotation |
 | `PUT` | `/api/v1/quotations/:id` | Updates one saved quotation |
 | `DELETE` | `/api/v1/quotations/:id` | Deletes one saved quotation |
+| `GET` | `/api/v1/admin/users` | Lists users for administrators |
+| `POST` | `/api/v1/admin/users` | Creates a regular user for administrators |
+| `PATCH` | `/api/v1/admin/users/:id/status` | Activates or deactivates a user |
+| `POST` | `/api/v1/admin/users/:id/reset-password` | Resets a user password |
 
 ## Local Development
 
@@ -256,6 +261,7 @@ go test ./...
 
 - Authentication depends on Google Sheets availability.
 - Google Sheets remains a lightweight datastore; use a database when concurrency or volume grows.
+- The admin route is not shown to regular users, and every admin API request is enforced server-side by the signed session role.
 - There is no database or server-side quotation history.
 - The app currently focuses on authentication and quotation generation only.
 

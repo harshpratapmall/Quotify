@@ -43,6 +43,7 @@ function App() {
   const [activeQuotationId, setActiveQuotationId] = useState(draftState.activeQuotationId);
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
+  const authenticatedHome = currentUser?.role === 'admin' ? APP_ROUTES.adminUsers : APP_ROUTES.home;
 
   const { subtotal, gstPercentage, tax, total } = useMemo(
     () => calculateQuotationTotals(items, includeGst, gstRate),
@@ -253,13 +254,13 @@ function App() {
     }
 
     if (authStatus === 'authenticated' && pathname === APP_ROUTES.login) {
-      navigate(APP_ROUTES.home, true);
+      navigate(authenticatedHome, true);
     }
 
     if (authStatus === 'authenticated' && pathname === APP_ROUTES.adminUsers && currentUser?.role !== 'admin') {
       navigate(APP_ROUTES.home, true);
     }
-  }, [authStatus, currentUser, navigate, pathname]);
+  }, [authStatus, authenticatedHome, currentUser, navigate, pathname]);
 
   useEffect(() => {
     if (!authExpiresAt || authStatus !== 'authenticated') {
@@ -305,7 +306,7 @@ function App() {
       setAuthExpiresAt(data?.expiresAt ?? null);
       setAuthStatus('authenticated');
       trackAction(ANALYTICS_EVENTS.loginSucceeded);
-      navigate(APP_ROUTES.home, true);
+      navigate(data?.user?.role === 'admin' ? APP_ROUTES.adminUsers : APP_ROUTES.home, true);
     } catch {
       setLoginError('The login service is unavailable. Please try again shortly.');
       trackAction(ANALYTICS_EVENTS.loginFailed, { reason: 'unavailable' });

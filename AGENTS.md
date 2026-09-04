@@ -27,12 +27,13 @@ Primary business flow:
 - Browser preview
 - Client-side PDF generation
 - Google Sheets-backed saved quotation CRUD
+- Admin-only user management with user search, activation/deactivation, and password reset
 - Vercel Web Analytics through `@vercel/analytics`
 
-## What Does Not Exist
+## Current Limitations
 
-- User management UI
-- Password hashing layer in app code
+- No self-service registration or account recovery flow
+- Saved quotations and users are persisted in Google Sheets, not a database
 
 Saved quotations are persisted to Google Sheets, not a database.
 
@@ -41,7 +42,7 @@ Saved quotations are persisted to Google Sheets, not a database.
 ### `my-app/`
 
 - `src/App.js`: application state and orchestration for auth, quotation actions, and routing
-- `src/components/`: login, dashboard, quotation workspace, preview, and shared presentational components
+- `src/components/`: login, dashboard, admin user management, quotation workspace, preview, and shared presentational components
 - `src/config/`: API, route, and quotation defaults
 - `src/hooks/useAppRouter.js`: history-based client-side router
 - `src/services/`: centralized authenticated API requests
@@ -59,8 +60,9 @@ Saved quotations are persisted to Google Sheets, not a database.
 - `internal/routes/routes.go`: route registration and CORS middleware
 - `internal/handlers/auth.go`: login, health, me, logout, session cookie logic
 - `internal/handlers/ping.go`: simple ping endpoint
-- `internal/sheets/credentials.go`: Google service account auth and sheet lookup
+- `internal/handlers/admin_users.go`: administrator-only user management handlers
 - `internal/sheets/quotations.go`: quotation row serialization and Google Sheets CRUD
+- `internal/sheets/credentials.go`: user authentication and user-management sheet operations
 - `.env.example`: backend env reference
 
 ### Root
@@ -102,15 +104,17 @@ Saved quotations are persisted to Google Sheets, not a database.
 
 ## Important Behavior Invariants
 
-- Auth depends on the Google Sheet range containing username in column A and password in column B.
+- Auth depends on the `Users` worksheet range containing the user ID, username, bcrypt hash, role, and status columns.
 - `GOOGLE_SHEET_ID` is the spreadsheet ID, not the worksheet name.
-- `GOOGLE_SHEET_RANGE` defaults to `login!A:B` if unset.
+- `GOOGLE_SHEET_RANGE` defaults to `Users!A:G` if unset.
 - `GOOGLE_SERVICE_ACCOUNT_JSON` takes precedence over `GOOGLE_SERVICE_ACCOUNT_FILE` only when provided; otherwise the file is read.
 - The app uses a cookie named `quotify_session`.
 - Session tokens are HMAC-signed and expire after 1 hour.
 - New quotation dates are derived in the `Asia/Kolkata` business timezone at workspace creation.
 - The active quotation draft is stored in browser session storage.
 - Saved quotations use the `Quotations` worksheet, with the full editable form stored in `items_json`.
+- The `Users` worksheet stores user identity, bcrypt hash, role, status, and administrative password reference columns.
+- Only users with `role=admin` may access `/api/v1/admin/*`; regular users must be redirected away from `/admin/users`.
 - PDF generation is entirely client-side in `my-app/src/utils/pdf.js`.
 - Analytics events must not include credentials, client details, quotation content, or other personal data.
 
@@ -141,6 +145,12 @@ Saved quotations are persisted to Google Sheets, not a database.
 
 - Inspect `backend-go/internal/handlers/quotations.go` and `backend-go/internal/sheets/quotations.go`.
 - Preserve the `Quotations` sheet schema and `items_json` payload compatibility.
+
+### If asked to change user management
+
+- Inspect `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`, and `my-app/src/components/AdminUsers.js`.
+- Preserve server-side admin authorization; hiding the frontend route is not sufficient.
+- Keep the `Users` sheet columns aligned with `GOOGLE_SHEET_RANGE=Users!A:G` and do not expose password hashes in API responses.
 
 ## Safe Edit Guidance
 
