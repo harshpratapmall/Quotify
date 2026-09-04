@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { APP_ROUTES } from '../config/routes';
+import ActionIcon from './ActionIcon';
 import { createUser, listUsers, resetUserPassword, updateUserStatus } from '../services/admin';
 
-function AdminUsers({ navigate, currentUser }) {
+function AdminUsers({ navigate, currentUser, logout }) {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ username: '', displayName: '', password: '' });
   const [message, setMessage] = useState('');
@@ -60,7 +60,7 @@ function AdminUsers({ navigate, currentUser }) {
     <main className="admin-page">
       <header className="admin-header">
         <div><p className="eyebrow">Administration</p><h1>User management</h1><p>Signed in as {currentUser.displayName || currentUser.username}.</p></div>
-        <button type="button" className="logout-action" onClick={() => navigate(APP_ROUTES.home, true)}>Back to workspace</button>
+        <button type="button" className="logout-action" onClick={logout}><ActionIcon type="logout" /> Log out</button>
       </header>
       <section className="admin-card">
         <h2>Create user</h2>

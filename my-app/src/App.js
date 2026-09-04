@@ -374,7 +374,7 @@ function App() {
   }
 
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
-    return <AdminUsers navigate={navigate} currentUser={currentUser} />;
+    return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
 
   return (

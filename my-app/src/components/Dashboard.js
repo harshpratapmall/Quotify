@@ -24,7 +24,7 @@ function Dashboard({
         >
           <ActionIcon type="plus" /> Create New Quotation
         </button>
-        <button type="button" className="logout-action" onClick={logout}>Log out</button>
+        <button type="button" className="logout-action" onClick={logout}><ActionIcon type="logout" /> Log out</button>
       </header>
 
       <main className="page-content">
