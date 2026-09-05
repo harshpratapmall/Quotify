@@ -15,7 +15,13 @@ function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument
     <div className="app-shell workspace-shell">
       <header className="topbar">
         <div className="topbar-user">{user?.displayName || user?.username}</div>
-        <div className="topbar-brand"><img src={profile?.logoUrl || quotifyLogo} alt={profile?.logoUrl ? `${profile.businessName || 'Business'} logo` : 'Quotify'} /></div>
+        <div className="topbar-brand">
+          {profile?.logoUrl ? (
+            <img src={profile.logoUrl} alt={`${profile.businessName || 'Business'} logo`} />
+          ) : (
+            <img src={quotifyLogo} alt="Quotify" />
+          )}
+        </div>
         <div className="topbar-actions">
           <button type="button" className="topbar-icon-action" aria-label="Business profile" title="Business profile" onClick={() => navigate(APP_ROUTES.businessProfile)}><ActionIcon type="profile" /></button>
           {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action topbar-admin-action" onClick={() => navigate(APP_ROUTES.adminUsers)}>Manage users</button>}
