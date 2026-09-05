@@ -49,6 +49,8 @@ func SetupRouter() *gin.Engine {
 		v1.PUT("/bills/:id", handlers.UpdateBill)
 		v1.DELETE("/bills/:id", handlers.DeleteBill)
 		v1.PATCH("/bills/:id/status", handlers.UpdateBillStatus)
+		v1.POST("/bills/:id/share", handlers.CreateBillShare)
+		v1.DELETE("/bills/:id/share", handlers.RevokeBillShare)
 		v1.GET("/public/share/:token", handlers.GetPublicShare)
 		admin := v1.Group("/admin")
 		admin.Use(handlers.RequireAdmin)

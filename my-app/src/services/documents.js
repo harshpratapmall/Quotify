@@ -30,8 +30,10 @@ export const updateDocumentStatus = (type, id, payload) => requestJson(`${pathFo
   body: JSON.stringify(payload),
 });
 
-export const createQuotationShare = (id) => requestJson(`/api/v1/quotations/${id}/share`, { method: 'POST' });
+export const createDocumentShare = (type, id) => requestJson(`/api/v1/${type === 'bill' ? 'bills' : 'quotations'}/${id}/share`, { method: 'POST' });
 
 export const revokeQuotationShare = (id) => request(`/api/v1/quotations/${id}/share`, { method: 'DELETE' });
+
+export const revokeDocumentShare = (type, id) => request(`/api/v1/${type === 'bill' ? 'bills' : 'quotations'}/${id}/share`, { method: 'DELETE' });
 
 export const convertQuotationToBill = (id) => requestJson(`/api/v1/quotations/${id}/convert-to-bill`, { method: 'POST' });

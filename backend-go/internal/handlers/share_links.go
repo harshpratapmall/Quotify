@@ -40,6 +40,14 @@ func RevokeQuotationShare(c *gin.Context) {
 	revokeDocumentShare(c, "quotation")
 }
 
+func CreateBillShare(c *gin.Context) {
+	createDocumentShare(c, "bill")
+}
+
+func RevokeBillShare(c *gin.Context) {
+	revokeDocumentShare(c, "bill")
+}
+
 func createDocumentShare(c *gin.Context, documentType string) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
@@ -47,12 +55,22 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		return
 	}
 	documentID := c.Param("id")
-	quote, err := sheets.GetQuotation(c.Request.Context(), ownerID, documentID)
+	if documentType != "quotation" && documentType != "bill" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported document type."})
+		return
+	}
+	var document sheets.Bill
+	var err error
+	if documentType == "bill" {
+		document, err = sheets.GetBill(c.Request.Context(), ownerID, documentID)
+	} else {
+		document, err = sheets.GetQuotation(c.Request.Context(), ownerID, documentID)
+	}
 	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load document."})
 		return
 	}
-	if quote.ID == "" {
+	if document.ID == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Document not found."})
 		return
 	}
@@ -76,9 +94,14 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to save share link."})
 		return
 	}
-	quote.ShareLinkID = link.ID
-	quote.UpdatedAt = now
-	if err := sheets.UpdateQuotation(c.Request.Context(), quote); err != nil {
+	document.ShareLinkID = link.ID
+	document.UpdatedAt = now
+	if documentType == "bill" {
+		err = sheets.UpdateBill(c.Request.Context(), document)
+	} else {
+		err = sheets.UpdateQuotation(c.Request.Context(), document)
+	}
+	if err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to attach share link."})
 		return
 	}
@@ -118,11 +141,16 @@ func GetPublicShare(c *gin.Context) {
 		c.JSON(http.StatusGone, gin.H{"error": "This share link has expired or been revoked."})
 		return
 	}
-	if link.DocumentType != "quotation" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Shared quotation not found."})
+	if link.DocumentType != "quotation" && link.DocumentType != "bill" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Shared document not found."})
 		return
 	}
-	quote, err := sheets.GetQuotation(c.Request.Context(), link.OwnerID, link.DocumentID)
+	var quote sheets.Bill
+	if link.DocumentType == "bill" {
+		quote, err = sheets.GetBill(c.Request.Context(), link.OwnerID, link.DocumentID)
+	} else {
+		quote, err = sheets.GetQuotation(c.Request.Context(), link.OwnerID, link.DocumentID)
+	}
 	if err != nil || quote.ID == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Shared document not found."})
 		return

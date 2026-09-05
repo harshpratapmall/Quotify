@@ -59,7 +59,7 @@ function QuotationPreviewModal({
         <div className="preview-export-actions">
           <button type="button" className="secondary-action" onClick={() => saveQuotation('preview')}>{activeQuotationId ? `Update Saved ${copy.singular}` : `Save ${copy.singular}`}</button>
           <button type="button" className={documentType === DOCUMENT_TYPES.bill ? 'bill-primary-action' : 'primary-action'} onClick={() => downloadPdf('preview')}>Download as PDF</button>
-          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={createShare}>Create public link</button>}
+          {activeQuotationId && <button type="button" className="secondary-action" onClick={createShare}>Create public link</button>}
           {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={convertToBill}>Convert to bill</button>}
           <button type="button" className="secondary-action" onClick={() => { const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: documentType === DOCUMENT_TYPES.quotation ? shareUrl : '' }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }}>Draft WhatsApp message</button>
         </div>

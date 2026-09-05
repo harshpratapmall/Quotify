@@ -18,7 +18,7 @@ import {
   fetchDocumentById,
   listDocuments,
   saveDocumentRequest,
-  createQuotationShare,
+  createDocumentShare,
   convertQuotationToBill,
 } from './services/documents';
 import { downloadQuotationPdf } from './utils/pdf';
@@ -365,11 +365,11 @@ function App() {
   };
 
   const createShare = async () => {
-    if (!activeQuotationId || documentType !== DOCUMENT_TYPES.quotation) {
+    if (!activeQuotationId) {
       setSaveStatus('Save the quotation before creating a share link.');
       return;
     }
-    const { response, data } = await createQuotationShare(activeQuotationId);
+    const { response, data } = await createDocumentShare(documentType, activeQuotationId);
     if (!response.ok) {
       setSaveStatus(data?.error || 'Unable to create share link.');
       return;
