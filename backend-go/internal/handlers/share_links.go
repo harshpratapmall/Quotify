@@ -118,6 +118,10 @@ func GetPublicShare(c *gin.Context) {
 		c.JSON(http.StatusGone, gin.H{"error": "This share link has expired or been revoked."})
 		return
 	}
+	if link.DocumentType != "quotation" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Shared quotation not found."})
+		return
+	}
 	quote, err := sheets.GetQuotation(c.Request.Context(), link.OwnerID, link.DocumentID)
 	if err != nil || quote.ID == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Shared document not found."})

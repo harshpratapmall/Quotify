@@ -6,7 +6,10 @@ export const normalizeWhatsAppPhone = (value) => {
 
 export const buildWhatsAppUrl = ({ phone, businessName, documentType, total, shareUrl }) => {
   const normalizedPhone = normalizeWhatsAppPhone(phone);
-  if (!normalizedPhone || !shareUrl) return '';
-  const message = `Hello, ${businessName || 'your business'} has shared a ${documentType || 'document'} with you. Total: ${total}. View it here: ${shareUrl}`;
+  if (!normalizedPhone) return '';
+  const isBill = documentType === 'bill';
+  const message = isBill
+    ? `Hello, ${businessName || 'your business'} has prepared your bill. Total due: ${total}. I will send the PDF document here.`
+    : `Hello, ${businessName || 'your business'} has shared your quotation. Total estimate: ${total}.${shareUrl ? ` View it here: ${shareUrl}` : ''}`;
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 };

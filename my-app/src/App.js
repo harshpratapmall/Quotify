@@ -169,6 +169,7 @@ function App() {
     setGstRate(nextState.gstRate);
     setActiveQuotationId(saved.id);
     setDocumentType(type);
+    setActiveShareUrl('');
     setSaveStatus('');
     setPreviewOnly(preview);
     trackAction(ANALYTICS_EVENTS.quotationOpened, { mode: preview ? 'preview' : 'edit', documentType: type });
