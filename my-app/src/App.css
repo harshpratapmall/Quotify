@@ -280,16 +280,10 @@ textarea {
 
 .topbar-brand {
   box-sizing: border-box;
-  width: 170px;
-  height: 56px;
+  width: 160px;
+  height: 80px;
   display: grid;
   place-items: center;
-  padding: 0.25rem 0.55rem;
-  overflow: hidden;
-  border: 1px solid rgba(16, 37, 66, 0.1);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 22px rgba(16, 37, 66, 0.08);
 }
 
 .topbar-brand img {
