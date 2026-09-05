@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
 :root {
   --navy: #19334c;
@@ -30,7 +30,7 @@
 .secondary-action { padding: 0.65rem 0.85rem; border: 1px solid #bfd1cc; border-radius: 10px; color: var(--navy); background: #fff; cursor: pointer; }
 .secondary-action:hover { background: #eef7f4; }
 .secondary-action:disabled { cursor: not-allowed; opacity: 0.55; }
-.admin-page { min-height: 100vh; padding: clamp(1.5rem, 4vw, 3rem); background: #fffaf3; }
+.admin-page { min-height: 100vh; padding: clamp(1.5rem, 4vw, 3rem); background: linear-gradient(120deg, rgba(255, 250, 243, 0.9), rgba(237, 246, 243, 0.86)), url('./assets/interior-workspace-background.png') center / cover fixed; }
 .admin-header, .admin-card { width: min(100%, 1100px); margin: 0 auto 1.5rem; }
 .admin-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; }
 .admin-header h1, .admin-card h2 { margin: 0.2rem 0 0.5rem; color: var(--navy); }
@@ -383,7 +383,7 @@ textarea {
 
 .create-document-menu button:hover { background: #edf4f3; }
 
-.workspace-shell { background: #f9f5ec; }
+.workspace-shell { background: linear-gradient(120deg, rgba(249, 245, 236, 0.93), rgba(237, 246, 243, 0.84)), url('./assets/interior-workspace-background.png') center / cover fixed; }
 
 .dashboard-layout {
   display: grid;
@@ -446,7 +446,7 @@ textarea {
   padding: clamp(2rem, 5vw, 4.5rem);
   border-radius: 30px;
   color: #fff;
-  background: linear-gradient(135deg, #15333f 0%, #245a59 58%, #3e8177 100%);
+  background: linear-gradient(110deg, rgba(21, 51, 63, 0.96), rgba(36, 90, 89, 0.82)), url('./assets/interior-workspace-background.png') center 58% / cover;
   box-shadow: 0 24px 52px rgba(22, 62, 62, 0.22);
 }
 
@@ -519,7 +519,7 @@ textarea {
   padding: clamp(1.4rem, 4vw, 2.5rem);
   border: 1px solid rgba(16, 37, 66, 0.1);
   border-radius: 28px;
-  background: #fffdf9;
+  background: linear-gradient(120deg, rgba(255, 253, 249, 0.96), rgba(241, 248, 245, 0.92)), url('./assets/interior-workspace-background.png') right center / cover;
   box-shadow: 0 28px 70px rgba(8, 23, 43, 0.35);
 }
 
@@ -792,8 +792,8 @@ textarea {
   padding: clamp(0.75rem, 2vw, 1.5rem);
   overflow-y: auto;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 200, 87, 0.22), transparent 26%),
-    rgba(8, 23, 43, 0.68);
+    linear-gradient(120deg, rgba(8, 23, 43, 0.78), rgba(24, 72, 70, 0.62)),
+    url('./assets/interior-workspace-background.png') center / cover;
   backdrop-filter: blur(10px);
 }
 
@@ -806,8 +806,8 @@ textarea {
   padding: clamp(1.4rem, 3.5vw, 2.6rem);
   border: 1px solid rgba(255, 255, 255, 0.86);
   background:
-    linear-gradient(130deg, rgba(255, 255, 255, 0.97), rgba(246, 251, 255, 0.95)),
-    var(--white);
+    linear-gradient(120deg, rgba(255, 255, 255, 0.97), rgba(246, 251, 255, 0.91)),
+    url('./assets/interior-workspace-background.png') right center / cover;
   animation: workspace-arrival 0.32s ease-out both;
 }
 
@@ -1105,7 +1105,9 @@ textarea {
   place-items: center;
   padding: 1rem;
   overflow-y: auto;
-  background: rgba(8, 23, 43, 0.64);
+  background:
+    linear-gradient(120deg, rgba(8, 23, 43, 0.78), rgba(24, 72, 70, 0.58)),
+    url('./assets/interior-workspace-background.png') center / cover;
   backdrop-filter: blur(8px);
 }
 
@@ -1115,7 +1117,9 @@ textarea {
   overflow-y: auto;
   padding: clamp(1.2rem, 3vw, 2rem);
   border-radius: 28px;
-  background: #fffaf3;
+  background:
+    linear-gradient(120deg, rgba(255, 250, 243, 0.97), rgba(246, 251, 255, 0.93)),
+    url('./assets/interior-workspace-background.png') right center / cover;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.32);
 }
 
@@ -1448,3 +1452,13 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep the workspace confident but easier to scan. */
+body { font-size: 0.95rem; }
+h1, h2, h3, h4, .login-brand h1, .login-copy h2, .login-card h2, .hero-copy h2, .section-heading h3, .document-hero-card h2 { font-weight: 600; }
+.login-copy h2 { font-size: clamp(2rem, 3.6vw, 3.45rem); }
+.document-hero-card h2 { font-size: clamp(2rem, 4.2vw, 3.55rem); }
+.hero-copy h2 { font-size: clamp(1.9rem, 3.2vw, 3rem); }
+.topbar-user, .login-card label, .document-summary-card p, .proposal-panel h3, .quotation-form label, .primary-action, .secondary-action, .bill-primary-action, .google-login-action, .clean-slate-action, .add-item-action, .create-document-menu button { font-weight: 600; }
+.eyebrow, .sidebar-label, .document-summary-card button, .login-error { font-weight: 600; }
+.sidebar-link, .sidebar-create, .admin-user-row strong { font-weight: 600; }
