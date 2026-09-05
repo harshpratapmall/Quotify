@@ -130,7 +130,8 @@ func googleOAuthConfig() (*oauth2.Config, error) {
 	clientID := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
 	clientSecret := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"))
 	redirectURL := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_REDIRECT_URL"))
-	if clientID == "" || clientSecret == "" || redirectURL == "" {
+	frontend := strings.TrimSpace(os.Getenv("OAUTH_FRONTEND_URL"))
+	if clientID == "" || clientSecret == "" || redirectURL == "" || frontend == "" {
 		return nil, errors.New("Google OAuth environment is incomplete")
 	}
 	return &oauth2.Config{ClientID: clientID, ClientSecret: clientSecret, Endpoint: google.Endpoint, RedirectURL: redirectURL, Scopes: []string{oidc.ScopeOpenID, "email", "profile"}}, nil
@@ -222,9 +223,6 @@ func allowedGoogleEmail(email string) bool {
 
 func frontendURL() string {
 	value := strings.TrimSpace(os.Getenv("OAUTH_FRONTEND_URL"))
-	if value == "" {
-		return "http://localhost:3000/"
-	}
 	return value
 }
 
