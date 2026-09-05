@@ -40,6 +40,15 @@ In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/
 - `GET /api/v1/auth/google/start`
 - `GET /api/v1/auth/google/callback`
 - `GET /api/v1/auth/me`
+- `GET|POST /api/v1/clients`
+- `GET|PUT|PATCH /api/v1/clients/:id`
+- `GET|POST /api/v1/templates`
+- `PUT|DELETE /api/v1/templates/:id`
+- `PATCH /api/v1/quotations/:id/status`
+- `POST|DELETE /api/v1/quotations/:id/share`
+- `POST /api/v1/quotations/:id/convert-to-bill`
+- `PATCH /api/v1/bills/:id/status`
+- `GET /api/v1/public/share/:token`
 - `POST /api/v1/auth/logout`
 - `GET|PUT /api/v1/business-profile`
 - `GET|POST /api/v1/quotations`

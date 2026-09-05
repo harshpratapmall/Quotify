@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dashboard from './components/Dashboard';
 import AdminUsers from './components/AdminUsers';
+import Clients from './components/Clients';
+import PublicShare from './components/PublicShare';
+import Templates from './components/Templates';
 import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
@@ -15,6 +18,8 @@ import {
   fetchDocumentById,
   listDocuments,
   saveDocumentRequest,
+  createQuotationShare,
+  convertQuotationToBill,
 } from './services/documents';
 import { downloadQuotationPdf } from './utils/pdf';
 import { fetchBusinessProfile, saveBusinessProfile } from './services/businessProfile';
@@ -50,8 +55,10 @@ function App() {
   const [saveStatus, setSaveStatus] = useState('');
   const [previewOnly, setPreviewOnly] = useState(false);
   const [businessProfile, setBusinessProfile] = useState({});
+  const [activeShareUrl, setActiveShareUrl] = useState('');
   const authenticatedHome = isAdminUser(currentUser) ? APP_ROUTES.adminUsers : APP_ROUTES.home;
   const document = documentCopy(documentType);
+  const isPublicShare = pathname.startsWith('/share/');
 
   const { subtotal, gstPercentage, tax, total } = useMemo(
     () => calculateQuotationTotals(items, includeGst, gstRate),
@@ -94,6 +101,7 @@ function App() {
     setIncludeGst(true);
     setGstRate(defaultGstRate);
     setActiveQuotationId(null);
+    setActiveShareUrl('');
     setSaveStatus('');
     setPreviewOnly(false);
   }, []);
@@ -197,6 +205,9 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (isPublicShare) {
+      return undefined;
+    }
     fetchSession()
       .then(({ response, data }) => {
         if (!response.ok) {
@@ -213,7 +224,7 @@ function App() {
         setAuthStatus('unauthenticated');
         setAuthExpiresAt(null);
       });
-  }, []);
+  }, [isPublicShare]);
 
   useEffect(() => {
     if (authStatus !== 'authenticated' || !currentUser?.id) {
@@ -352,6 +363,39 @@ function App() {
     navigate(APP_ROUTES.login, true);
   };
 
+  const createShare = async () => {
+    if (!activeQuotationId || documentType !== DOCUMENT_TYPES.quotation) {
+      setSaveStatus('Save the quotation before creating a share link.');
+      return;
+    }
+    const { response, data } = await createQuotationShare(activeQuotationId);
+    if (!response.ok) {
+      setSaveStatus(data?.error || 'Unable to create share link.');
+      return;
+    }
+    setActiveShareUrl(data.url || '');
+    setSaveStatus('Share link ready.');
+  };
+
+  const convertCurrentQuotationToBill = async () => {
+    if (!activeQuotationId || documentType !== DOCUMENT_TYPES.quotation) return;
+    const { response, data } = await convertQuotationToBill(activeQuotationId);
+    if (!response.ok) {
+      setSaveStatus(data?.error || 'Unable to create bill.');
+      return;
+    }
+    const nextState = parseSavedQuotationPayload(data);
+    setQuotation(nextState.quotation);
+    setItems(nextState.items);
+    setIncludeGst(nextState.includeGst);
+    setGstRate(nextState.gstRate);
+    setActiveQuotationId(data.id);
+    setDocumentType(DOCUMENT_TYPES.bill);
+    setPreviewOnly(false);
+    setActiveShareUrl('');
+    navigate(APP_ROUTES.billNew, true);
+  };
+
   const generateQuotation = (event) => {
     event.preventDefault();
     const validationError = quotationValidationError();
@@ -396,6 +440,10 @@ function App() {
     }
   };
 
+  if (isPublicShare) {
+    return <PublicShare token={pathname.slice('/share/'.length)} />;
+  }
+
   if (authStatus === 'checking') {
     return null;
   }
@@ -406,6 +454,12 @@ function App() {
 
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
+  }
+  if (pathname === APP_ROUTES.clients) {
+    return <Clients navigate={navigate} />;
+  }
+  if (pathname === APP_ROUTES.templates) {
+    return <Templates navigate={navigate} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 
@@ -460,6 +514,9 @@ function App() {
         activeQuotationId={activeQuotationId}
         saveQuotation={saveQuotation}
         downloadPdf={handleDownloadPdf}
+        createShare={createShare}
+        shareUrl={activeShareUrl}
+        convertToBill={convertCurrentQuotationToBill}
         navigate={navigate}
         businessProfile={businessProfile}
       />

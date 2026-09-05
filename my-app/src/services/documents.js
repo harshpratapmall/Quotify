@@ -23,3 +23,15 @@ export const saveDocumentRequest = async (type, id, payload) => {
 };
 
 export const deleteDocumentRequest = (type, id) => request(pathFor(type, id), { method: 'DELETE' });
+
+export const updateDocumentStatus = (type, id, payload) => requestJson(`${pathFor(type, id)}/status`, {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+});
+
+export const createQuotationShare = (id) => requestJson(`/api/v1/quotations/${id}/share`, { method: 'POST' });
+
+export const revokeQuotationShare = (id) => request(`/api/v1/quotations/${id}/share`, { method: 'DELETE' });
+
+export const convertQuotationToBill = (id) => requestJson(`/api/v1/quotations/${id}/convert-to-bill`, { method: 'POST' });

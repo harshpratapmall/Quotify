@@ -3,6 +3,7 @@ import { APP_ROUTES } from '../config/routes';
 import { currency } from '../utils/formatters';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 function QuotationPreviewModal({
   pathname,
@@ -20,6 +21,9 @@ function QuotationPreviewModal({
   downloadPdf,
   navigate,
   businessProfile,
+  createShare,
+  shareUrl,
+  convertToBill,
 }) {
   if (pathname !== APP_ROUTES.quotationPreview && pathname !== APP_ROUTES.billPreview) {
     return null;
@@ -55,7 +59,11 @@ function QuotationPreviewModal({
         <div className="preview-export-actions">
           <button type="button" className="secondary-action" onClick={() => saveQuotation('preview')}>{activeQuotationId ? `Update Saved ${copy.singular}` : `Save ${copy.singular}`}</button>
           <button type="button" className={documentType === DOCUMENT_TYPES.bill ? 'bill-primary-action' : 'primary-action'} onClick={() => downloadPdf('preview')}>Download as PDF</button>
+          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={createShare}>Create public link</button>}
+          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={convertToBill}>Convert to bill</button>}
+          {documentType === DOCUMENT_TYPES.quotation && shareUrl && <button type="button" className="secondary-action" onClick={() => window.open(buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType: copy.singular.toLowerCase(), total, shareUrl }), '_blank', 'noopener,noreferrer')}>Draft WhatsApp message</button>}
         </div>
+        {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><button type="button" className="secondary-action" onClick={() => navigator.clipboard?.writeText(shareUrl)}>Copy link</button></div>}
       </section>
     </div>
   );

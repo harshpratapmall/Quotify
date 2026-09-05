@@ -9,4 +9,6 @@ export const APP_ROUTES = {
   bills: '/bills',
   adminUsers: '/admin/users',
   businessProfile: '/business-profile',
+  clients: '/clients',
+  templates: '/templates',
 };

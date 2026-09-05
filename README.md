@@ -20,6 +20,20 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/auth/google/callback` | Complete Google sign-in |
 | POST | `/api/v1/auth/logout` | Clear session |
 | GET | `/api/v1/auth/me` | Read current session |
+| GET | `/api/v1/clients` | List the current user's clients |
+| POST | `/api/v1/clients` | Create a client |
+| PUT | `/api/v1/clients/:id` | Update a client |
+| PATCH | `/api/v1/clients/:id/status` | Archive or restore a client |
+| GET | `/api/v1/templates` | List document templates |
+| POST | `/api/v1/templates` | Create a document template |
+| PUT | `/api/v1/templates/:id` | Update a document template |
+| DELETE | `/api/v1/templates/:id` | Delete a document template |
+| PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle status |
+| POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
+| DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
+| POST | `/api/v1/quotations/:id/convert-to-bill` | Create a bill from a quotation |
+| PATCH | `/api/v1/bills/:id/status` | Update bill or payment status |
+| GET | `/api/v1/public/share/:token` | Read a public quotation link |
 | GET | `/api/v1/business-profile` | Read the current user's business profile |
 | PUT | `/api/v1/business-profile` | Create or update the current user's business profile |
 | GET | `/api/v1/quotations` | List current owner's quotations |
@@ -70,6 +84,17 @@ items_json, subtotal, tax, total
 ```
 
 Bills use the same line-item payload and owner enforcement as quotations, while remaining in a separate worksheet and API collection.
+
+Phase 1 appends metadata after the existing A:Q columns:
+
+- `Quotations!R:X`: `status, client_id, share_link_id, viewed_at, sent_at, template_id, source_quotation_id`
+- `Bills!R:W`: `status, client_id, source_quotation_id, payment_status, due_date, template_id`
+
+The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
+The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
+The `Templates` tab uses: `template_id, owner_id, name, document_type, primary_color, secondary_color, accent_color, terms, footer, logo_url, is_default, created_at, updated_at, status`.
+
+Existing A:Q quotation and bill rows remain readable. Public quotation links are view-only, share tokens are stored as hashes, payment status is manually recorded, and WhatsApp sharing opens a prefilled browser draft without automated sending.
 
 The `BusinessProfiles` tab must keep row 1 in this order:
 

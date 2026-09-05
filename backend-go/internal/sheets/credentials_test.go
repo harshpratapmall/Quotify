@@ -18,3 +18,10 @@ func TestMatchesPasswordSupportsHashAndSheetFallback(t *testing.T) {
 		t.Fatal("sheet password fallback should match")
 	}
 }
+
+func TestClientRowParsingToleratesShortRows(t *testing.T) {
+	client := clientFromRow([]string{"CL-1", "usr-1", "Harsh"}, 2)
+	if client.ID != "CL-1" || client.OwnerID != "usr-1" || client.Name != "Harsh" || client.Status != "" || client.Row != 2 {
+		t.Fatalf("clientFromRow() = %#v", client)
+	}
+}

@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/share/:token",
+      "destination": "/index.html"
+    },
+    {
       "source": "/api/blob/upload",
       "destination": "/api/blob-upload"
     },

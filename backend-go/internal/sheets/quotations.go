@@ -14,31 +14,40 @@ import (
 	"time"
 )
 
-const quotationRange = "Quotations!A:Q"
+const quotationRange = "Quotations!A:X"
 
 type Quotation struct {
-	ID         string          `json:"id"`
-	CreatedAt  time.Time       `json:"createdAt"`
-	UpdatedAt  time.Time       `json:"updatedAt"`
-	Owner      string          `json:"owner"`
-	Client     string          `json:"clientName"`
-	Project    string          `json:"projectName"`
-	Phone      string          `json:"phone"`
-	Email      string          `json:"email"`
-	Location   string          `json:"siteLocation"`
-	QuoteDate  string          `json:"quoteDate"`
-	Scope      string          `json:"scopeOfWork"`
-	IncludeGST bool            `json:"includeGst"`
-	GSTRate    string          `json:"gstRate"`
-	Payload    json.RawMessage `json:"payload"`
-	Subtotal   float64         `json:"subtotal"`
-	Tax        float64         `json:"tax"`
-	Total      float64         `json:"total"`
-	Row        int             `json:"-"`
+	ID                string          `json:"id"`
+	CreatedAt         time.Time       `json:"createdAt"`
+	UpdatedAt         time.Time       `json:"updatedAt"`
+	Owner             string          `json:"owner"`
+	Client            string          `json:"clientName"`
+	Project           string          `json:"projectName"`
+	Phone             string          `json:"phone"`
+	Email             string          `json:"email"`
+	Location          string          `json:"siteLocation"`
+	QuoteDate         string          `json:"quoteDate"`
+	Scope             string          `json:"scopeOfWork"`
+	IncludeGST        bool            `json:"includeGst"`
+	GSTRate           string          `json:"gstRate"`
+	Payload           json.RawMessage `json:"payload"`
+	Subtotal          float64         `json:"subtotal"`
+	Tax               float64         `json:"tax"`
+	Total             float64         `json:"total"`
+	Status            string          `json:"status,omitempty"`
+	ClientID          string          `json:"clientId,omitempty"`
+	ShareLinkID       string          `json:"shareLinkId,omitempty"`
+	ViewedAt          string          `json:"viewedAt,omitempty"`
+	SentAt            string          `json:"sentAt,omitempty"`
+	TemplateID        string          `json:"templateId,omitempty"`
+	SourceQuotationID string          `json:"sourceQuotationId,omitempty"`
+	PaymentStatus     string          `json:"paymentStatus,omitempty"`
+	DueDate           string          `json:"dueDate,omitempty"`
+	Row               int             `json:"-"`
 }
 
 func ListQuotations(ctx context.Context, owner string) ([]Quotation, error) {
-	values, err := readValues(ctx, "Quotations!A2:Q")
+	values, err := readValues(ctx, "Quotations!A2:X")
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +82,7 @@ func SaveQuotation(ctx context.Context, quote Quotation) error {
 }
 
 func UpdateQuotation(ctx context.Context, quote Quotation) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Quotations!A%d:Q%d?valueInputOption=RAW", quote.Row, quote.Row), [][]string{toRow(quote)})
+	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Quotations!A%d:X%d?valueInputOption=RAW", quote.Row, quote.Row), [][]string{toRow(quote)})
 }
 
 func DeleteQuotation(ctx context.Context, row int) error {
@@ -227,9 +236,9 @@ func fromRow(row []string, rowNumber int) Quotation {
 	if !json.Valid(payload) {
 		payload = json.RawMessage("{}")
 	}
-	return Quotation{ID: get(0), CreatedAt: created, UpdatedAt: updated, Owner: get(3), Client: get(4), Project: get(5), Phone: get(6), Email: get(7), Location: get(8), QuoteDate: get(9), Scope: get(10), IncludeGST: include, GSTRate: get(12), Payload: payload, Subtotal: subtotal, Tax: tax, Total: total, Row: rowNumber}
+	return Quotation{ID: get(0), CreatedAt: created, UpdatedAt: updated, Owner: get(3), Client: get(4), Project: get(5), Phone: get(6), Email: get(7), Location: get(8), QuoteDate: get(9), Scope: get(10), IncludeGST: include, GSTRate: get(12), Payload: payload, Subtotal: subtotal, Tax: tax, Total: total, Status: get(17), ClientID: get(18), ShareLinkID: get(19), ViewedAt: get(20), SentAt: get(21), TemplateID: get(22), SourceQuotationID: get(23), Row: rowNumber}
 }
 
 func toRow(q Quotation) []string {
-	return []string{q.ID, q.CreatedAt.Format(time.RFC3339), q.UpdatedAt.Format(time.RFC3339), q.Owner, q.Client, q.Project, q.Phone, q.Email, q.Location, q.QuoteDate, q.Scope, strconv.FormatBool(q.IncludeGST), q.GSTRate, string(q.Payload), strconv.FormatFloat(q.Subtotal, 'f', 2, 64), strconv.FormatFloat(q.Tax, 'f', 2, 64), strconv.FormatFloat(q.Total, 'f', 2, 64)}
+	return []string{q.ID, q.CreatedAt.Format(time.RFC3339), q.UpdatedAt.Format(time.RFC3339), q.Owner, q.Client, q.Project, q.Phone, q.Email, q.Location, q.QuoteDate, q.Scope, strconv.FormatBool(q.IncludeGST), q.GSTRate, string(q.Payload), strconv.FormatFloat(q.Subtotal, 'f', 2, 64), strconv.FormatFloat(q.Tax, 'f', 2, 64), strconv.FormatFloat(q.Total, 'f', 2, 64), q.Status, q.ClientID, q.ShareLinkID, q.ViewedAt, q.SentAt, q.TemplateID, q.SourceQuotationID}
 }
