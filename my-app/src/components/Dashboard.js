@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ActionIcon from './ActionIcon';
 import quotifyLogo from '../assets/quotify-logo.svg';
 import { APP_ROUTES } from '../config/routes';
@@ -6,6 +6,32 @@ import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
 function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument, savedDocuments }) {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!createMenuOpen) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (!createMenuRef.current?.contains(event.target)) {
+        setCreateMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setCreateMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [createMenuOpen]);
+
   const launchDocument = (type, source) => {
     setCreateMenuOpen(false);
     startNewDocument(type, source);
@@ -25,8 +51,8 @@ function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument
         <div className="topbar-actions">
           <button type="button" className="topbar-icon-action" aria-label="Business profile" title="Business profile" onClick={() => navigate(APP_ROUTES.businessProfile)}><ActionIcon type="profile" /></button>
           {user?.role?.toLowerCase() === 'admin' && <button type="button" className="secondary-action topbar-admin-action" onClick={() => navigate(APP_ROUTES.adminUsers)}>Manage users</button>}
-          <div className="topbar-create-menu">
-            <button type="button" className="topbar-icon-action topbar-create-action" aria-label="Create document" title="Create document" aria-expanded={createMenuOpen} onClick={() => setCreateMenuOpen((open) => !open)}><ActionIcon type="plus" /></button>
+          <div className="topbar-create-menu" ref={createMenuRef}>
+            <button type="button" className="topbar-icon-action topbar-create-action" aria-label="Create document" title="Create document" aria-haspopup="menu" aria-expanded={createMenuOpen} onClick={() => setCreateMenuOpen((open) => !open)}><ActionIcon type="plus" /></button>
             {createMenuOpen && <div className="create-document-menu" role="menu"><button type="button" role="menuitem" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'create-menu')}><ActionIcon type="quotation" /> New quotation</button><button type="button" role="menuitem" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'create-menu')}><ActionIcon type="bill" /> New bill</button></div>}
           </div>
           <button type="button" className="topbar-icon-action topbar-logout-action" aria-label="Log out" title="Log out" onClick={logout}><ActionIcon type="logout" /></button>
