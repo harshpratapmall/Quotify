@@ -19,6 +19,8 @@ func SetupRouter() *gin.Engine {
 		v1.GET("/ping", handlers.Ping)
 		v1.GET("/auth/health", handlers.Health)
 		v1.POST("/auth/login", handlers.Login)
+		v1.GET("/auth/google/start", handlers.GoogleLoginStart)
+		v1.GET("/auth/google/callback", handlers.GoogleLoginCallback)
 		v1.POST("/auth/logout", handlers.Logout)
 		v1.GET("/auth/me", handlers.Me)
 		v1.GET("/business-profile", handlers.BusinessProfile)

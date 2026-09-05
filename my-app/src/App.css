@@ -243,6 +243,12 @@ textarea {
 
 .login-action { width: 100%; margin-top: 0.4rem; }
 
+.login-divider { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+.login-divider::before, .login-divider::after { flex: 1; height: 1px; background: var(--border); content: ''; }
+.google-login-action { width: 100%; padding: 0.9rem 1rem; border: 1px solid #b8c4d2; border-radius: 14px; color: var(--navy); background: #fff; cursor: pointer; font-weight: 800; }
+.google-login-action:hover { background: #f4f8fb; }
+.google-login-action:disabled { cursor: wait; opacity: 0.7; }
+
 .primary-action:disabled {
   cursor: wait;
   opacity: 0.7;

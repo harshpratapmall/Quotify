@@ -51,9 +51,11 @@ type User struct {
 
 type UserRecord struct {
 	User
-	PasswordHash string
-	Password     string
-	Row          int
+	PasswordHash  string
+	Password      string
+	GoogleSubject string
+	GoogleEmail   string
+	Row           int
 }
 
 var userMutationMu sync.Mutex
@@ -105,7 +107,7 @@ func matchesPassword(record UserRecord, password string) bool {
 }
 
 func ListUsers(ctx context.Context) ([]UserRecord, error) {
-	values, err := readValues(ctx, "Users!A2:H")
+	values, err := readValues(ctx, "Users!A2:J")
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +123,12 @@ func ListUsers(ctx context.Context) ([]UserRecord, error) {
 			return ""
 		}
 		users = append(users, UserRecord{
-			User:         User{ID: get(0), Username: get(1), DisplayName: get(3), Role: get(4), Status: get(5)},
-			PasswordHash: get(2),
-			Password:     get(7),
-			Row:          index + 2,
+			User:          User{ID: get(0), Username: get(1), DisplayName: get(3), Role: get(4), Status: get(5)},
+			PasswordHash:  get(2),
+			Password:      get(7),
+			GoogleSubject: get(8),
+			GoogleEmail:   get(9),
+			Row:           index + 2,
 		})
 	}
 	return users, nil
@@ -146,7 +150,7 @@ func CreateUser(ctx context.Context, user User, password string) error {
 	if err != nil {
 		return err
 	}
-	return writeValues(ctx, http.MethodPost, "Users!A:H:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, string(hash), user.DisplayName, "user", "active", time.Now().UTC().Format(time.RFC3339), password}})
+	return writeValues(ctx, http.MethodPost, "Users!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, string(hash), user.DisplayName, "user", "active", time.Now().UTC().Format(time.RFC3339), password, "", ""}})
 }
 
 func UpdateUserStatus(ctx context.Context, id, status string) (User, error) {
@@ -158,7 +162,7 @@ func UpdateUserStatus(ctx context.Context, id, status string) (User, error) {
 	}
 	for _, record := range users {
 		if record.ID == id {
-			return record.User, writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:H%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, record.PasswordHash, record.DisplayName, record.Role, status, time.Now().UTC().Format(time.RFC3339), record.Password}})
+			return record.User, writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, record.PasswordHash, record.DisplayName, record.Role, status, time.Now().UTC().Format(time.RFC3339), record.Password, record.GoogleSubject, record.GoogleEmail}})
 		}
 	}
 	return User{}, errors.New("user not found")
@@ -177,11 +181,73 @@ func ResetUserPassword(ctx context.Context, id, password string) (User, error) {
 	}
 	for _, record := range users {
 		if record.ID == id {
-			err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:H%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, string(hash), record.DisplayName, record.Role, "active", time.Now().UTC().Format(time.RFC3339), password}})
+			err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, string(hash), record.DisplayName, record.Role, "active", time.Now().UTC().Format(time.RFC3339), password, record.GoogleSubject, record.GoogleEmail}})
 			return record.User, err
 		}
 	}
 	return User{}, errors.New("user not found")
+}
+
+// ResolveGoogleUser links a verified Google identity to an existing user or creates
+// an active standard user while preserving the stable Quotify ID.
+func ResolveGoogleUser(ctx context.Context, subject, email, displayName string) (User, error) {
+	userMutationMu.Lock()
+	defer userMutationMu.Unlock()
+
+	users, err := ListUsers(ctx)
+	if err != nil {
+		return User{}, err
+	}
+	for _, record := range users {
+		if record.GoogleSubject == subject {
+			if !strings.EqualFold(record.Status, "active") {
+				return User{}, errors.New("Google user is inactive")
+			}
+			return record.User, nil
+		}
+	}
+
+	var match *UserRecord
+	for index := range users {
+		if strings.EqualFold(recordEmail(users[index]), email) {
+			if match != nil {
+				return User{}, errors.New("Google email matches multiple users")
+			}
+			match = &users[index]
+		}
+	}
+	if match != nil {
+		if !strings.EqualFold(match.Status, "active") {
+			return User{}, errors.New("Google user is inactive")
+		}
+		match.GoogleSubject = subject
+		match.GoogleEmail = email
+		if err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", match.Row, match.Row), [][]string{{match.ID, match.Username, match.PasswordHash, match.DisplayName, match.Role, match.Status, time.Now().UTC().Format(time.RFC3339), match.Password, subject, email}}); err != nil {
+			return User{}, err
+		}
+		return match.User, nil
+	}
+
+	user := User{ID: newUserID(), Username: email, DisplayName: displayName, Role: "user", Status: "active"}
+	if err := writeValues(ctx, http.MethodPost, "Users!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, "", user.DisplayName, user.Role, user.Status, time.Now().UTC().Format(time.RFC3339), "", subject, email}}); err != nil {
+		return User{}, err
+	}
+	return user, nil
+}
+
+func recordEmail(record UserRecord) string {
+	if record.GoogleEmail != "" {
+		return record.GoogleEmail
+	}
+	return record.Username
+}
+
+func newUserID() string {
+	bytes := make([]byte, 8)
+	if _, err := rand.Read(bytes); err != nil {
+		return fmt.Sprintf("usr_%d", time.Now().UnixNano())
+	}
+	return "usr_" + fmt.Sprintf("%x", bytes)
 }
 
 func loadServiceAccount() (serviceAccount, error) {

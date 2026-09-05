@@ -11,8 +11,18 @@ services:
       - key: GOOGLE_SHEET_ID
         sync: false
       - key: GOOGLE_SHEET_RANGE
-        value: Users!A:G
+        value: Users!A:J
       - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URL
+        value: https://quotify-net.vercel.app/api/v1/auth/google/callback
+      - key: OAUTH_FRONTEND_URL
+        value: https://quotify-net.vercel.app/
+      - key: GOOGLE_ALLOWED_DOMAINS
         sync: false
       - key: AUTH_SESSION_SECRET
         generateValue: true

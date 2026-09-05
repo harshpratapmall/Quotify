@@ -15,20 +15,28 @@ The default address is `http://localhost:8000`.
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
-GOOGLE_SHEET_RANGE=Users!A:G
+GOOGLE_SHEET_RANGE=Users!A:J
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=use-a-long-random-value
 COOKIE_SECURE=false
 CORS_ALLOWED_ORIGINS=http://localhost:3000
+GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_OAUTH_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8000/api/v1/auth/google/callback
+OAUTH_FRONTEND_URL=http://localhost:3000/
+# Optional: comma-separated Workspace domains
+GOOGLE_ALLOWED_DOMAINS=
 ```
 
-Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path when appropriate. Share the spreadsheet with the service account as an Editor. User records are read from `Users!A2:H`: bcrypt hashes are in column C and the legacy plaintext fallback is in column H. Quotation CRUD writes to `Quotations`; business profiles write to `BusinessProfiles`.
+Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path when appropriate. Share the spreadsheet with the service account as an Editor. User records are read from `Users!A2:J`: bcrypt hashes are in column C, the legacy plaintext fallback is in column H, and Google subject/email are in columns I/J. Quotation CRUD writes to `Quotations`; business profiles write to `BusinessProfiles`.
 
 ## Endpoints
 
 - `GET /api/v1/ping`
 - `GET /api/v1/auth/health`
 - `POST /api/v1/auth/login`
+- `GET /api/v1/auth/google/start`
+- `GET /api/v1/auth/google/callback`
 - `GET /api/v1/auth/me`
 - `POST /api/v1/auth/logout`
 - `GET|PUT /api/v1/business-profile`

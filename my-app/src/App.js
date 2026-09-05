@@ -9,7 +9,7 @@ import DocumentLibraryModal from './components/DocumentLibraryModal';
 import { createEmptyQuotation, defaultGstRate, lineItemTemplate } from './config/quotation';
 import { APP_ROUTES } from './config/routes';
 import { useAppRouter } from './hooks/useAppRouter';
-import { fetchSession, loginRequest, logoutRequest } from './services/auth';
+import { fetchSession, loginRequest, logoutRequest, startGoogleLogin } from './services/auth';
 import {
   deleteDocumentRequest,
   fetchDocumentById,
@@ -39,7 +39,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authExpiresAt, setAuthExpiresAt] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginError, setLoginError] = useState('');
+  const [loginError, setLoginError] = useState(() => new URLSearchParams(window.location.search).get('oauth_error') || '');
   const [items, setItems] = useState(draftState.items);
   const [includeGst, setIncludeGst] = useState(draftState.includeGst);
   const [gstRate, setGstRate] = useState(draftState.gstRate);
@@ -186,6 +186,15 @@ function App() {
       setSaveStatus(`Unable to delete ${copy.singular.toLowerCase()}. Please try again.`);
     }
   }, [activeQuotationId, clearQuotation, documentType]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('oauth_error')) {
+      params.delete('oauth_error');
+      const nextQuery = params.toString();
+      window.history.replaceState({}, '', `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSession()
@@ -392,7 +401,7 @@ function App() {
   }
 
   if (authStatus !== 'authenticated') {
-    return <LoginScreen onLogin={login} isLoggingIn={isLoggingIn} error={loginError} />;
+    return <LoginScreen onLogin={login} onGoogleLogin={startGoogleLogin} isLoggingIn={isLoggingIn} error={loginError} />;
   }
 
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {

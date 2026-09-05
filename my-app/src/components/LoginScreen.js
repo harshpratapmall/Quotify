@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import quotifyLogo from '../assets/quotify-logo.svg';
 
-function LoginScreen({ onLogin, isLoggingIn, error }) {
+function LoginScreen({ onLogin, onGoogleLogin, isLoggingIn, error }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -39,6 +39,8 @@ function LoginScreen({ onLogin, isLoggingIn, error }) {
           </label>
           {error && <p className="login-error" role="alert">{error}</p>}
           <button type="submit" className="primary-action login-action" disabled={isLoggingIn}>{isLoggingIn ? 'Signing in...' : 'Sign In'}</button>
+          <div className="login-divider" aria-hidden="true"><span>or</span></div>
+          <button type="button" className="google-login-action" onClick={onGoogleLogin} disabled={isLoggingIn}>Continue with Google</button>
         </form>
       </section>
     </main>
