@@ -30,6 +30,8 @@ GOOGLE_ALLOWED_DOMAINS=
 
 Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path when appropriate. Share the spreadsheet with the service account as an Editor. User records are read from `Users!A2:J`: bcrypt hashes are in column C, the legacy plaintext fallback is in column H, and Google subject/email are in columns I/J. Quotation CRUD writes to `Quotations`; business profiles write to `BusinessProfiles`.
 
+In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`. Register the Render callback URL in the Google Cloud OAuth client.
+
 ## Endpoints
 
 - `GET /api/v1/ping`

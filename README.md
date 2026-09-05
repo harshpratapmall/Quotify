@@ -6,35 +6,20 @@ Quotify is a quotation workspace for Door2Door Interiors. Users sign in with cre
 
 - `my-app/`: React 19 frontend; deploy from this directory to Vercel.
 - `backend-go/`: Go 1.22/Gin API; deploy from this directory to Render.
+- `render.yaml`: Render service definition.
+
+The frontend calls the Render API directly in production at `https://quotify-i62o.onrender.com` and sends requests with credentials. Vercel hosts the frontend and the Blob upload authorization function.
+
+## API
+
+| Method | Path | Purpose |
+| GET | `/api/v1/ping` | Uptime check |
+| GET | `/api/v1/auth/health` | Check auth configuration |
+| POST | `/api/v1/auth/login` | Validate credentials and start session |
 | GET | `/api/v1/auth/google/start` | Start Google sign-in |
 | GET | `/api/v1/auth/google/callback` | Complete Google sign-in |
-- `render.yaml`: Render service definition.
-User records are read from `Users!A2:J`; deployment configuration sets `GOOGLE_SHEET_RANGE=Users!A:J`:
-The frontend checks `GET /api/v1/auth/me`, sends API requests with cookies, and uses `my-app/vercel.json` to proxy production `/api/*` requests to Render.
-
-
-Add these columns after the existing columns:
-
-| I | J |
-| --- | --- |
-| google_subject | google_email |
-## API
-Google sign-in uses the verified, immutable Google subject in column I. A new verified Google account is automatically added as an active `user` with a generated Quotify ID and no password. Set `GOOGLE_ALLOWED_DOMAINS` to a comma-separated domain allowlist when access should be restricted.
-
-Google sign-in uses the verified, immutable Google subject in column I. A new verified Google account is automatically added as an active `user` with a generated Quotify ID and no password. Set `GOOGLE_ALLOWED_DOMAINS` to a comma-separated domain allowlist when access should be restricted.
-| Method | Path | Purpose |
-GOOGLE_SHEET_RANGE=Users!A:J
-| GET | `/api/v1/ping` | Uptime check |
-GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id
-GOOGLE_OAUTH_CLIENT_SECRET=your-google-oauth-client-secret
-GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8000/api/v1/auth/google/callback
-OAUTH_FRONTEND_URL=http://localhost:3000/
-GOOGLE_ALLOWED_DOMAINS=
-| GET | `/api/v1/auth/health` | Check auth configuration |
-
-Create a Google Cloud OAuth client of type Web application. Add `http://localhost:8000/api/v1/auth/google/callback` and `https://quotify-net.vercel.app/api/v1/auth/google/callback` as authorized redirect URIs. For production, set `GOOGLE_OAUTH_REDIRECT_URL` to the Vercel URL so the proxied callback sets the session cookie for the frontend origin.
-hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE=Users!A:J`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-net.vercel.app/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
 | POST | `/api/v1/auth/logout` | Clear session |
+| GET | `/api/v1/auth/me` | Read current session |
 | GET | `/api/v1/business-profile` | Read the current user's business profile |
 | PUT | `/api/v1/business-profile` | Create or update the current user's business profile |
 | GET | `/api/v1/quotations` | List current owner's quotations |
@@ -56,13 +41,15 @@ Quotation ownership is enforced by the backend from the signed session cookie; t
 
 ## Google Sheets
 
-Use one spreadsheet shared with the service account. User records are read from `Users!A2:H`; deployment configuration sets `GOOGLE_SHEET_RANGE=Users!A:G` for compatibility with the required user columns:
+Use one spreadsheet shared with the service account. User records are read from `Users!A2:J`; deployment configuration sets `GOOGLE_SHEET_RANGE=Users!A:J`:
 
-| A | B | C | D | E | F | G | H |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password |
+| A | B | C | D | E | F | G | H | I | J |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password | google_subject | google_email |
 
 Passwords are verified with the bcrypt hash in column C. Column H is a legacy plaintext compatibility fallback and must not be exposed by the API; remove it after all existing accounts have been migrated.
+
+Google sign-in uses the verified, immutable Google subject in column I. A new verified Google account is automatically added as an active `user` with a generated Quotify ID and no password. Set `GOOGLE_ALLOWED_DOMAINS` to a comma-separated domain allowlist when access should be restricted.
 
 The `Quotations` tab must keep row 1 in this order:
 
@@ -106,12 +93,17 @@ Create `backend-go/.env` from `backend-go/.env.example`:
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
-GOOGLE_SHEET_RANGE=Users!A:G
+GOOGLE_SHEET_RANGE=Users!A:J
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=replace-with-a-long-random-secret
 COOKIE_SECURE=false
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 AUTH_DEBUG=false
+GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_OAUTH_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8000/api/v1/auth/google/callback
+OAUTH_FRONTEND_URL=http://localhost:3000/
+GOOGLE_ALLOWED_DOMAINS=
 ```
 
 `GOOGLE_SHEET_ID` is the ID between `/d/` and `/edit` in the spreadsheet URL. Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Keep credentials out of source control.
@@ -127,7 +119,9 @@ The API runs on `http://localhost:8000`; the frontend runs on `http://localhost:
 
 ## Deployment
 
-Deploy `my-app/` to Vercel. Keep both its same-origin `/api/*` rewrite and the more-specific `/api/blob/upload` Vercel Function route in place. Connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
+Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE=Users!A:J`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
+
+Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://quotify-i62o.onrender.com/api/v1/auth/google/callback` as authorized redirect URIs in the Google Cloud OAuth client.
 
 ## Behavior Notes
 

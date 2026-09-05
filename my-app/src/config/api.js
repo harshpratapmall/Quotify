@@ -1,7 +1,7 @@
 const API_BASE_URLS = {
   local: 'http://localhost:8000',
   development: 'https://quotify-i62o.onrender.com',
-  production: '',
+  production: 'https://quotify-i62o.onrender.com',
 };
 
 const hostnameEnvironment = {

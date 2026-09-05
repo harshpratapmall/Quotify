@@ -41,7 +41,7 @@ Two-service quotation app for Door2Door Interiors:
 - Business logos accept JPEG, PNG, and WebP files up to 200 KB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
 - Preserve `credentials: 'include'` on frontend requests.
-- Production frontend calls `/api/*` through `my-app/vercel.json`; do not replace the same-origin rewrite without checking cookie behavior.
+- Production frontend API calls use `https://quotify-i62o.onrender.com` directly; preserve `credentials: 'include'` and Render CORS. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
 - Analytics must not include credentials, client data, or quotation content.
 
 ## Configuration
