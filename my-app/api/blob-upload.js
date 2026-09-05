@@ -1,7 +1,7 @@
 const { handleUpload } = require('@vercel/blob/client');
 
 const BUSINESS_API_URL = process.env.QUOTIFY_API_URL || 'https://quotify-i62o.onrender.com';
-const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
 async function currentUser(request) {
   const response = await fetch(`${BUSINESS_API_URL}/api/v1/auth/me`, {

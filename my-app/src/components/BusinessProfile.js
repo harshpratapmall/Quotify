@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { upload } from '@vercel/blob/client';
 
-const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
 const logoPath = (file) => {
   const extension = file.name.split('.').pop()?.toLowerCase() || 'image';
@@ -39,7 +39,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
 
     if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
       event.target.value = '';
-      setMessage('Logo must be 2 MB or smaller.');
+      setMessage('Logo must be 200 KB or smaller.');
       return;
     }
 
@@ -121,7 +121,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
             </label>
 
             <label>
-              Business logo
+              Business logo (JPEG, PNG, or WebP, up to 200 KB)
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"

@@ -71,12 +71,12 @@ describe('BusinessProfile', () => {
 
     fireEvent.change(screen.getByLabelText(/business logo/i), {
       target: {
-        files: [new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
+        files: [new File([new Uint8Array(200 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
       },
     });
 
     expect(
-      screen.getByText(/logo must be 2 MB or smaller/i)
+      screen.getByText(/logo must be 200 KB or smaller/i)
     ).toBeInTheDocument();
     expect(saveProfile).not.toHaveBeenCalled();
   });

@@ -43,7 +43,7 @@ If `REACT_APP_ENV` is omitted, the app falls back to hostname-based environment 
 
 ## Logo Uploads
 
-Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to confirm the signed session before an upload is authorized.
+Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. JPEG, PNG, and WebP files are limited to 200 KB, and uploaded logos are displayed inside a fixed topbar frame. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to confirm the signed session before an upload is authorized.
 
 ## Scripts
 

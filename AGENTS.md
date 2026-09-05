@@ -38,7 +38,7 @@ Two-service quotation app for Door2Door Interiors:
 - `items_json` contains the full editable quotation payload.
 - Bill rows use `Bills!A:Q`: `bill_id, created_at, updated_at, owner, client_name, project_name, phone, email, site_location, bill_date, billing_notes, include_gst, gst_rate, items_json, subtotal, tax, total`.
 - Business profile rows use `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`.
-- Business logos accept JPEG, PNG, and WebP files up to 2 MB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
+- Business logos accept JPEG, PNG, and WebP files up to 200 KB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
 - Preserve `credentials: 'include'` on frontend requests.
 - Production frontend calls `/api/*` through `my-app/vercel.json`; do not replace the same-origin rewrite without checking cookie behavior.

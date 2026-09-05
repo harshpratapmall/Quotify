@@ -78,7 +78,7 @@ Each user has one profile row. `logo_url` contains a public Vercel Blob URL, nev
 
 ## Business Logos
 
-Business logos are uploaded directly from the browser to Vercel Blob. The Vercel function at `/api/blob/upload` checks the existing signed session before issuing an upload token, permits JPEG, PNG, and WebP files up to 2 MB, and the profile save stores the returned public URL in `BusinessProfiles`.
+Business logos are uploaded directly from the browser to Vercel Blob. The Vercel function at `/api/blob/upload` checks the existing signed session before issuing an upload token, permits JPEG, PNG, and WebP files up to 200 KB, and the profile save stores the returned public URL in `BusinessProfiles`. The app displays every uploaded logo inside the same fixed-size topbar frame.
 
 Connect a public Vercel Blob store to the `my-app/` Vercel project. Vercel creates `BLOB_READ_WRITE_TOKEN` automatically. Set `QUOTIFY_API_URL` only if the upload authorization function must use a backend URL other than its current Render default.
 
