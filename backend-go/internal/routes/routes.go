@@ -2,6 +2,7 @@ package routes
 
 import (
 	"backend-go/internal/handlers"
+	"backend-go/internal/middleware"
 	"net/http"
 	"os"
 	"strings"
@@ -12,6 +13,7 @@ import (
 func SetupRouter() *gin.Engine {
 	router := gin.Default()
 	router.Use(cors())
+	router.Use(middleware.APILogger())
 
 	api := router.Group("/api")
 	v1 := api.Group("/v1")

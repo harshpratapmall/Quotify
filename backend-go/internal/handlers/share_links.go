@@ -29,6 +29,7 @@ type publicDocument struct {
 	Tax          float64                `json:"tax"`
 	Total        float64                `json:"total"`
 	Business     sheets.BusinessProfile `json:"business"`
+	Username     string                 `json:"username"`
 	ExpiresAt    string                 `json:"expiresAt"`
 }
 
@@ -161,7 +162,7 @@ func GetPublicShare(c *gin.Context) {
 		return
 	}
 	_ = sheets.RecordShareView(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339))
-	c.JSON(http.StatusOK, publicDocument{ID: quote.ID, DocumentType: link.DocumentType, ClientName: quote.Client, ProjectName: quote.Project, Phone: quote.Phone, Email: quote.Email, Location: quote.Location, Date: quote.QuoteDate, Scope: quote.Scope, IncludeGST: quote.IncludeGST, GSTRate: quote.GSTRate, Payload: quote.Payload, Subtotal: quote.Subtotal, Tax: quote.Tax, Total: quote.Total, Business: profile, ExpiresAt: link.ExpiresAt})
+	c.JSON(http.StatusOK, publicDocument{ID: quote.ID, DocumentType: link.DocumentType, ClientName: quote.Client, ProjectName: quote.Project, Phone: quote.Phone, Email: quote.Email, Location: quote.Location, Date: quote.QuoteDate, Scope: quote.Scope, IncludeGST: quote.IncludeGST, GSTRate: quote.GSTRate, Payload: quote.Payload, Subtotal: quote.Subtotal, Tax: quote.Tax, Total: quote.Total, Business: profile, Username: link.OwnerID, ExpiresAt: link.ExpiresAt})
 }
 
 func shareURL(token string) string {

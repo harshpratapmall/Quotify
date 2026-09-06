@@ -10,11 +10,13 @@ export const documentCopy = (type) => type === DOCUMENT_TYPES.bill ? {
   noteLabel: 'Billing Notes',
   notePlaceholder: 'Add payment terms, completed work, or billing details.',
   totalLabel: 'Total Due',
+  projectLabel: 'Job/Work Name',
 } : {
   singular: 'Quotation',
   plural: 'Quotations',
   dateLabel: 'Quote Date',
-  noteLabel: 'Scope of Work',
-  notePlaceholder: 'Describe rooms, finishes, materials, and installation details.',
+  noteLabel: 'Additional Notes',
+  notePlaceholder: 'Add any additional notes or details.',
   totalLabel: 'Total Estimate',
+  projectLabel: 'Project Name',
 };

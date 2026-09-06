@@ -38,6 +38,7 @@ function QuotationWorkspaceModal({
   }
 
   const copy = documentCopy(documentType);
+  const isBill = documentType === DOCUMENT_TYPES.bill;
 
   const closeWorkspace = (source) => {
     trackAction(ANALYTICS_EVENTS.workspaceClosed, { source, documentType });
@@ -86,8 +87,8 @@ function QuotationWorkspaceModal({
               <input type="text" value={quotation.clientName} onChange={(event) => handleQuotationChange('clientName', event.target.value)} placeholder="Enter client name" />
             </label>
             <label>
-              Project Name
-              <input type="text" value={quotation.projectName} onChange={(event) => handleQuotationChange('projectName', event.target.value)} placeholder="3BHK Interior Package" />
+              {copy.projectLabel}
+              <input type="text" value={quotation.projectName} onChange={(event) => handleQuotationChange('projectName', event.target.value)} placeholder={isBill ? 'Completed work or job reference' : '3BHK Interior Package'} />
             </label>
             <label>
               Phone Number
@@ -106,16 +107,6 @@ function QuotationWorkspaceModal({
               <input type="date" value={quotation.quoteDate} onChange={(event) => handleQuotationChange('quoteDate', event.target.value)} />
             </label>
           </div>
-
-          <label className="full-width">
-            {copy.noteLabel}
-            <textarea
-              rows="4"
-              value={quotation.scopeOfWork}
-              onChange={(event) => handleQuotationChange('scopeOfWork', event.target.value)}
-              placeholder={copy.notePlaceholder}
-            />
-          </label>
 
           <div className="line-items">
             <div className="line-items-header">

@@ -9,24 +9,6 @@ const pdfText = (value) =>
     .replace(/\)/g, '\\)')
     .replace(/[^\x20-\x7E]/g, '');
 
-const wrapText = (value, maxLength = 82) => {
-  const words = String(value || '').split(/\s+/).filter(Boolean);
-  const lines = [];
-  let line = '';
-
-  words.forEach((word) => {
-    const nextLine = line ? `${line} ${word}` : word;
-    if (nextLine.length > maxLength && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = nextLine;
-    }
-  });
-
-  return lines.length || line ? [...lines, line] : ['Not provided'];
-};
-
 const loadLogoForPdf = (source) =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -84,6 +66,7 @@ export const downloadQuotationPdf = async ({
   logoSource,
   businessProfile = {},
   documentType = 'quotation',
+  username = '',
 }) => {
   const logo = await loadPdfLogo(logoSource);
   const isBill = documentType === 'bill';
@@ -125,7 +108,13 @@ export const downloadQuotationPdf = async ({
   const today = getTodayDate();
   const quoteSuffix = activeQuotationId ? activeQuotationId.slice(-6).toUpperCase() : 'DRAFT';
   const quoteNumber = `${isBill ? 'BILL' : businessProfile.quotePrefix || 'QUOTE'}-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
-  const hasScope = quotation.scopeOfWork.trim().length > 0;
+
+  // Generate filename in format: Quotation-Username-DDMonth / Bill-Username-DDMonth
+  const dateObj = new Date(quotation.quoteDate || today);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const ddMonth = `${String(dateObj.getDate()).padStart(2, '0')}${months[dateObj.getMonth()]}`;
+  const displayName = username || businessProfile.businessName || 'User';
+  const filename = `${isBill ? 'Bill' : 'Quotation'}-${displayName}-${ddMonth}.pdf`;
 
   rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
   rectangle(22, 22, 551, 798, [1, 1, 1]);
@@ -147,21 +136,10 @@ export const downloadQuotationPdf = async ({
   text(shortText(quotation.phone || quotation.email || 'Mobile number to be added', 30), 66, 641, 8, 'F1', [0.37, 0.44, 0.53]);
   text('ADDRESS', 248, 669, 7, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
   text(shortText(quotation.siteLocation || 'Site location to be added', 28), 248, 652, 9, 'F1', [0.19, 0.28, 0.31]);
-  text('PROJECT', 408, 669, 7, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
-  text(shortText(quotation.projectName || 'Interior Project', 22), 408, 652, 9, 'F1', [0.19, 0.28, 0.31]);
+  text(isBill ? 'JOB/WORK' : 'PROJECT', 408, 669, 7, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
+  text(shortText(quotation.projectName || (isBill ? 'Job/Work name to be added' : 'Interior Project'), 22), 408, 652, 9, 'F1', [0.19, 0.28, 0.31]);
 
-  if (hasScope) {
-    rectangle(48, 579, 499, 42, [0.98, 0.99, 0.98]);
-    border(48, 579, 499, 42, [0.72, 0.8, 0.77]);
-    rectangle(48, 579, 5, 42, isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
-    text(isBill ? 'BILLING NOTES' : 'SCOPE OF WORK', 65, 604, 8, 'F2', isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42]);
-    const scopeLines = wrapText(quotation.scopeOfWork, 88).slice(0, 2);
-    scopeLines.forEach((scopeLine, index) => {
-      text(scopeLine, 65, 591 - index * 10, 8, 'F1', [0.37, 0.44, 0.53]);
-    });
-  }
-
-  const tableTop = hasScope ? 538 : 591;
+  const tableTop = 591;
   rectangle(48, tableTop, 499, 27, header);
   text('DESCRIPTION', 61, tableTop + 10, 8, 'F2', [1, 1, 1]);
   text('QTY', 341, tableTop + 10, 8, 'F2', [1, 1, 1]);
@@ -317,7 +295,7 @@ export const downloadQuotationPdf = async ({
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${businessProfile.quotePrefix || 'Quotation'}-${quotation.clientName || 'Draft'}.pdf`;
+  link.download = filename;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 100);
 };

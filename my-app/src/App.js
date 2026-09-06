@@ -3,7 +3,6 @@ import Dashboard from './components/Dashboard';
 import AdminUsers from './components/AdminUsers';
 import Clients from './components/Clients';
 import PublicShare from './components/PublicShare';
-import Templates from './components/Templates';
 import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
 import QuotationPreviewModal from './components/QuotationPreviewModal';
@@ -434,6 +433,7 @@ function App() {
         logoSource: businessProfile.logoUrl,
         businessProfile,
         documentType,
+        username: currentUser?.username || '',
       });
       trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source, documentType });
     } catch (error) {
@@ -459,9 +459,6 @@ function App() {
   }
   if (pathname === APP_ROUTES.clients) {
     return <Clients navigate={navigate} />;
-  }
-  if (pathname === APP_ROUTES.templates) {
-    return <Templates navigate={navigate} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 

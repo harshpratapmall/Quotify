@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"backend-go/internal/sheets"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -92,7 +93,11 @@ func authenticatedUser(c *gin.Context) (sheets.User, int64, bool) {
 	if err != nil {
 		return sheets.User{}, 0, false
 	}
-	return readToken(cookie)
+	user, expiresAt, valid := readToken(cookie)
+	if valid {
+		c.Set("username", user.Username)
+	}
+	return user, expiresAt, valid
 }
 
 func Logout(c *gin.Context) {

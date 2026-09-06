@@ -1,3 +1,4 @@
 .cache/
 .env
 service-account.json
+.exe
