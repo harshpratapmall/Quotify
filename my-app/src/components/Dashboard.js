@@ -66,7 +66,6 @@ function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument
           <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.quotations ? 'active' : ''}`} onClick={() => navigate(APP_ROUTES.quotations)}><ActionIcon type="quotation" /> Quotations</button>
           <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.bills ? 'active bill-active' : ''}`} onClick={() => navigate(APP_ROUTES.bills)}><ActionIcon type="bill" /> Bills</button>
           <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.clients ? 'active' : ''}`} onClick={() => navigate(APP_ROUTES.clients)}><ActionIcon type="profile" /> Clients</button>
-          <button type="button" className={`sidebar-link ${pathname === APP_ROUTES.templates ? 'active' : ''}`} onClick={() => navigate(APP_ROUTES.templates)}><ActionIcon type="library" /> Templates</button>
           <div className="sidebar-divider" />
           <p className="sidebar-label">Create</p>
           <button type="button" className="sidebar-create quotation-create" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'sidebar')}><ActionIcon type="plus" /> New quotation</button>

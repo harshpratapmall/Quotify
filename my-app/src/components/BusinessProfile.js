@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import ActionIcon from './ActionIcon';
-import Templates from './Templates';
 
 const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
@@ -14,7 +13,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isPreparingLogo, setIsPreparingLogo] = useState(false);
   const [message, setMessage] = useState('');
-  const [showTemplates, setShowTemplates] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const change = (field, value) =>
@@ -76,9 +74,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
             <h3>Make every quotation yours</h3>
           </div>
           <div className="header-actions">
-            <button className="icon-button" type="button" onClick={() => setShowTemplates(true)} aria-label="Manage templates">
-              <ActionIcon type="library" />
-            </button>
             <button className="icon-button" type="button" onClick={() => navigate('/')} aria-label="Back to overview">
               <ActionIcon type="back" />
             </button>
@@ -209,20 +204,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
           </form>
         )}
       </section>
-
-      {showTemplates && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowTemplates(false)}>
-          <section className="modal-content" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Templates</h3>
-              <button className="icon-button" onClick={() => setShowTemplates(false)} aria-label="Close templates">
-                <ActionIcon type="delete" />
-              </button>
-            </div>
-            <Templates navigate={() => {}} isPopup={true} onClose={() => setShowTemplates(false)} />
-          </section>
-        </div>
-      )}
     </main>
   );
 }
