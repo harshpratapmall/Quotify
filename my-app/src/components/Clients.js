@@ -77,8 +77,8 @@ function Clients({ navigate }) {
           <p>Keep client details ready for every quotation and bill.</p>
         </div>
         <div className="header-actions">
-          <button type="button" className="primary-action" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }}>
-            <ActionIcon type="plus" /> Add Client
+          <button type="button" className="icon-button" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} aria-label="Add client">
+            <ActionIcon type="plus" />
           </button>
           <button type="button" className="icon-button" onClick={() => navigate('/')} aria-label="Back to overview">
             <ActionIcon type="back" />
@@ -119,12 +119,13 @@ function Clients({ navigate }) {
 
       {showAddClient && (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => resetForm()}>
-          <section className="modal-content" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingId ? 'Edit client' : 'Add a client'}</h3>
-              <button className="icon-button" onClick={resetForm} aria-label="Close client form">
-                <ActionIcon type="delete" />
-              </button>
+          <section className="modal-content admin-card" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Client record</p>
+                <h2>{editingId ? 'Edit client' : 'Add a client'}</h2>
+              </div>
+              {editingId && <button type="button" className="secondary-action" onClick={resetForm}>Cancel</button>}
             </div>
             <form className="client-form" onSubmit={submit}>
               <label>Name<input value={form.name} onChange={(event) => change('name', event.target.value)} required /></label>

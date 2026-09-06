@@ -96,8 +96,14 @@ func authenticatedUser(c *gin.Context) (sheets.User, int64, bool) {
 	user, expiresAt, valid := readToken(cookie)
 	if valid {
 		c.Set("username", user.Username)
+		c.Set("user_id", user.ID)
 	}
 	return user, expiresAt, valid
+}
+
+// AuthenticatedUser exported for use in middleware
+func AuthenticatedUser(c *gin.Context) (sheets.User, int64, bool) {
+	return authenticatedUser(c)
 }
 
 func Logout(c *gin.Context) {

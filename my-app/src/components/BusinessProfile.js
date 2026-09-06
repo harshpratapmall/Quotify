@@ -68,8 +68,8 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
   };
 
   return (
-    <main className="page-content">
-      <section className="form-card">
+    <main className="admin-page business-profile-page">
+      <section className="form-card business-profile-card">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Business profile</p>
@@ -113,7 +113,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
               </div>
             </div>
 
-            <button className="primary-action" type="button" onClick={() => setIsEditing(true)}>
+            <button className="primary-action" type="button" onClick={() => setIsEditing(true)} style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.3)', color: 'var(--white)' }}>
               <ActionIcon type="edit" /> Edit Profile
             </button>
           </div>
@@ -219,7 +219,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                 <ActionIcon type="delete" />
               </button>
             </div>
-            <Templates navigate={() => {}} isPopup={true} />
+            <Templates navigate={() => {}} isPopup={true} onClose={() => setShowTemplates(false)} />
           </section>
         </div>
       )}
