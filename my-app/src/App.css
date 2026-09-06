@@ -1382,26 +1382,24 @@ textarea {
 .share-link-result { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.8rem; padding: 0.7rem 0.85rem; border: 1px solid rgba(60, 118, 109, 0.22); border-radius: 12px; color: var(--muted); background: rgba(237, 247, 243, 0.78); font-size: 0.82rem; overflow-wrap: anywhere; }
 .share-link-result span { flex: 1; }
 .share-link-result .secondary-action { flex: 0 0 auto; padding: 0.55rem 0.8rem; }
-.public-share-page { min-height: 100vh; padding: clamp(1.5rem, 4vw, 3rem); background: linear-gradient(120deg, rgba(255, 250, 243, 0.9), rgba(237, 246, 243, 0.86)), url('./assets/interior-workspace-background.png') center / cover fixed; display: flex; align-items: center; justify-content: center; }
-.public-share-card { width: min(100%, 1100px); margin: 0 auto; background: #fffdf8; border: 1px solid #d8e1dc; border-radius: 16px; padding: 2rem; }
-.public-share-state { min-height: 260px; display: grid; place-content: center; gap: 0.7rem; padding: 2rem; text-align: center; overflow-wrap: anywhere; background: #fffdf8; border: 1px solid #d8e1dc; border-radius: 16px; }
+.public-share-page { min-height: 100vh; padding: clamp(1rem, 4vw, 4rem); background: linear-gradient(120deg, rgba(249, 245, 236, 0.9), rgba(237, 246, 243, 0.84)), url('./assets/interior-workspace-background.png') center / cover fixed; }
+.public-share-card { width: min(900px, 100%); margin: 0 auto; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 26px; background: rgba(255, 253, 249, 0.94); box-shadow: var(--shadow); }
+.public-share-state { min-height: 260px; display: grid; place-content: center; gap: 0.7rem; padding: 2rem; text-align: center; overflow-wrap: anywhere; }
 .public-share-state h1, .public-share-state p { max-width: 100%; margin: 0; overflow-wrap: anywhere; }
-.public-share-state h1 { color: var(--navy); }
-.public-share-state p { color: var(--muted); }
-.public-share-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem; border-bottom: 1px solid #d8e1dc; margin-bottom: 1.5rem; }
-.public-share-header > div { display: flex; align-items: center; gap: 1rem; }
+.public-share-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: clamp(1.4rem, 4vw, 2.5rem); color: var(--white); background: linear-gradient(110deg, rgba(21, 51, 63, 0.96), rgba(36, 90, 89, 0.84)), url('./assets/interior-workspace-background.png') center / cover; }
+.public-share-header > div { display: flex; align-items: center; gap: 0.8rem; }
 .public-share-header img { width: 64px; height: 48px; object-fit: contain; border-radius: 8px; background: #fff; }
-.public-share-header h1 { margin: 0; color: var(--navy); font-size: 1.5rem; font-weight: 600; }
-.public-share-header .document-number { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.85rem; }
-.public-share-header .eyebrow { margin-bottom: 0.2rem; color: var(--teal); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.public-share-header span { color: var(--muted); font-size: 0.9rem; }
-.public-share-client { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; padding: 1.5rem; border-bottom: 1px solid #d8e1dc; margin-bottom: 1.5rem; }
+.public-share-header h1 { margin: 0; color: var(--white); font-size: clamp(1.35rem, 3vw, 2rem); font-weight: 600; }
+.public-share-header .eyebrow { margin-bottom: 0.2rem; color: #edcf8a; }
+.public-share-client { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; padding: 1.5rem; border-bottom: 1px solid var(--border); }
 .public-share-client div { display: grid; gap: 0.25rem; }
 .public-share-client small { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .public-share-client strong { color: var(--navy); font-size: 1.05rem; font-weight: 600; }
-.public-share-client span, .public-share-footer { color: var(--muted); }
-.public-share-items { margin: 1.5rem; border: 1px solid #d8e1dc; border-radius: 12px; overflow: hidden; }
-.public-share-item { display: grid; grid-template-columns: minmax(0, 2fr) auto auto auto; gap: 1rem; padding: 0.9rem 1rem; border-top: 1px solid #d8e1dc; color: var(--text); font-size: 0.9rem; }
+.public-share-client span, .public-share-scope, .public-share-footer { color: var(--muted); }
+.public-share-scope { margin: 0; padding: 1.5rem 1.5rem 0; line-height: 1.6; white-space: pre-wrap; }
+.public-share-scope { margin: 0; padding: 1.5rem 1.5rem 0; line-height: 1.6; white-space: pre-wrap; }
+.public-share-items { margin: 1.5rem; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.public-share-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 1rem; padding: 0.9rem 1rem; border-top: 1px solid var(--border); color: var(--text); font-size: 0.9rem; }
 .public-share-item:first-child { border-top: 0; }
 .public-share-item strong { color: var(--navy); font-weight: 600; }
 .public-share-item-heading { border-top: 0; color: var(--muted); background: #f4f8f5; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -1411,16 +1409,14 @@ textarea {
 .public-share-total strong { color: var(--navy); font-weight: 600; }
 .public-share-total .grand-total { padding: 0.85rem 1rem; border-radius: 10px; color: var(--white); background: linear-gradient(135deg, var(--coral), #ee8c42); }
 .public-share-total .grand-total strong { color: var(--white); }
-.public-share-footer { margin: 0; padding: 1.5rem; border-top: 1px solid #d8e1dc; text-align: center; color: var(--muted); font-size: 0.9rem; }
+.public-share-footer { margin: 0; padding: 1rem 1.5rem; border-top: 1px solid var(--border); font-size: 0.82rem; text-align: center; }
 @media (max-width: 640px) {
   .public-share-page { padding: 0.6rem; }
-  .public-share-card { border-radius: 18px; padding: 1.5rem; }
-  .public-share-header { padding: 1.2rem; }
+  .public-share-card { border-radius: 18px; }
+  .public-share-header { align-items: flex-start; flex-direction: column; padding: 1.2rem; }
   .public-share-client { grid-template-columns: 1fr; padding: 1.2rem; }
+  .public-share-scope { padding: 1.2rem 1.2rem 0; }
   .public-share-item { grid-template-columns: minmax(0, 1fr) auto auto; }
-  .public-share-item-heading span:first-child { grid-column: 1 / -1; }
-  .public-share-item-heading span:last-child { text-align: right; }
-
   .public-share-items { margin: 1.2rem; }
   .public-share-item { grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; padding: 0.75rem; }
   .public-share-item span:first-child { grid-column: 1 / -1; }

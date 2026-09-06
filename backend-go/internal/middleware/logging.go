@@ -57,7 +57,12 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Try to authenticate, but don't block if it fails
 		user, _, valid := handlers.AuthenticatedUser(c)
 		if valid {
-			c.Set("username", user.Username)
+			// Prefer display name over username
+			displayName := user.DisplayName
+			if displayName == "" {
+				displayName = user.Username
+			}
+			c.Set("username", displayName)
 			c.Set("user_id", user.ID)
 		}
 		c.Next()
