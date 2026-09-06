@@ -61,7 +61,7 @@ function QuotationPreviewModal({
           <button type="button" className={documentType === DOCUMENT_TYPES.bill ? 'bill-primary-action' : 'primary-action'} onClick={() => downloadPdf('preview')}>Download as PDF</button>
           {activeQuotationId && <button type="button" className="secondary-action" onClick={createShare}>Create public link</button>}
           {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={convertToBill}>Convert to bill</button>}
-          <button type="button" className="secondary-action" onClick={() => { const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: documentType === DOCUMENT_TYPES.quotation ? shareUrl : '' }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }}>Draft WhatsApp message</button>
+          <button type="button" className="secondary-action" onClick={async () => { let currentShareUrl = shareUrl; if (!currentShareUrl && activeQuotationId) { currentShareUrl = await createShare(); } const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: currentShareUrl }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }}>Draft WhatsApp message</button>
         </div>
         {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><button type="button" className="secondary-action" onClick={() => navigator.clipboard?.writeText(shareUrl)}>Copy link</button></div>}
       </section>

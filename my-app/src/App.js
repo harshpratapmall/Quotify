@@ -367,15 +367,16 @@ function App() {
   const createShare = async () => {
     if (!activeQuotationId) {
       setSaveStatus('Save the quotation before creating a share link.');
-      return;
+      return null;
     }
     const { response, data } = await createDocumentShare(documentType, activeQuotationId);
     if (!response.ok) {
       setSaveStatus(data?.error || 'Unable to create share link.');
-      return;
+      return null;
     }
     setActiveShareUrl(data.url || '');
     setSaveStatus('Share link ready.');
+    return data.url || '';
   };
 
   const convertCurrentQuotationToBill = async () => {
