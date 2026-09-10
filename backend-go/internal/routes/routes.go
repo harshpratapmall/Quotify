@@ -33,6 +33,7 @@ func SetupRouter() *gin.Engine {
 		v1.GET("/clients/:id/documents", handlers.GetClientDocuments)
 		v1.PUT("/clients/:id", handlers.UpdateClient)
 		v1.PATCH("/clients/:id/status", handlers.UpdateClientStatus)
+		v1.DELETE("/clients/:id", handlers.DeleteClient)
 		v1.GET("/business-profile", handlers.BusinessProfile)
 		v1.PUT("/business-profile", handlers.SaveBusinessProfile)
 		v1.GET("/quotations", handlers.ListQuotations)

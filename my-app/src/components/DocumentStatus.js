@@ -1,7 +1,7 @@
 import { billStatuses, paymentStatuses, quotationStatuses, statusLabel } from '../config/statuses';
 
 export default function DocumentStatus({ type, document, onChange, disabled }) {
-  return <div className="document-status-controls">
+  return <div className={`document-status-controls ${type}`}>
     <label>Status<select aria-label={`${type} status`} value={document.status || 'draft'} disabled={disabled} onChange={(event) => onChange({ status: event.target.value })}>
       {(type === 'bill' ? billStatuses : quotationStatuses).map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
     </select></label>

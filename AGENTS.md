@@ -19,11 +19,11 @@ Two-service quotation app for Door2Door Interiors:
 - Auth/session: `backend-go/internal/handlers/auth.go`, `google_auth.go`, and `backend-go/internal/sheets/credentials.go`.
 - Quotation API/ownership: `backend-go/internal/handlers/quotations.go`, `backend-go/internal/sheets/quotations.go`.
 - Bill API/ownership: `backend-go/internal/handlers/bills.go`, `backend-go/internal/sheets/bills.go`.
-- Clients/history: `backend-go/internal/handlers/clients.go`, `backend-go/internal/sheets/clients.go`, and `my-app/src/components/Clients.js`.
+- Clients/history: `backend-go/internal/handlers/clients.go`, `backend-go/internal/sheets/clients.go`, and `my-app/src/components/Clients.js`. Delete is `DELETE /api/v1/clients/:id`; the archive `PATCH` endpoint remains for compatibility but the UI exposes delete, not archive/restore.
 - Client autofill: `my-app/src/components/ClientSelector.js`; selection and document creation are wired in `my-app/src/App.js`.
 - Document/payment status controls: `my-app/src/components/DocumentStatus.js`, `my-app/src/config/statuses.js`, and quotation/bill handlers.
 - Public shares: `backend-go/internal/handlers/share_links.go` and `backend-go/internal/sheets/share_links.go`. Template routes and implementations are absent in this checkout; preserve existing template metadata columns for compatibility.
-- Business profiles: `backend-go/internal/handlers/business_profile.go`, `backend-go/internal/sheets/business_profiles.go`.
+- Business profiles: `backend-go/internal/handlers/business_profile.go`, `backend-go/internal/sheets/business_profiles.go`; the "Getting started" onboarding guide is `my-app/src/components/UserGuide.js`.
 - Admin users: `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`.
 - Routes/CORS: `backend-go/internal/routes/routes.go`.
 - Frontend orchestration: `my-app/src/App.js`.
@@ -31,6 +31,7 @@ Two-service quotation app for Door2Door Interiors:
 - Draft persistence: `my-app/src/utils/storage.js`.
 - Quotation rules: `my-app/src/config/quotation.js` and `my-app/src/utils/quotation.js`.
 - UI: `my-app/src/components/` and `my-app/src/App.css`.
+- Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths).
 - PDF: `my-app/src/utils/pdf.js`.
 - Logo upload authorization: `my-app/api/blob-upload.js`.
 
@@ -58,7 +59,7 @@ Two-service quotation app for Door2Door Interiors:
 
 ## Configuration
 
-Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`.
+Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`. Backend loads `backend-go/.env` (copy from `.env.example`), but existing environment variables take precedence over `.env`.
 
 Google sign-in: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL`, `OAUTH_FRONTEND_URL`, optional `GOOGLE_ALLOWED_DOMAINS`.
 
@@ -73,6 +74,7 @@ The service account needs Editor access to the spreadsheet for saved records and
 - Preserve the `Bills!A:Q` column order and `items_json` compatibility.
 - Preserve appended quotation/bill metadata positions and tolerate legacy rows without appended columns.
 - Preserve the `BusinessProfiles!A:J` column order; never store image data in the sheet.
+- Reuse the shared UI primitives: close/plus buttons go through `IconButton`, preview export pills through `ActionButton` with `color-*` classes, modal headers through `ModalHeader`. Do not reintroduce hand-rolled `x` buttons.
 - For multi-user work, keep server-side owner enforcement and make browser draft state user-scoped; never rely on frontend hiding alone.
 - Local: `http://localhost:3000` frontend, `http://localhost:8000` backend; local cookies require `COOKIE_SECURE=false`.
 

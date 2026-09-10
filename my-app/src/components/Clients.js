@@ -3,7 +3,7 @@ import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import { statusLabel } from '../config/statuses';
 import { currency } from '../utils/formatters';
-import { createClient, listClients, listClientDocuments, updateClient, updateClientStatus } from '../services/clients';
+import { createClient, deleteClient, listClients, listClientDocuments, updateClient } from '../services/clients';
 
 const emptyClient = { name: '', phone: '', email: '', address: '', notes: '' };
 
@@ -16,10 +16,9 @@ function Clients({ navigate, startNewDocument, openDocument }) {
   const [showAddClient, setShowAddClient] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [documents, setDocuments] = useState({ quotation: [], bill: [] });
-  const [loadingDocuments, setLoadingDocuments] = useState(false);
+const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [message, setMessage] = useState('');
   const [documentError, setDocumentError] = useState('');
-  const [archiveBusy, setArchiveBusy] = useState(false);
 
   useEffect(() => {
     if (!selectedClient) return undefined;
@@ -80,19 +79,22 @@ function Clients({ navigate, startNewDocument, openDocument }) {
     setShowAddClient(true);
   };
 
-  const archive = async (client) => {
-    setArchiveBusy(true);
+  const remove = async () => {
+    if (!editingId) return;
+    if (!window.confirm('Delete this client? Saved quotations and bills for this client keep their client name but will no longer appear in the client history. This cannot be undone.')) return;
+    setMessage('Deleting...');
     try {
-    const nextStatus = client.status === 'archived' ? 'active' : 'archived';
-    const result = await updateClientStatus(client.id, nextStatus);
-    if (result.response.ok) {
-      setMessage(nextStatus === 'archived' ? 'Client archived.' : 'Client restored.');
+      const result = await deleteClient(editingId);
+      if (!result.response.ok) {
+        setMessage(result.data?.error || 'Unable to delete client.');
+        return;
+      }
+      setMessage('Client deleted.');
+      resetForm();
       await refreshClients();
-    } else {
-      setMessage(result.data?.error || 'Unable to update client.');
+    } catch {
+      setMessage('Unable to delete client. Please try again.');
     }
-    } catch { setMessage('Unable to update client. Please try again.'); }
-    finally { setArchiveBusy(false); }
   };
 
   return (
@@ -127,10 +129,9 @@ function Clients({ navigate, startNewDocument, openDocument }) {
                 <span>{client.phone || 'No phone'}{client.email ? ` · ${client.email}` : ''}</span>
                 {client.address && <small>{client.address}</small>}
               </div>
-              <div className="saved-actions">
-                <IconButton icon="library" label={`Documents for ${client.name}`} onClick={() => setSelectedClient(client)} />
-                <IconButton icon="edit" label={`Edit ${client.name}`} onClick={() => edit(client)} />
-                <IconButton icon={client.status === 'archived' ? 'restore' : 'archive'} label={`${client.status === 'archived' ? 'Restore' : 'Archive'} ${client.name}`} disabled={archiveBusy} onClick={() => archive(client)} />
+<div className="saved-actions">
+                <IconButton icon="library" className="color-download" label={`Documents for ${client.name}`} onClick={() => setSelectedClient(client)} />
+                <IconButton icon="edit" className="color-link" label={`Edit ${client.name}`} onClick={() => edit(client)} />
               </div>
             </article>
           ))}
@@ -155,7 +156,10 @@ function Clients({ navigate, startNewDocument, openDocument }) {
               <label>Email<input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} /></label>
               <label>Address<input value={form.address} onChange={(event) => change('address', event.target.value)} /></label>
               <label className="full-width">Notes<textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="2" /></label>
-              <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save client' : 'Add client'}</button>
+              <div className="form-actions modal-form-actions">
+                {editingId && <button type="button" className="secondary-action compact-action danger-action" disabled={isSaving} onClick={remove}><ActionIcon type="delete" /> Delete client</button>}
+                <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save client' : 'Add client'}</button>
+              </div>
             </form>
           </section>
         </div>
@@ -163,15 +167,14 @@ function Clients({ navigate, startNewDocument, openDocument }) {
       {selectedClient && <div className="modal-backdrop" onMouseDown={() => setSelectedClient(null)}>
         <section className="client-documents-modal" role="dialog" aria-modal="true" aria-labelledby="client-documents-title" onMouseDown={(event) => event.stopPropagation()}>
           <div className="modal-actions"><div><p className="eyebrow">Client workspace</p><h2 id="client-documents-title">{selectedClient.name}</h2><p>{[selectedClient.phone, selectedClient.email].filter(Boolean).join(' · ')}</p></div><IconButton icon="close" label="Close client documents" onClick={() => setSelectedClient(null)} /></div>
-          <div className="client-document-actions">
-            <button type="button" className="primary-action compact-action" disabled={selectedClient.status === 'archived'} onClick={() => startNewDocument('quotation', 'client', selectedClient)}><ActionIcon type="quotation" /> New quotation</button>
-            <button type="button" className="bill-primary-action compact-action" disabled={selectedClient.status === 'archived'} onClick={() => startNewDocument('bill', 'client', selectedClient)}><ActionIcon type="bill" /> New bill</button>
+<div className="client-document-actions">
+            <button type="button" className="primary-action compact-action" onClick={() => startNewDocument('quotation', 'client', selectedClient)}><ActionIcon type="quotation" /> New quotation</button>
+            <button type="button" className="bill-primary-action compact-action" onClick={() => startNewDocument('bill', 'client', selectedClient)}><ActionIcon type="bill" /> New bill</button>
           </div>
-          {selectedClient.status === 'archived' && <p>Restore this client to create new documents.</p>}
           <p className="section-text">Documents linked to this client appear here. To link older documents, edit them and select this client.</p>
           {loadingDocuments ? <p role="status">Loading documents…</p> : documentError ? <p role="alert">{documentError}</p> : ['quotation', 'bill'].map((type) => <section className="client-document-group" key={type}><h3>{type === 'bill' ? 'Bills' : 'Quotations'} <small>({documents[type]?.length || 0})</small></h3>
             {!documents[type]?.length && <p className="section-text">No linked {type === 'bill' ? 'bills' : 'quotations'} yet.</p>}
-            {documents[type]?.map((entry) => <article className="saved-quotation-card" key={entry.id}><div><strong>{entry.projectName}</strong><small>{entry.quoteDate} · {currency(entry.total)}</small><span className={`status-badge status-${entry.status || 'draft'}`}>{statusLabel(entry.status || 'draft')}{type === 'bill' ? ` · ${statusLabel(entry.paymentStatus || 'unpaid')}` : ''}</span></div><div className="saved-actions"><IconButton icon="open" label={`Preview ${entry.projectName}`} onClick={() => openDocument(type, entry.id, true)} /><IconButton icon="edit" label={`Edit ${entry.projectName}`} onClick={() => openDocument(type, entry.id)} /></div></article>)}
+            {documents[type]?.map((entry) => <article className="saved-quotation-card" key={entry.id}><div><strong>{entry.projectName}</strong><small>{entry.quoteDate} · {currency(entry.total)}</small><span className={`status-badge status-${entry.status || 'draft'}`}>{statusLabel(entry.status || 'draft')}{type === 'bill' ? ` · ${statusLabel(entry.paymentStatus || 'unpaid')}` : ''}</span></div><div className="saved-actions"><IconButton icon="open" className="color-save" label={`Preview ${entry.projectName}`} onClick={() => openDocument(type, entry.id, true)} /><IconButton icon="edit" className="color-link" label={`Edit ${entry.projectName}`} onClick={() => openDocument(type, entry.id)} /></div></article>)}
           </section>)}
         </section>
       </div>}

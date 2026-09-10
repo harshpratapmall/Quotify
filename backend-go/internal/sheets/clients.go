@@ -62,6 +62,10 @@ func UpdateClient(ctx context.Context, client Client) error {
 	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Clients!A%d:J%d?valueInputOption=RAW", client.Row, client.Row), [][]string{clientToRow(client)})
 }
 
+func DeleteClient(ctx context.Context, row int) error {
+	return deleteDocumentRow(ctx, row, "Clients")
+}
+
 func NewClientID() string {
 	value := make([]byte, 8)
 	if _, err := rand.Read(value); err != nil {

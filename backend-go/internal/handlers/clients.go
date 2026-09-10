@@ -176,6 +176,28 @@ func UpdateClientStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, client)
 }
 
+func DeleteClient(c *gin.Context) {
+	ownerID, ok := quotationOwner(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		return
+	}
+	client, err := sheets.GetClient(c.Request.Context(), ownerID, c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		return
+	}
+	if client.ID == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		return
+	}
+	if err := sheets.DeleteClient(c.Request.Context(), client.Row); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to delete client."})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 func bindClient(c *gin.Context) (sheets.Client, bool) {
 	var client sheets.Client
 	if err := c.ShouldBindJSON(&client); err != nil || strings.TrimSpace(client.Name) == "" {

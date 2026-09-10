@@ -1,7 +1,6 @@
-function ModalHeader({ eyebrow, title, titleId, leadingActions = null, trailingAction = null }) {
+function ModalHeader({ eyebrow, title, titleId, trailingAction = null }) {
   return (
-    <header className={`modal-actions ${leadingActions ? 'modal-actions--stacked' : ''}`}>
-      {leadingActions && <div className="modal-leading-actions">{leadingActions}</div>}
+    <header className="modal-actions">
       <div className="modal-heading">
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         <h2 id={titleId}>{title}</h2>

@@ -31,12 +31,14 @@ REACT_APP_ENV=local
 - Direct PDF generation in the browser
 - Business profile editing and Vercel Blob logo uploads
 - Separate quotation and bill libraries with shared line-item pricing workflows
-- Client search, add/edit, archive/restore, contact autofill, and linked quotation/bill history
+- Client search, add/edit/delete, contact autofill, and linked quotation/bill history
 - Document lifecycle controls, quotation accepted/declined decisions, bill payment status, and optional bill due dates
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
 - Admin user search, creation, activation/deactivation, and password resets
+- Color-coded library and client action buttons (preview/edit/delete), and themed status/payment dropdowns
+- "Getting started" onboarding guide on the business profile page
 
-Share revocation is available through API service helpers but has no UI button. Document templates and library search/filter controls are not implemented. Due dates display in the editor, library, and authenticated preview; PDF export does not currently include them. There is no separate print action.
+Share revocation is available through API service helpers but has no UI button. Client deletion removes the client row only; saved quotations and bills keep their stored client name but stop appearing in that client's linked history. Document templates and library search/filter controls are not implemented. Due dates display in the editor, library, and authenticated preview; PDF export does not currently include them. There is no separate print action.
 
 ## Important Files
 
@@ -44,7 +46,7 @@ Share revocation is available through API service helpers but has no UI button. 
 - `src/config/api.js`
 - `src/App.css`
 - `src/App.test.js`
-- `src/components/ClientSelector.js`, `Clients.js`: client reuse and history
+- `src/components/ClientSelector.js`, `Clients.js`: client reuse, edit/delete, and history
 - `src/components/DocumentStatus.js`, `src/config/statuses.js`: lifecycle/payment controls
 - `src/utils/quotation.js`: save/reopen metadata and pricing helpers
 - `src/utils/pdf.js`: PDF export

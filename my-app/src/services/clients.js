@@ -17,6 +17,6 @@ export const updateClient = (id, client) => requestJson(clientPath(id), {
   body: JSON.stringify(client),
 });
 
-export const updateClientStatus = (id, status) => requestJson(`${clientPath(id)}/status?status=${encodeURIComponent(status)}`, {
-  method: 'PATCH',
+export const deleteClient = (id) => requestJson(clientPath(id), {
+  method: 'DELETE',
 });

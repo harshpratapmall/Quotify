@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
+import UserGuide from './UserGuide';
 
 const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
@@ -203,6 +204,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
           </form>
         )}
       </section>
+      <UserGuide />
     </main>
   );
 }

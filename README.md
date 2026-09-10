@@ -27,6 +27,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/clients/:id/documents` | List the owner's quotations and bills linked to this client |
 | PUT | `/api/v1/clients/:id` | Update a client |
 | PATCH | `/api/v1/clients/:id/status` | Archive or restore a client |
+| DELETE | `/api/v1/clients/:id` | Delete a client owned by the current user |
 | PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle status |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
@@ -54,7 +55,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 
 Quotation, bill, and client ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
 
-Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (either bill field can be sent alone). Client history returns `quotation` and `bill` arrays linked by client ID.
+Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Client deletion removes only the row for the authenticated owner; linked documents keep their stored client name but no longer appear in that client's history. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (either bill field can be sent alone). Client history returns `quotation` and `bill` arrays linked by client ID.
 
 Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `expired`, `cancelled`. Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue`, `cancelled`. Payment status is manually recorded; a due date does not automatically mark a bill overdue.
 

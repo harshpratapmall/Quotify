@@ -44,6 +44,7 @@ See the [complete endpoint table](../README.md#api), verified against `internal/
 
 - Client history: `GET /api/v1/clients/:id/documents` returns owner-scoped `quotation` and `bill` arrays, matched by client ID.
 - Client archival: `PATCH /api/v1/clients/:id/status?status=archived`; use `status=active` to restore.
+- Client deletion: `DELETE /api/v1/clients/:id` deletes only the owner's row; linked documents keep their stored client name.
 - Quotation and bill status endpoints accept JSON. Bills keep lifecycle and payment status separate; accepted/declined decisions apply to quotations.
 - Quotation and bill sharing both support POST to create and DELETE to revoke `/api/v1/{quotations|bills}/:id/share`. Public links use `GET /api/v1/public/share/:token`.
 - Document updates preserve client links and bill due dates when omitted, and clear them on explicit empty strings. Nonempty due dates must be valid `YYYY-MM-DD` dates; submitted client IDs must belong to the owner.

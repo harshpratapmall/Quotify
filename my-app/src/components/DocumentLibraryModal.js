@@ -13,10 +13,10 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
   const entries = documents[type] || [];
   return <div className="modal-backdrop library-backdrop" role="presentation" onMouseDown={() => navigate(APP_ROUTES.home, true)}>
     <section className={`document-library-modal ${type}`} role="dialog" aria-modal="true" aria-labelledby="document-library-title" onMouseDown={(event) => event.stopPropagation()}>
-      <ModalHeader eyebrow="Saved work" title={`${copy.plural} library`} titleId="document-library-title" leadingActions={<>
+      <ModalHeader eyebrow="Saved work" title={`${copy.plural} library`} titleId="document-library-title" trailingAction={<div className="modal-action-cluster">
         <IconButton icon="plus" className="accent-icon" label={`New ${copy.singular.toLowerCase()}`} onClick={() => startNewDocument(type, 'library')} />
         <IconButton icon="close" className="modal-close" label={`Close ${copy.plural.toLowerCase()} library`} onClick={() => navigate(APP_ROUTES.home, true)} />
-      </>} />
+      </div>} />
       <div className="library-toolbar"><p>{entries.length ? `${entries.length} saved ${copy.plural.toLowerCase()}` : `Your saved ${copy.plural.toLowerCase()} will appear here.`}</p></div>
       {entries.length === 0 ? <div className="library-empty"><ActionIcon type={type} /><h3>No {copy.plural.toLowerCase()} yet</h3><p>Create your first {copy.singular.toLowerCase()} to keep it ready for later.</p></div> : <div className="saved-quotation-list document-library-list">
         {entries.map((entry) => <article className="saved-quotation-card" key={entry.id}>
@@ -24,8 +24,8 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
             <DocumentStatus type={type} document={entry} disabled={statusBusy} onChange={(changes) => changeStatus(type, entry.id, changes)} />
           </div>
           <div className="saved-actions">
-            <IconButton icon="open" label={`Preview ${copy.singular.toLowerCase()}`} onClick={() => openDocument(type, entry.id, true)} />
-            <IconButton icon="edit" label={`Edit ${copy.singular.toLowerCase()}`} onClick={() => openDocument(type, entry.id)} />
+            <IconButton icon="open" className="color-save" label={`Preview ${copy.singular.toLowerCase()}`} onClick={() => openDocument(type, entry.id, true)} />
+            <IconButton icon="edit" className="color-link" label={`Edit ${copy.singular.toLowerCase()}`} onClick={() => openDocument(type, entry.id)} />
             <IconButton icon="delete" label={`Delete ${copy.singular.toLowerCase()}`} className="danger-icon" onClick={() => deleteDocument(type, entry.id)} />
           </div>
         </article>)}
