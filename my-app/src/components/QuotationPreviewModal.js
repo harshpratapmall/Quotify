@@ -7,6 +7,8 @@ import { buildWhatsAppUrl } from '../utils/whatsapp';
 import IconButton from './IconButton';
 import ActionButton from './ActionButton';
 import ModalHeader from './ModalHeader';
+import ModalOverlay from './ModalOverlay';
+import SaveStatus from './SaveStatus';
 import DocumentStatus from './DocumentStatus';
 
 function QuotationPreviewModal({
@@ -43,9 +45,8 @@ function QuotationPreviewModal({
   };
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={() => closePreview('backdrop')}>
-      <section className={`quotation-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-preview-modal' : ''}`} role="dialog" aria-modal="true" aria-labelledby="quotation-preview-title" onMouseDown={(event) => event.stopPropagation()}>
-        <ModalHeader eyebrow="Ready to share" title={`${copy.singular} Preview`} titleId="quotation-preview-title" trailingAction={<IconButton icon="close" className="modal-close" label={`Close ${copy.singular.toLowerCase()} preview`} onClick={() => closePreview('button')} />} />
+    <ModalOverlay onClose={() => closePreview('backdrop')} sectionClass={`quotation-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-preview-modal' : ''}`} sectionProps={{ 'aria-labelledby': 'quotation-preview-title' }}>
+      <ModalHeader eyebrow="Ready to share" title={`${copy.singular} Preview`} titleId="quotation-preview-title" trailingAction={<IconButton icon="close" className="modal-close" label={`Close ${copy.singular.toLowerCase()} preview`} onClick={() => closePreview('button')} />} />
         {activeQuotationId && <DocumentStatus type={documentType} document={quotation} onChange={changeStatus} disabled={statusBusy} />}
         <article className={`quotation-document ${documentType === DOCUMENT_TYPES.bill ? 'bill-document' : ''}`}>
           <div className="document-header">
@@ -66,10 +67,9 @@ function QuotationPreviewModal({
           <ActionButton icon="message" label="WhatsApp" className="color-message" onClick={async () => { let currentShareUrl = shareUrl; if (!currentShareUrl && activeQuotationId) { currentShareUrl = await createShare(); if (!currentShareUrl) return; } const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: currentShareUrl }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }} />
         </div>
         {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><IconButton icon="copy" label="Copy link" onClick={() => navigator.clipboard?.writeText(shareUrl)} /></div>}
-        {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
-      </section>
-    </div>
-  );
+        <SaveStatus message={saveStatus} />
+      </ModalOverlay>
+    );
 }
 
 export default QuotationPreviewModal;

@@ -18,6 +18,22 @@ export const calculateQuotationTotals = (items, includeGst, gstRate) => {
   return { subtotal, gstPercentage, tax, total };
 };
 
+// Overlays a client record onto a quotation: used both when creating a new
+// document from a client and when a client is selected in the workspace.
+export const applyClientToQuotation = (quotation, client) => {
+  if (!client) {
+    return { ...quotation, clientId: '' };
+  }
+  return {
+    ...quotation,
+    clientId: client.id,
+    clientName: client.name,
+    phone: client.phone || '',
+    email: client.email || '',
+    siteLocation: client.address || '',
+  };
+};
+
 export const getQuotationValidationError = (quotation, items) => {
   if (!quotation.clientName.trim()) return 'Enter a client name before continuing.';
   if (!quotation.projectName.trim()) return 'Enter a project name before continuing.';

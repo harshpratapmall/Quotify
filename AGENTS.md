@@ -16,11 +16,11 @@ Two-service quotation app for Door2Door Interiors:
 
 ## Request Routing
 
-- Auth/session: `backend-go/internal/handlers/auth.go`, `google_auth.go`, and `backend-go/internal/sheets/credentials.go`.
-- Quotation API/ownership: `backend-go/internal/handlers/quotations.go`, `backend-go/internal/sheets/quotations.go`.
-- Bill API/ownership: `backend-go/internal/handlers/bills.go`, `backend-go/internal/sheets/bills.go`.
+- Auth/session: `backend-go/internal/handlers/auth.go`, `google_auth.go`, and `backend-go/internal/sheets/credentials.go`. Shared cookie signing/verification lives in `backend-go/internal/handlers/tokens.go`; all environment reads are centralized in `backend-go/internal/config/config.go`; the shared Google Sheets HTTP transport is `backend-go/internal/sheets/transport.go`; HTTP response helpers are `backend-go/internal/handlers/response.go`; ID generation is `backend-go/internal/handlers/ids.go`; CORS middleware is `backend-go/internal/middleware/cors.go`.
+- Quotation API/ownership: `backend-go/internal/handlers/quotations.go`, `backend-go/internal/sheets/quotations.go`.`
+- Bill API/ownership: `backend-go/internal/handlers/bills.go`, `backend-go/internal/sheets/bills.go`.`
 - Clients/history: `backend-go/internal/handlers/clients.go`, `backend-go/internal/sheets/clients.go`, and `my-app/src/components/Clients.js`. Delete is `DELETE /api/v1/clients/:id`; the archive `PATCH` endpoint remains for compatibility but the UI exposes delete, not archive/restore.
-- Client autofill: `my-app/src/components/ClientSelector.js`; selection and document creation are wired in `my-app/src/App.js`.
+- Client autofill: `my-app/src/components/ClientSelector.js`; selection and document creation are wired in `my-app/src/App.js` and share `applyClientToQuotation` (`my-app/src/utils/quotation.js`).
 - Document/payment status controls: `my-app/src/components/DocumentStatus.js`, `my-app/src/config/statuses.js`, and quotation/bill handlers.
 - Public shares: `backend-go/internal/handlers/share_links.go` and `backend-go/internal/sheets/share_links.go`. Template routes and implementations are absent in this checkout; preserve existing template metadata columns for compatibility.
 - Business profiles: `backend-go/internal/handlers/business_profile.go`, `backend-go/internal/sheets/business_profiles.go`; the "Getting started" onboarding guide `my-app/src/components/UserGuide.js` renders behind a toggle button on the Business Profile page. The UI no longer edits quote prefix or terms, but those columns remain in `BusinessProfiles!A:J` for compatibility.
@@ -28,11 +28,13 @@ Two-service quotation app for Door2Door Interiors:
 - Admin users: `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`.
 - Routes/CORS: `backend-go/internal/routes/routes.go`.
 - Frontend orchestration: `my-app/src/App.js`.
-- Frontend API calls: `my-app/src/services/`.
+- Frontend API calls: `my-app/src/services/` (shared fetch helper in `services/apiClient.js`).
 - Draft persistence: `my-app/src/utils/storage.js`.
 - Quotation rules: `my-app/src/config/quotation.js` and `my-app/src/utils/quotation.js`.
+- Document library state: `my-app/src/hooks/useSavedDocuments.js`.
+- Payment records/summary: `my-app/src/utils/payments.js` (used by `DocumentStatus.js` and `DocumentLibraryModal.js`).
 - UI: `my-app/src/components/` and `my-app/src/App.css`.
-- Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths).
+- Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths), `ModalOverlay.js` (modal backdrops), `SaveStatus.js` (save-result messages).
 - PDF: `my-app/src/utils/pdf.js`.
 - Logo upload authorization: `my-app/api/blob-upload.js`.
 

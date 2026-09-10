@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -16,12 +14,12 @@ import (
 func ListBills(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	bills, err := sheets.ListBills(c.Request.Context(), owner)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bills."})
+		unavailable(c, "Unable to load bills.")
 		return
 	}
 	c.JSON(http.StatusOK, bills)
@@ -30,16 +28,16 @@ func ListBills(c *gin.Context) {
 func GetBill(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	bill, err := sheets.GetBill(c.Request.Context(), owner, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bill."})
+		unavailable(c, "Unable to load bill.")
 		return
 	}
 	if bill.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Bill not found."})
+		notFound(c, "Bill not found.")
 		return
 	}
 	c.JSON(http.StatusOK, bill)
@@ -48,7 +46,7 @@ func GetBill(c *gin.Context) {
 func CreateBill(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	bill, ok := bindDocument(c, "Bill")
@@ -63,7 +61,7 @@ func CreateBill(c *gin.Context) {
 	bill.CreatedAt = time.Now().UTC()
 	bill.UpdatedAt = bill.CreatedAt
 	if err := sheets.SaveBill(c.Request.Context(), bill); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to save bill."})
+		unavailable(c, "Unable to save bill.")
 		return
 	}
 	c.JSON(http.StatusCreated, bill)
@@ -72,16 +70,16 @@ func CreateBill(c *gin.Context) {
 func UpdateBill(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	existing, err := sheets.GetBill(c.Request.Context(), owner, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bill."})
+		unavailable(c, "Unable to load bill.")
 		return
 	}
 	if existing.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Bill not found."})
+		notFound(c, "Bill not found.")
 		return
 	}
 	bill, ok := bindDocument(c, "Bill")
@@ -98,7 +96,7 @@ func UpdateBill(c *gin.Context) {
 	}
 	bill.UpdatedAt = time.Now().UTC()
 	if err := sheets.UpdateBill(c.Request.Context(), bill); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to update bill."})
+		unavailable(c, "Unable to update bill.")
 		return
 	}
 	c.JSON(http.StatusOK, bill)
@@ -107,20 +105,20 @@ func UpdateBill(c *gin.Context) {
 func DeleteBill(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	bill, err := sheets.GetBill(c.Request.Context(), owner, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bill."})
+		unavailable(c, "Unable to load bill.")
 		return
 	}
 	if bill.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Bill not found."})
+		notFound(c, "Bill not found.")
 		return
 	}
 	if err := sheets.DeleteBill(c.Request.Context(), bill.Row); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to delete bill."})
+		unavailable(c, "Unable to delete bill.")
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -129,7 +127,7 @@ func DeleteBill(c *gin.Context) {
 func UpdateBillStatus(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	var request struct {
@@ -138,22 +136,22 @@ func UpdateBillStatus(c *gin.Context) {
 		Payments      []paymentInput `json:"payments"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil || (request.Status == "" && request.PaymentStatus == "" && request.Payments == nil) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "A bill status, payment status, or payment record is required."})
+		badRequest(c, "A bill status, payment status, or payment record is required.")
 		return
 	}
 	bill, err := sheets.GetBill(c.Request.Context(), owner, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bill."})
+		unavailable(c, "Unable to load bill.")
 		return
 	}
 	if bill.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Bill not found."})
+		notFound(c, "Bill not found.")
 		return
 	}
 	if request.Status != "" {
 		request.Status = strings.ToLower(strings.TrimSpace(request.Status))
 		if !validBillStatus(request.Status) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Bill status must be draft, issued, or cancelled."})
+			badRequest(c, "Bill status must be draft, issued, or cancelled.")
 			return
 		}
 		bill.Status = request.Status
@@ -161,7 +159,7 @@ func UpdateBillStatus(c *gin.Context) {
 	if request.Payments != nil {
 		encoded, valid := encodePayments(request.Payments)
 		if !valid {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Each payment needs a valid date and a positive amount."})
+			badRequest(c, "Each payment needs a valid date and a positive amount.")
 			return
 		}
 		bill.Payments = encoded
@@ -174,14 +172,14 @@ func UpdateBillStatus(c *gin.Context) {
 	if request.PaymentStatus != "" {
 		request.PaymentStatus = strings.ToLower(strings.TrimSpace(request.PaymentStatus))
 		if !validPaymentStatus(request.PaymentStatus) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Payment status must be unpaid, partially_paid, paid, or overdue."})
+			badRequest(c, "Payment status must be unpaid, partially_paid, paid, or overdue.")
 			return
 		}
 		bill.PaymentStatus = request.PaymentStatus
 	}
 	bill.UpdatedAt = time.Now().UTC()
 	if err := sheets.UpdateBill(c.Request.Context(), bill); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to update bill status."})
+		unavailable(c, "Unable to update bill status.")
 		return
 	}
 	c.JSON(http.StatusOK, bill)
@@ -229,10 +227,4 @@ func validPaymentStatus(status string) bool {
 	default:
 		return false
 	}
-}
-
-func newBillID() string {
-	bytes := make([]byte, 8)
-	_, _ = rand.Read(bytes)
-	return "B-" + hex.EncodeToString(bytes)
 }

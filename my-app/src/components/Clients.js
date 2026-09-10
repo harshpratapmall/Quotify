@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
+import ModalOverlay from './ModalOverlay';
+import SaveStatus from './SaveStatus';
 import { statusLabel } from '../config/statuses';
+import { APP_ROUTES } from '../config/routes';
 import { currency } from '../utils/formatters';
 import { createClient, deleteClient, listClients, listClientDocuments, updateClient } from '../services/clients';
 
@@ -107,10 +110,10 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
         </div>
         <div className="header-actions">
           <IconButton icon="plus" className="accent-icon" label="Add client" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} />
-          <IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} />
+          <IconButton icon="back" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
         </div>
       </header>
-      {message && <p className="admin-card save-status" role="status">{message}</p>}
+      <SaveStatus message={message} className="admin-card" />
 
       <section className="admin-card">
         <div className="section-heading">
@@ -139,9 +142,8 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
         {!clients.length && <p className="section-text">No clients match your search.</p>}
       </section>
 
-      {showAddClient && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => resetForm()}>
-          <section className="modal-content admin-card" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+{showAddClient && (
+        <ModalOverlay onClose={() => resetForm()} sectionClass="modal-content admin-card">
             <div className="section-heading">
               <div>
                 <p className="eyebrow">Client record</p>
@@ -161,11 +163,9 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
                 <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save client' : 'Add client'}</button>
               </div>
             </form>
-          </section>
-        </div>
+        </ModalOverlay>
       )}
-      {selectedClient && <div className="modal-backdrop" onMouseDown={() => setSelectedClient(null)}>
-        <section className="client-documents-modal" role="dialog" aria-modal="true" aria-labelledby="client-documents-title" onMouseDown={(event) => event.stopPropagation()}>
+      {selectedClient && <ModalOverlay onClose={() => setSelectedClient(null)} sectionClass="client-documents-modal" sectionProps={{ 'aria-labelledby': 'client-documents-title' }}>
           <div className="modal-actions"><div><p className="eyebrow">Client workspace</p><h2 id="client-documents-title">{selectedClient.name}</h2><p>{[selectedClient.phone, selectedClient.email].filter(Boolean).join(' · ')}</p></div><IconButton icon="close" label="Close client documents" onClick={() => setSelectedClient(null)} /></div>
 <div className="client-document-actions">
             <button type="button" className="primary-action compact-action" onClick={() => startNewDocument('quotation', 'client', selectedClient)}><ActionIcon type="quotation" /> New quotation</button>
@@ -175,9 +175,8 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
           {loadingDocuments ? <p role="status">Loading documents…</p> : documentError ? <p role="alert">{documentError}</p> : ['quotation', 'bill'].map((type) => <section className="client-document-group" key={type}><h3>{type === 'bill' ? 'Bills' : 'Quotations'} <small>({documents[type]?.length || 0})</small></h3>
             {!documents[type]?.length && <p className="section-text">No linked {type === 'bill' ? 'bills' : 'quotations'} yet.</p>}
             {documents[type]?.map((entry) => <article className="saved-quotation-card" key={entry.id}><div><strong>{entry.projectName}</strong><small>{entry.quoteDate} · {currency(entry.total)}</small><span className={`status-badge status-${entry.status || 'draft'}`}>{statusLabel(entry.status || 'draft')}{type === 'bill' && (entry.status || 'draft') !== 'cancelled' ? ` · ${statusLabel(entry.paymentStatus || 'unpaid')}` : ''}</span></div><div className="saved-actions"><IconButton icon="open" className="color-save" label={`Preview ${entry.projectName}`} onClick={() => openDocument(type, entry.id, true)} /><IconButton icon="edit" className="color-link" label={`Edit ${entry.projectName}`} onClick={() => openDocument(type, entry.id)} /></div></article>)}
-          </section>)}
-        </section>
-      </div>}
+</section>)}
+        </ModalOverlay>}
     </main>
   );
 }

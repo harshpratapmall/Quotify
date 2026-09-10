@@ -13,12 +13,12 @@ import (
 func ListClients(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	clients, err := sheets.ListClients(c.Request.Context(), ownerID)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load clients."})
+		unavailable(c, "Unable to load clients.")
 		return
 	}
 	query := strings.TrimSpace(strings.ToLower(c.Query("q")))
@@ -37,16 +37,16 @@ func ListClients(c *gin.Context) {
 func GetClient(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	client, err := sheets.GetClient(c.Request.Context(), ownerID, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		unavailable(c, "Unable to load client.")
 		return
 	}
 	if client.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		notFound(c, "Client not found.")
 		return
 	}
 	c.JSON(http.StatusOK, client)
@@ -56,26 +56,26 @@ func GetClient(c *gin.Context) {
 func GetClientDocuments(c *gin.Context) {
 	owner, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	client, err := sheets.GetClient(c.Request.Context(), owner, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		unavailable(c, "Unable to load client.")
 		return
 	}
 	if client.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		notFound(c, "Client not found.")
 		return
 	}
 	quotes, err := sheets.ListQuotations(c.Request.Context(), owner)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load quotations."})
+		unavailable(c, "Unable to load quotations.")
 		return
 	}
 	bills, err := sheets.ListBills(c.Request.Context(), owner)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bills."})
+		unavailable(c, "Unable to load bills.")
 		return
 	}
 	linkedQuotes, linkedBills := []sheets.Quotation{}, []sheets.Bill{}
@@ -95,7 +95,7 @@ func GetClientDocuments(c *gin.Context) {
 func CreateClient(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	client, ok := bindClient(c)
@@ -109,7 +109,7 @@ func CreateClient(c *gin.Context) {
 	client.UpdatedAt = now
 	client.Status = "active"
 	if err := sheets.SaveClient(c.Request.Context(), client); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to save client."})
+		unavailable(c, "Unable to save client.")
 		return
 	}
 	c.JSON(http.StatusCreated, client)
@@ -118,16 +118,16 @@ func CreateClient(c *gin.Context) {
 func UpdateClient(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	existing, err := sheets.GetClient(c.Request.Context(), ownerID, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		unavailable(c, "Unable to load client.")
 		return
 	}
 	if existing.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		notFound(c, "Client not found.")
 		return
 	}
 	client, ok := bindClient(c)
@@ -141,7 +141,7 @@ func UpdateClient(c *gin.Context) {
 	client.Status = existing.Status
 	client.Row = existing.Row
 	if err := sheets.UpdateClient(c.Request.Context(), client); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to update client."})
+		unavailable(c, "Unable to update client.")
 		return
 	}
 	c.JSON(http.StatusOK, client)
@@ -150,27 +150,27 @@ func UpdateClient(c *gin.Context) {
 func UpdateClientStatus(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	status := strings.ToLower(strings.TrimSpace(c.Query("status")))
 	if status != "active" && status != "archived" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be active or archived."})
+		badRequest(c, "Status must be active or archived.")
 		return
 	}
 	client, err := sheets.GetClient(c.Request.Context(), ownerID, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		unavailable(c, "Unable to load client.")
 		return
 	}
 	if client.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		notFound(c, "Client not found.")
 		return
 	}
 	client.Status = status
 	client.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	if err := sheets.UpdateClient(c.Request.Context(), client); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to update client status."})
+		unavailable(c, "Unable to update client status.")
 		return
 	}
 	c.JSON(http.StatusOK, client)
@@ -179,20 +179,20 @@ func UpdateClientStatus(c *gin.Context) {
 func DeleteClient(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	client, err := sheets.GetClient(c.Request.Context(), ownerID, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		unavailable(c, "Unable to load client.")
 		return
 	}
 	if client.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		notFound(c, "Client not found.")
 		return
 	}
 	if err := sheets.DeleteClient(c.Request.Context(), client.Row); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to delete client."})
+		unavailable(c, "Unable to delete client.")
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -201,7 +201,7 @@ func DeleteClient(c *gin.Context) {
 func bindClient(c *gin.Context) (sheets.Client, bool) {
 	var client sheets.Client
 	if err := c.ShouldBindJSON(&client); err != nil || strings.TrimSpace(client.Name) == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Client name is required."})
+		badRequest(c, "Client name is required.")
 		return sheets.Client{}, false
 	}
 	client.Name = strings.TrimSpace(client.Name)

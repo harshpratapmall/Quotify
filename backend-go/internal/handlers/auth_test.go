@@ -41,7 +41,6 @@ func TestRequireAdminBlocksRegularUsers(t *testing.T) {
 	}
 }
 
-
 func TestSessionCookieUsesCrossSitePolicyInProduction(t *testing.T) {
 	t.Setenv("COOKIE_SECURE", "true")
 	gin.SetMode(gin.TestMode)

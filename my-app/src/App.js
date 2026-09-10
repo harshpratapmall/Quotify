@@ -11,6 +11,7 @@ import DocumentLibraryModal from './components/DocumentLibraryModal';
 import { createEmptyQuotation, defaultGstRate, lineItemTemplate } from './config/quotation';
 import { APP_ROUTES } from './config/routes';
 import { useAppRouter } from './hooks/useAppRouter';
+import { useSavedDocuments } from './hooks/useSavedDocuments';
 import { fetchSession, loginRequest, logoutRequest, startGoogleLogin } from './services/auth';
 import {
   deleteDocumentRequest,
@@ -28,6 +29,7 @@ import {
   calculateQuotationTotals,
   getQuotationValidationError,
   parseSavedQuotationPayload,
+  applyClientToQuotation,
 } from './utils/quotation';
 import { createDraftState, loadQuotationDraft, saveQuotationDraft } from './utils/storage';
 import { ANALYTICS_EVENTS, trackAction, trackRoute } from './utils/analytics';
@@ -49,7 +51,7 @@ function App() {
   const [includeGst, setIncludeGst] = useState(draftState.includeGst);
   const [gstRate, setGstRate] = useState(draftState.gstRate);
   const [quotation, setQuotation] = useState(draftState.quotation);
-  const [savedDocuments, setSavedDocuments] = useState({ quotation: [], bill: [] });
+  const { savedDocuments, setSavedDocuments, upsertDocument, replaceDocument, removeDocument } = useSavedDocuments();
   const [activeQuotationId, setActiveQuotationId] = useState(draftState.activeQuotationId);
   const [documentType, setDocumentType] = useState(pathname === APP_ROUTES.billNew ? DOCUMENT_TYPES.bill : DOCUMENT_TYPES.quotation);
   const [saveStatus, setSaveStatus] = useState('');
@@ -111,13 +113,11 @@ function App() {
     setDocumentType(type);
     trackAction(ANALYTICS_EVENTS.quotationStarted, { source, documentType: type });
     clearQuotation();
-    if (client) setQuotation({ ...createEmptyQuotation(), clientId: client.id, clientName: client.name, phone: client.phone || '', email: client.email || '', siteLocation: client.address || '' });
+    if (client) setQuotation(applyClientToQuotation(createEmptyQuotation(), client));
     navigate(type === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew);
   }, [clearQuotation, navigate]);
 
-  const selectClient = (client) => setQuotation((current) => client
-    ? { ...current, clientId: client.id, clientName: client.name, phone: client.phone || '', email: client.email || '', siteLocation: client.address || '' }
-    : { ...current, clientId: '' });
+  const selectClient = (client) => setQuotation((current) => applyClientToQuotation(current, client));
 
   const changeDocumentStatus = async (type, id, changes) => {
     setStatusBusy(true);
@@ -125,7 +125,7 @@ function App() {
     try {
       const { response, data } = await updateDocumentStatus(type, id, changes);
       if (!response.ok) throw new Error(data?.error || 'Unable to update status.');
-      setSavedDocuments((current) => ({ ...current, [type]: current[type].map((entry) => entry.id === id ? data : entry) }));
+      replaceDocument(type, id, data);
       if (activeQuotationId === id && documentType === type) setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid', payments: data.payments || current.payments || [] }));
       setSaveStatus('Status updated.');
     } catch (error) {
@@ -162,10 +162,7 @@ function App() {
 
       setActiveQuotationId(data.id);
       setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid' }));
-      setSavedDocuments((current) => ({
-        ...current,
-        [documentType]: [data, ...current[documentType].filter((entry) => entry.id !== data.id)],
-      }));
+      upsertDocument(documentType, data);
       setSaveStatus('Saved');
       trackAction(ANALYTICS_EVENTS.quotationSaveSucceeded, {
         source,
@@ -177,7 +174,7 @@ function App() {
       trackAction(ANALYTICS_EVENTS.quotationSaveFailed, { source, reason: 'request' });
       return false;
     }
-  }, [activeQuotationId, document.singular, documentType, gstRate, includeGst, items, quotation, quotationValidationError, subtotal, tax, total]);
+  }, [activeQuotationId, document.singular, documentType, gstRate, includeGst, items, quotation, quotationValidationError, subtotal, tax, total, upsertDocument]);
 
   const openSavedDocument = useCallback(async (type, id, preview = false) => {
     const saved = await fetchDocumentById(type, id);
@@ -208,7 +205,7 @@ function App() {
 
     const response = await deleteDocumentRequest(type, id);
     if (response.ok) {
-      setSavedDocuments((current) => ({ ...current, [type]: current[type].filter((entry) => entry.id !== id) }));
+      removeDocument(type, id);
       if (activeQuotationId === id && documentType === type) {
         clearQuotation();
       }
@@ -217,7 +214,7 @@ function App() {
     } else {
       setSaveStatus(`Unable to delete ${copy.singular.toLowerCase()}. Please try again.`);
     }
-  }, [activeQuotationId, clearQuotation, documentType]);
+  }, [activeQuotationId, clearQuotation, documentType, removeDocument]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -451,7 +448,7 @@ function App() {
     if (validationError) {
       setSaveStatus(validationError);
       trackAction(ANALYTICS_EVENTS.quotationPdfDownloadFailed, { source, reason: 'validation' });
-      navigate(APP_ROUTES.quotationNew, true);
+      navigate(documentType === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew, true);
       return;
     }
 

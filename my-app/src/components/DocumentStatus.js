@@ -1,26 +1,15 @@
 import { useState } from 'react';
 import IconButton from './IconButton';
 import { currency } from '../utils/formatters';
+import { parsePayments, getPaymentSummary } from '../utils/payments';
 import { billStatuses, paymentStatuses, quotationStatuses, statusLabel } from '../config/statuses';
-
-const parsePayments = (value) => {
-  if (Array.isArray(value)) return value;
-  try {
-    const parsed = JSON.parse(value || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
 
 export default function DocumentStatus({ type, document, onChange, disabled }) {
   const isBill = type === 'bill';
   const payments = parsePayments(document.payments);
   const cancelled = isBill && (document.status || '').toLowerCase() === 'cancelled';
   const partialPayment = isBill && !cancelled && document.paymentStatus === 'partially_paid';
-  const received = payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
-  const total = Number(document.total) || 0;
-  const pending = Math.max(0, Math.round((total - received) * 100) / 100);
+  const { received, pending, total } = getPaymentSummary(payments, document.total);
   const [paymentDate, setPaymentDate] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
 

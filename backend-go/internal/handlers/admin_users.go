@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"net/http"
 	"strings"
 
@@ -27,7 +25,7 @@ type resetPasswordRequest struct {
 func ListUsers(c *gin.Context) {
 	records, err := sheets.ListUsers(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load users."})
+		unavailable(c, "Unable to load users.")
 		return
 	}
 	users := make([]sheets.User, 0, len(records))
@@ -40,13 +38,13 @@ func ListUsers(c *gin.Context) {
 func CreateUser(c *gin.Context) {
 	var request createUserRequest
 	if err := c.ShouldBindJSON(&request); err != nil || len([]rune(request.Password)) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Username, display name, and a password of at least 8 characters are required."})
+		badRequest(c, "Username, display name, and a password of at least 8 characters are required.")
 		return
 	}
 	username := strings.TrimSpace(request.Username)
 	displayName := strings.TrimSpace(request.DisplayName)
 	if username == "" || displayName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and display name are required."})
+		badRequest(c, "Username and display name are required.")
 		return
 	}
 	user := sheets.User{ID: newUserID(), Username: username, DisplayName: displayName, Role: "user", Status: "active"}
@@ -55,7 +53,7 @@ func CreateUser(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": "A user with that username already exists."})
 			return
 		}
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to create user."})
+		unavailable(c, "Unable to create user.")
 		return
 	}
 	c.JSON(http.StatusCreated, user)
@@ -64,17 +62,17 @@ func CreateUser(c *gin.Context) {
 func UpdateUserStatus(c *gin.Context) {
 	status := userStatusRequest{}
 	if err := c.ShouldBindJSON(&status); err != nil || !validUserStatus(status.Status) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be active or inactive."})
+		badRequest(c, "Status must be active or inactive.")
 		return
 	}
 	currentUser, _ := c.Get("authenticatedUser")
 	if user, ok := currentUser.(sheets.User); ok && user.ID == c.Param("id") && status.Status != "active" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot deactivate your own administrator account."})
+		badRequest(c, "You cannot deactivate your own administrator account.")
 		return
 	}
 	user, err := sheets.UpdateUserStatus(c.Request.Context(), c.Param("id"), strings.ToLower(status.Status))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found."})
+		notFound(c, "User not found.")
 		return
 	}
 	user.Status = strings.ToLower(status.Status)
@@ -84,12 +82,12 @@ func UpdateUserStatus(c *gin.Context) {
 func ResetUserPassword(c *gin.Context) {
 	var request resetPasswordRequest
 	if err := c.ShouldBindJSON(&request); err != nil || len([]rune(request.Password)) < 8 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters."})
+		badRequest(c, "Password must be at least 8 characters.")
 		return
 	}
 	user, err := sheets.ResetUserPassword(c.Request.Context(), c.Param("id"), request.Password)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found."})
+		notFound(c, "User not found.")
 		return
 	}
 	c.JSON(http.StatusOK, user)
@@ -98,10 +96,4 @@ func ResetUserPassword(c *gin.Context) {
 func validUserStatus(status string) bool {
 	status = strings.ToLower(strings.TrimSpace(status))
 	return status == "active" || status == "inactive"
-}
-
-func newUserID() string {
-	bytes := make([]byte, 8)
-	_, _ = rand.Read(bytes)
-	return "usr_" + hex.EncodeToString(bytes)
 }

@@ -17,7 +17,6 @@ Run these commands from `backend-go/`. Copy `.env.example` to `.env` and configu
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
-GOOGLE_SHEET_RANGE=Users!A:J
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=use-a-long-random-value
 COOKIE_SECURE=false
@@ -30,7 +29,7 @@ OAUTH_FRONTEND_URL=http://localhost:3000/
 GOOGLE_ALLOWED_DOMAINS=
 ```
 
-Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the hard-coded `Users!A2:J` range: bcrypt hashes are in C, the legacy plaintext fallback is in H, and Google subject/email are in I/J. `GOOGLE_SHEET_RANGE` remains in deployment configuration but does not override this read range.
+Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the hard-coded `Users!A2:J` range: bcrypt hashes are in C, the legacy plaintext fallback is in H, and Google subject/email are in I/J.
 
 Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
 

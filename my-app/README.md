@@ -50,10 +50,13 @@ Share revocation is available through API service helpers but has no UI button. 
 - `src/config/api.js`
 - `src/App.css`
 - `src/App.test.js`
+- `src/services/apiClient.js`: shared `fetch` helper used by the document, client, auth, admin, and profile services
+- `src/hooks/useSavedDocuments.js`: document-library state with upsert/replace/remove mutations
 - `src/components/ClientSelector.js`, `Clients.js`: client reuse, edit/delete, and history
 - `src/components/DocumentStatus.js`, `src/config/statuses.js`: lifecycle/payment controls
-- `src/utils/quotation.js`: save/reopen metadata and pricing helpers
+- `src/utils/quotation.js`: save/reopen metadata and pricing helpers; also `src/utils/payments.js` for payment records and summaries
 - `src/utils/pdf.js`: PDF export
+- `src/components/ModalOverlay.js`, `SaveStatus.js`: shared popup backdrop and save-status primitives
 - `api/blob-upload.js`: authenticated Vercel Blob upload authorization
 
 ## Logo Uploads

@@ -3,7 +3,9 @@ import { upload } from '@vercel/blob/client';
 import ActionIcon from './ActionIcon';
 import ActionButton from './ActionButton';
 import IconButton from './IconButton';
+import SaveStatus from './SaveStatus';
 import UserGuide from './UserGuide';
+import { APP_ROUTES } from '../config/routes';
 
 const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
@@ -79,7 +81,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
           </div>
           <div className="header-actions">
             <ActionButton icon={showGuide ? 'close' : 'library'} label={showGuide ? 'Hide guide' : 'User guide'} className={showGuide ? '' : 'color-link'} onClick={() => setShowGuide((open) => !open)} />
-            <IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} />
+            <IconButton icon="back" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
           </div>
         </div>
 
@@ -177,7 +179,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
               </button>
             </div>
 
-            {message && <p className="save-status">{message}</p>}
+            <SaveStatus message={message} />
           </form>
         )}
       </section>

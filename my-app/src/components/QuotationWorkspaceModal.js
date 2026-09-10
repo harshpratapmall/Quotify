@@ -2,6 +2,8 @@ import { APP_ROUTES } from '../config/routes';
 import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import ClientSelector from './ClientSelector';
+import ModalOverlay from './ModalOverlay';
+import SaveStatus from './SaveStatus';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
@@ -69,9 +71,8 @@ function QuotationWorkspaceModal({
   };
 
   return (
-    <div className={`form-modal-backdrop ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace-backdrop' : ''}`} role="presentation" onMouseDown={() => closeWorkspace('backdrop')}>
-      <section className={`form-card form-workspace-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace' : ''}`} role="dialog" aria-modal="true" aria-labelledby="quotation-workspace-title" onMouseDown={(event) => event.stopPropagation()}>
-        <div className="section-heading">
+    <ModalOverlay onClose={() => closeWorkspace('backdrop')} backdropClass={`form-modal-backdrop ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace-backdrop' : ''}`} sectionClass={`form-card form-workspace-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-workspace' : ''}`} sectionProps={{ 'aria-labelledby': 'quotation-workspace-title' }}>
+      <div className="section-heading">
           <div>
             <p className="eyebrow">{copy.singular} Workspace</p>
             <h3 id="quotation-workspace-title">{activeQuotationId ? `Edit saved ${copy.singular.toLowerCase()}` : `Create a new ${copy.singular.toLowerCase()}`}</h3>
@@ -212,11 +213,10 @@ function QuotationWorkspaceModal({
               Generate {copy.singular}
             </button>
           </div>
-          {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
+          <SaveStatus message={saveStatus} />
         </form>
-      </section>
-    </div>
-  );
+      </ModalOverlay>
+    );
 }
 
 export default QuotationWorkspaceModal;

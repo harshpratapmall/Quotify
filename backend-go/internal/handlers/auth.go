@@ -1,17 +1,12 @@
 package handlers
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/subtle"
-	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
+	"backend-go/internal/config"
 	"backend-go/internal/sheets"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +23,7 @@ type loginRequest struct {
 func Login(c *gin.Context) {
 	var request loginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required."})
+		badRequest(c, "Username and password are required.")
 		return
 	}
 	if err := sheets.ValidateConfiguration(); err != nil {
@@ -48,7 +43,7 @@ func Login(c *gin.Context) {
 
 	token, expiresAt, err := createToken(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to start a session."})
+		internalError(c, "Unable to start a session.")
 		return
 	}
 	setSessionCookie(c, token, int(sessionDuration.Seconds()))
@@ -66,7 +61,7 @@ func Health(c *gin.Context) {
 func Me(c *gin.Context) {
 	user, expiresAt, valid := authenticatedUser(c)
 	if !valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
@@ -75,7 +70,7 @@ func Me(c *gin.Context) {
 func RequireAdmin(c *gin.Context) {
 	user, _, valid := authenticatedUser(c)
 	if !valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		c.Abort()
 		return
 	}
@@ -112,7 +107,7 @@ func Logout(c *gin.Context) {
 }
 
 func setSessionCookie(c *gin.Context, value string, maxAge int) {
-	secure, _ := strconv.ParseBool(os.Getenv("COOKIE_SECURE"))
+	secure := config.CookieSecure()
 	sameSite := http.SameSiteLaxMode
 	if secure {
 		// The Vercel frontend and Render API are cross-site, so production
@@ -132,29 +127,12 @@ func createToken(user sheets.User) (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
-	payload := string(payloadBytes)
-	encodedPayload := base64.RawURLEncoding.EncodeToString([]byte(payload))
-	mac := hmac.New(sha256.New, sessionSecret())
-	if _, err := mac.Write([]byte(encodedPayload)); err != nil {
-		return "", 0, err
-	}
-	return encodedPayload + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), expiresAt, nil
+	return signPayload(payloadBytes), expiresAt, nil
 }
 
 func readToken(token string) (sheets.User, int64, bool) {
-	parts := strings.Split(token, ".")
-	if len(parts) != 2 {
-		return sheets.User{}, 0, false
-	}
-	mac := hmac.New(sha256.New, sessionSecret())
-	_, _ = mac.Write([]byte(parts[0]))
-	expectedSignature := mac.Sum(nil)
-	providedSignature, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil || subtle.ConstantTimeCompare(expectedSignature, providedSignature) != 1 {
-		return sheets.User{}, 0, false
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
-	if err != nil {
+	payload := verifyPayload(token)
+	if payload == nil {
 		return sheets.User{}, 0, false
 	}
 	var claims struct {
@@ -171,9 +149,5 @@ func readToken(token string) (sheets.User, int64, bool) {
 }
 
 func sessionSecret() []byte {
-	secret := os.Getenv("AUTH_SESSION_SECRET")
-	if secret == "" {
-		secret = "local-development-secret-change-me"
-	}
-	return []byte(secret)
+	return []byte(config.SessionSecret())
 }

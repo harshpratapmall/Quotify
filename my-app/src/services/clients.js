@@ -1,22 +1,12 @@
-import { requestJson } from './apiClient';
+import { apiRequest, requestJson } from './apiClient';
 
 const clientPath = (id = '') => `/api/v1/clients${id ? `/${id}` : ''}`;
 export const listClientDocuments = (id) => requestJson(`${clientPath(id)}/documents`);
 
 export const listClients = (query = '') => requestJson(`${clientPath()}${query ? `?q=${encodeURIComponent(query)}` : ''}`);
 
-export const createClient = (client) => requestJson(clientPath(), {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(client),
-});
+export const createClient = (client) => apiRequest('POST', clientPath(), client);
 
-export const updateClient = (id, client) => requestJson(clientPath(id), {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(client),
-});
+export const updateClient = (id, client) => apiRequest('PUT', clientPath(id), client);
 
-export const deleteClient = (id) => requestJson(clientPath(id), {
-  method: 'DELETE',
-});
+export const deleteClient = (id) => apiRequest('DELETE', clientPath(id));

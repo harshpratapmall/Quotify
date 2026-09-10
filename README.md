@@ -61,13 +61,13 @@ Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `cancelle
 
 ## Google Sheets
 
-Use one spreadsheet shared with the service account. User records are read from `Users!A2:J`; deployment configuration sets `GOOGLE_SHEET_RANGE=Users!A:J`:
+Use one spreadsheet shared with the service account. User records are read from `Users!A2:J`:
 
 | A | B | C | D | E | F | G | H | I | J |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password | google_subject | google_email |
 
-The current repository hard-codes worksheet ranges, including `Users!A2:J`; changing `GOOGLE_SHEET_RANGE` alone does not change the login read range.
+All worksheet ranges are hard-coded in the repository, including `Users!A2:J`; there is no `GOOGLE_SHEET_RANGE` variable to override them.
 
 Passwords are verified with the bcrypt hash in column C. Column H is a legacy plaintext compatibility fallback and must not be exposed by the API; remove it after all existing accounts have been migrated.
 
@@ -127,7 +127,6 @@ Create `backend-go/.env` from `backend-go/.env.example`:
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
-GOOGLE_SHEET_RANGE=Users!A:J
 GOOGLE_SERVICE_ACCOUNT_FILE=./service-account.json
 AUTH_SESSION_SECRET=replace-with-a-long-random-secret
 COOKIE_SECURE=false
@@ -155,7 +154,7 @@ Password sign-in does not require Google OAuth configuration; the Google sign-in
 
 ## Deployment
 
-Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE=Users!A:J`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
+Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
 
 Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://quotify-i62o.onrender.com/api/v1/auth/google/callback` as authorized redirect URIs in the Google Cloud OAuth client.
 

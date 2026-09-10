@@ -1,7 +1,63 @@
 package sheets
 
-import("context";"fmt";"net/http";"strings";"time")
-type BusinessProfile struct { UserID string `json:"-"`; BusinessName string `json:"businessName"`; LogoURL string `json:"logoUrl"`; Phone string `json:"phone"`; Email string `json:"email"`; Address string `json:"address"`; GSTIN string `json:"gstin"`; QuotePrefix string `json:"quotePrefix"`; Terms string `json:"terms"`; Row int `json:"-"` }
-func GetBusinessProfile(ctx context.Context,id string)(BusinessProfile,error){ rows,e:=readValues(ctx,"BusinessProfiles!A2:J");if e!=nil{return BusinessProfile{},e};for i,r:=range rows{if len(r)>0&&r[0]==id{return profileRow(r,i+2),nil}};return BusinessProfile{},nil }
-func SaveBusinessProfile(ctx context.Context,p BusinessProfile)(BusinessProfile,error){ existing,e:=GetBusinessProfile(ctx,p.UserID);if e!=nil{return p,e};p.Row=existing.Row;if p.LogoURL==""{p.LogoURL=existing.LogoURL}; row:=[]string{p.UserID,p.BusinessName,p.LogoURL,p.Phone,p.Email,p.Address,p.GSTIN,p.QuotePrefix,p.Terms,time.Now().UTC().Format(time.RFC3339)};if p.Row>0{e=writeValues(ctx,http.MethodPut,fmt.Sprintf("BusinessProfiles!A%d:J%d?valueInputOption=RAW",p.Row,p.Row),[][]string{row})}else{e=writeValues(ctx,http.MethodPost,"BusinessProfiles!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",[][]string{row})};return p,e }
-func profileRow(r []string,row int)BusinessProfile{g:=func(i int)string{if i<len(r){return strings.TrimSpace(r[i])};return ""};return BusinessProfile{UserID:g(0),BusinessName:g(1),LogoURL:g(2),Phone:g(3),Email:g(4),Address:g(5),GSTIN:g(6),QuotePrefix:g(7),Terms:g(8),Row:row}}
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+)
+
+type BusinessProfile struct {
+	UserID       string `json:"-"`
+	BusinessName string `json:"businessName"`
+	LogoURL      string `json:"logoUrl"`
+	Phone        string `json:"phone"`
+	Email        string `json:"email"`
+	Address      string `json:"address"`
+	GSTIN        string `json:"gstin"`
+	QuotePrefix  string `json:"quotePrefix"`
+	Terms        string `json:"terms"`
+	Row          int    `json:"-"`
+}
+
+func GetBusinessProfile(ctx context.Context, id string) (BusinessProfile, error) {
+	rows, err := readValues(ctx, "BusinessProfiles!A2:J")
+	if err != nil {
+		return BusinessProfile{}, err
+	}
+	for index, row := range rows {
+		if len(row) > 0 && row[0] == id {
+			return profileRow(row, index+2), nil
+		}
+	}
+	return BusinessProfile{}, nil
+}
+
+func SaveBusinessProfile(ctx context.Context, profile BusinessProfile) (BusinessProfile, error) {
+	existing, err := GetBusinessProfile(ctx, profile.UserID)
+	if err != nil {
+		return profile, err
+	}
+	profile.Row = existing.Row
+	if profile.LogoURL == "" {
+		profile.LogoURL = existing.LogoURL
+	}
+	row := []string{profile.UserID, profile.BusinessName, profile.LogoURL, profile.Phone, profile.Email, profile.Address, profile.GSTIN, profile.QuotePrefix, profile.Terms, time.Now().UTC().Format(time.RFC3339)}
+	if profile.Row > 0 {
+		err = writeValues(ctx, http.MethodPut, fmt.Sprintf("BusinessProfiles!A%d:J%d?valueInputOption=RAW", profile.Row, profile.Row), [][]string{row})
+	} else {
+		err = writeValues(ctx, http.MethodPost, "BusinessProfiles!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{row})
+	}
+	return profile, err
+}
+
+func profileRow(row []string, rowNumber int) BusinessProfile {
+	get := func(index int) string {
+		if index < len(row) {
+			return strings.TrimSpace(row[index])
+		}
+		return ""
+	}
+	return BusinessProfile{UserID: get(0), BusinessName: get(1), LogoURL: get(2), Phone: get(3), Email: get(4), Address: get(5), GSTIN: get(6), QuotePrefix: get(7), Terms: get(8), Row: rowNumber}
+}

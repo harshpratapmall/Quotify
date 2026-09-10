@@ -22,6 +22,8 @@ import (
 	"sync"
 	"time"
 
+	"backend-go/internal/config"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,7 +64,7 @@ var userMutationMu sync.Mutex
 
 // ValidateConfiguration checks only local setup and never makes a Google request.
 func ValidateConfiguration() error {
-	if os.Getenv("GOOGLE_SHEET_ID") == "" {
+	if config.SheetID() == "" {
 		return errors.New("GOOGLE_SHEET_ID is not set")
 	}
 	_, err := loadServiceAccount()
@@ -77,7 +79,7 @@ func Authenticate(ctx context.Context, username, password string) (User, error) 
 	if err != nil {
 		return User{}, err
 	}
-	debugAuthentication := os.Getenv("AUTH_DEBUG") == "true"
+	debugAuthentication := config.AuthDebug()
 	if debugAuthentication {
 		log.Printf("auth debug: fetched %d sheet rows; submitted username=%q password_length=%d", len(users), username, len(password))
 	}
@@ -251,9 +253,9 @@ func newUserID() string {
 }
 
 func loadServiceAccount() (serviceAccount, error) {
-	contents := os.Getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+	contents := config.ServiceAccountJSON()
 	if contents == "" {
-		filePath := os.Getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
+		filePath := config.ServiceAccountFile()
 		if filePath == "" {
 			return serviceAccount{}, errors.New("Google service account credentials are not configured")
 		}

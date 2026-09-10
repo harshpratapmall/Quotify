@@ -3,26 +3,12 @@ import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import DocumentStatus from './DocumentStatus';
 import ModalHeader from './ModalHeader';
+import ModalOverlay from './ModalOverlay';
+import SaveStatus from './SaveStatus';
 import { APP_ROUTES } from '../config/routes';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 import { currency } from '../utils/formatters';
-
-const parsePayments = (value) => {
-  if (Array.isArray(value)) return value;
-  try {
-    const parsed = JSON.parse(value || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-function paymentSummary(entry) {
-  const payments = parsePayments(entry.payments);
-  const received = payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
-  const total = Number(entry.total) || 0;
-  return { received, pending: Math.max(0, Math.round((total - received) * 100) / 100), total };
-}
+import { parsePayments, getPaymentSummary } from '../utils/payments';
 
 function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocument, startNewDocument, goBack, saveStatus, changeStatus, statusBusy }) {
   const [query, setQuery] = useState('');
@@ -36,8 +22,7 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
     return [entry.clientName, entry.projectName, entry.owner].filter(Boolean).some((field) => String(field).toLowerCase().includes(needle));
   });
   const toggleEntry = (id) => setOpenEntry((current) => current === id ? null : id);
-  return <div className="modal-backdrop library-backdrop" role="presentation" onMouseDown={goBack}>
-    <section className={`document-library-modal ${type}`} role="dialog" aria-modal="true" aria-labelledby="document-library-title" onMouseDown={(event) => event.stopPropagation()}>
+  return <ModalOverlay onClose={goBack} backdropClass="modal-backdrop library-backdrop" sectionClass={`document-library-modal ${type}`} sectionProps={{ 'aria-labelledby': 'document-library-title' }}>
       <ModalHeader eyebrow="Saved work" title={`${copy.plural} library`} titleId="document-library-title" trailingAction={<div className="modal-action-cluster">
         <IconButton icon="plus" className="accent-icon" label={`New ${copy.singular.toLowerCase()}`} onClick={() => startNewDocument(type, 'library')} />
         <IconButton icon="close" className="modal-close" label={`Close ${copy.plural.toLowerCase()} library`} onClick={goBack} />
@@ -50,7 +35,7 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
         {entries.map((entry) => {
           const isOpen = openEntry === entry.id;
           const partial = type === DOCUMENT_TYPES.bill && (entry.status || 'draft') !== 'cancelled' && entry.paymentStatus === 'partially_paid';
-          const summary = partial ? paymentSummary(entry) : null;
+          const summary = partial ? getPaymentSummary(parsePayments(entry.payments), entry.total) : null;
           return <article className={`saved-quotation-card ${isOpen ? 'is-open' : ''}`} key={entry.id}>
             <div className="library-tile" role="button" tabIndex={0} aria-expanded={isOpen} onClick={() => toggleEntry(entry.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleEntry(entry.id); } }}>
               <div className="library-document-info"><strong>{entry.clientName || 'Untitled client'}</strong><span>{entry.projectName || 'Untitled project'} · {entry.quoteDate || 'No date'}</span><small>{currency(Number(entry.total || 0))}{entry.dueDate ? ` · Due ${entry.dueDate}` : ''}</small>
@@ -67,8 +52,7 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
           </article>;
         })}
       </div>}
-      {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
-    </section>
-  </div>;
+      <SaveStatus message={saveStatus} />
+    </ModalOverlay>;
 }
 export default DocumentLibraryModal;

@@ -52,12 +52,12 @@ func RevokeBillShare(c *gin.Context) {
 func createDocumentShare(c *gin.Context, documentType string) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	documentID := c.Param("id")
 	if documentType != "quotation" && documentType != "bill" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported document type."})
+		badRequest(c, "Unsupported document type.")
 		return
 	}
 	var document sheets.Bill
@@ -68,31 +68,31 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		document, err = sheets.GetQuotation(c.Request.Context(), ownerID, documentID)
 	}
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load document."})
+		unavailable(c, "Unable to load document.")
 		return
 	}
 	if document.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Document not found."})
+		notFound(c, "Document not found.")
 		return
 	}
 	if existing, err := sheets.GetOwnerShareLink(c.Request.Context(), ownerID, documentType, documentID); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load share link."})
+		unavailable(c, "Unable to load share link.")
 		return
 	} else if existing.ID != "" {
 		if err := sheets.RevokeShareLink(c.Request.Context(), existing, time.Now().UTC().Format(time.RFC3339)); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to rotate share link."})
+			unavailable(c, "Unable to rotate share link.")
 			return
 		}
 	}
 	token, tokenHash, err := sheets.NewShareToken()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create share link."})
+		internalError(c, "Unable to create share link.")
 		return
 	}
 	now := time.Now().UTC()
 	link := sheets.ShareLink{ID: "SH-" + token[:12], OwnerID: ownerID, DocumentType: documentType, DocumentID: documentID, TokenHash: tokenHash, CreatedAt: now.Format(time.RFC3339), ExpiresAt: now.Add(30 * 24 * time.Hour).Format(time.RFC3339)}
 	if err := sheets.SaveShareLink(c.Request.Context(), link); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to save share link."})
+		unavailable(c, "Unable to save share link.")
 		return
 	}
 	document.ShareLinkID = link.ID
@@ -103,7 +103,7 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		err = sheets.UpdateQuotation(c.Request.Context(), document)
 	}
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to attach share link."})
+		unavailable(c, "Unable to attach share link.")
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"id": link.ID, "url": shareURL(token), "expiresAt": link.ExpiresAt})
@@ -112,20 +112,20 @@ func createDocumentShare(c *gin.Context, documentType string) {
 func revokeDocumentShare(c *gin.Context, documentType string) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		unauthorized(c)
 		return
 	}
 	link, err := sheets.GetOwnerShareLink(c.Request.Context(), ownerID, documentType, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load share link."})
+		unavailable(c, "Unable to load share link.")
 		return
 	}
 	if link.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Active share link not found."})
+		notFound(c, "Active share link not found.")
 		return
 	}
 	if err := sheets.RevokeShareLink(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339)); err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to revoke share link."})
+		unavailable(c, "Unable to revoke share link.")
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -135,7 +135,7 @@ func GetPublicShare(c *gin.Context) {
 	hash := sha256.Sum256([]byte(strings.TrimSpace(c.Param("token"))))
 	link, err := sheets.GetShareLink(c.Request.Context(), hex.EncodeToString(hash[:]))
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load shared document."})
+		unavailable(c, "Unable to load shared document.")
 		return
 	}
 	if !sheets.ShareLinkIsActive(link, time.Now()) {
@@ -143,7 +143,7 @@ func GetPublicShare(c *gin.Context) {
 		return
 	}
 	if link.DocumentType != "quotation" && link.DocumentType != "bill" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Shared document not found."})
+		notFound(c, "Shared document not found.")
 		return
 	}
 	var quote sheets.Bill
@@ -153,12 +153,12 @@ func GetPublicShare(c *gin.Context) {
 		quote, err = sheets.GetQuotation(c.Request.Context(), link.OwnerID, link.DocumentID)
 	}
 	if err != nil || quote.ID == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Shared document not found."})
+		notFound(c, "Shared document not found.")
 		return
 	}
 	profile, err := sheets.GetBusinessProfile(c.Request.Context(), link.OwnerID)
 	if err != nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load business branding."})
+		unavailable(c, "Unable to load business branding.")
 		return
 	}
 	_ = sheets.RecordShareView(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339))

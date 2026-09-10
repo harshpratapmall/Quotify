@@ -1,16 +1,11 @@
 package sheets
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -88,136 +83,6 @@ func UpdateQuotation(ctx context.Context, quote Quotation) error {
 
 func DeleteQuotation(ctx context.Context, row int) error {
 	return deleteDocumentRow(ctx, row, "Quotations")
-}
-
-func deleteDocumentRow(ctx context.Context, row int, worksheet string) error {
-	account, err := loadServiceAccount()
-	if err != nil {
-		return err
-	}
-	token, err := accessToken(ctx, account)
-	if err != nil {
-		return err
-	}
-	sheetID, err := worksheetID(ctx, token, worksheet)
-	if err != nil {
-		return err
-	}
-	body, _ := json.Marshal(map[string]any{"requests": []any{map[string]any{"deleteDimension": map[string]any{"range": map[string]any{"sheetId": sheetID, "dimension": "ROWS", "startIndex": row - 1, "endIndex": row}}}}})
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s:batchUpdate", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")))
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
-	response, err := newHTTPClient().Do(req)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return fmt.Errorf("Google Sheets returned %s", response.Status)
-	}
-	return nil
-}
-
-func worksheetID(ctx context.Context, token, worksheet string) (int, error) {
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s?fields=sheets.properties", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return 0, err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	response, err := newHTTPClient().Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("Google Sheets returned %s", response.Status)
-	}
-	var metadata struct {
-		Sheets []struct {
-			Properties struct {
-				SheetID int    `json:"sheetId"`
-				Title   string `json:"title"`
-			} `json:"properties"`
-		} `json:"sheets"`
-	}
-	if err := json.NewDecoder(response.Body).Decode(&metadata); err != nil {
-		return 0, err
-	}
-	for _, sheet := range metadata.Sheets {
-		if sheet.Properties.Title == worksheet {
-			return sheet.Properties.SheetID, nil
-		}
-	}
-	return 0, fmt.Errorf("%s worksheet not found", worksheet)
-}
-
-func readValues(ctx context.Context, rangeName string) ([][]string, error) {
-	account, err := loadServiceAccount()
-	if err != nil {
-		return nil, err
-	}
-	token, err := accessToken(ctx, account)
-	if err != nil {
-		return nil, err
-	}
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")), url.PathEscape(rangeName))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	resp, err := newHTTPClient().Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Google Sheets returned %s", resp.Status)
-	}
-	var body valuesResponse
-	err = json.NewDecoder(resp.Body).Decode(&body)
-	return body.Values, err
-}
-
-func writeValues(ctx context.Context, method, target string, values [][]string) error {
-	account, err := loadServiceAccount()
-	if err != nil {
-		return err
-	}
-	token, err := accessToken(ctx, account)
-	if err != nil {
-		return err
-	}
-	body, err := json.Marshal(map[string]any{"values": values})
-	if err != nil {
-		return err
-	}
-	rangeName, query, _ := strings.Cut(target, "?")
-	endpoint := fmt.Sprintf("https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s", url.PathEscape(os.Getenv("GOOGLE_SHEET_ID")), url.PathEscape(rangeName))
-	if query != "" {
-		endpoint += "?" + query
-	}
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := newHTTPClient().Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		responseBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Google Sheets returned %s: %s", resp.Status, strings.TrimSpace(string(responseBody)))
-	}
-	return nil
 }
 
 func fromRow(row []string, rowNumber int) Quotation {

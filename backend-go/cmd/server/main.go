@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"backend-go/internal/config"
 	"backend-go/internal/routes"
 )
 
@@ -15,15 +16,10 @@ func main() {
 	loadDotEnv(".env")
 	loadProjectDotEnv()
 	normalizeServiceAccountPath()
-	log.Printf("Google Sheets login configuration loaded: %t", os.Getenv("GOOGLE_SHEET_ID") != "")
+	log.Printf("Google Sheets login configuration loaded: %t", config.SheetID() != "")
 	router := routes.SetupRouter()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
-	}
-
-	if err := router.Run(":" + port); err != nil {
+	if err := router.Run(":" + config.Port()); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
 }
@@ -39,7 +35,7 @@ func loadProjectDotEnv() {
 }
 
 func normalizeServiceAccountPath() {
-	credentialPath := os.Getenv("GOOGLE_SERVICE_ACCOUNT_FILE")
+	credentialPath := config.ServiceAccountFile()
 	if credentialPath == "" || filepath.IsAbs(credentialPath) {
 		return
 	}

@@ -1,20 +1,16 @@
 package handlers
 
 import (
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
+	"backend-go/internal/config"
 	"backend-go/internal/sheets"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -127,10 +123,10 @@ func GoogleLoginCallback(c *gin.Context) {
 }
 
 func googleOAuthConfig() (*oauth2.Config, error) {
-	clientID := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
-	clientSecret := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"))
-	redirectURL := strings.TrimSpace(os.Getenv("GOOGLE_OAUTH_REDIRECT_URL"))
-	frontend := strings.TrimSpace(os.Getenv("OAUTH_FRONTEND_URL"))
+	clientID := strings.TrimSpace(config.GoogleOAuthClientID())
+	clientSecret := strings.TrimSpace(config.GoogleOAuthClientSecret())
+	redirectURL := strings.TrimSpace(config.GoogleOAuthRedirectURL())
+	frontend := strings.TrimSpace(config.OAuthFrontendURL())
 	if clientID == "" || clientSecret == "" || redirectURL == "" || frontend == "" {
 		return nil, errors.New("Google OAuth environment is incomplete")
 	}
@@ -163,11 +159,8 @@ func randomURLValue(size int) (string, error) {
 
 func setOAuthStateCookie(c *gin.Context, state googleOAuthState) {
 	payload, _ := json.Marshal(state)
-	encoded := base64.RawURLEncoding.EncodeToString(payload)
-	mac := hmac.New(sha256.New, sessionSecret())
-	mac.Write([]byte(encoded))
-	value := encoded + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	secure, _ := strconvBool(os.Getenv("COOKIE_SECURE"))
+	value := signPayload(payload)
+	secure := config.CookieSecure()
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(googleStateCookie, value, int(googleStateTTL.Seconds()), "/", "", secure, true)
 }
@@ -177,19 +170,9 @@ func readOAuthStateCookie(c *gin.Context) (googleOAuthState, error) {
 	if err != nil {
 		return googleOAuthState{}, err
 	}
-	parts := strings.Split(value, ".")
-	if len(parts) != 2 {
+	payload := verifyPayload(value)
+	if payload == nil {
 		return googleOAuthState{}, errors.New("invalid OAuth state")
-	}
-	mac := hmac.New(sha256.New, sessionSecret())
-	mac.Write([]byte(parts[0]))
-	signature, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil || subtle.ConstantTimeCompare(mac.Sum(nil), signature) != 1 {
-		return googleOAuthState{}, errors.New("invalid OAuth state signature")
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
-	if err != nil {
-		return googleOAuthState{}, err
 	}
 	state := googleOAuthState{}
 	if err := json.Unmarshal(payload, &state); err != nil || state.State == "" || state.Verifier == "" || state.Nonce == "" || time.Now().Unix() > state.Expires {
@@ -199,13 +182,13 @@ func readOAuthStateCookie(c *gin.Context) (googleOAuthState, error) {
 }
 
 func clearOAuthStateCookie(c *gin.Context) {
-	secure, _ := strconvBool(os.Getenv("COOKIE_SECURE"))
+	secure := config.CookieSecure()
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(googleStateCookie, "", -1, "/", "", secure, true)
 }
 
 func allowedGoogleEmail(email string) bool {
-	configured := strings.TrimSpace(os.Getenv("GOOGLE_ALLOWED_DOMAINS"))
+	configured := strings.TrimSpace(config.GoogleAllowedDomains())
 	if configured == "" {
 		return true
 	}
@@ -222,8 +205,7 @@ func allowedGoogleEmail(email string) bool {
 }
 
 func frontendURL() string {
-	value := strings.TrimSpace(os.Getenv("OAUTH_FRONTEND_URL"))
-	return value
+	return strings.TrimSpace(config.OAuthFrontendURL())
 }
 
 func googleAuthFailure(c *gin.Context, message string) {
@@ -236,14 +218,4 @@ func googleAuthFailure(c *gin.Context, message string) {
 	query.Set("oauth_error", message)
 	target.RawQuery = query.Encode()
 	c.Redirect(http.StatusFound, target.String())
-}
-
-func strconvBool(value string) (bool, error) {
-	if value == "true" {
-		return true, nil
-	}
-	if value == "false" || value == "" {
-		return false, nil
-	}
-	return false, fmt.Errorf("invalid boolean")
 }
