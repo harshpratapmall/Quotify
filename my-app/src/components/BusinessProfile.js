@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import ActionIcon from './ActionIcon';
+import IconButton from './IconButton';
 
 const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
 
@@ -74,9 +75,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
             <h3>Make every quotation yours</h3>
           </div>
           <div className="header-actions">
-            <button className="icon-button" type="button" onClick={() => navigate('/')} aria-label="Back to overview">
-              <ActionIcon type="back" />
-            </button>
+            <IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} />
           </div>
         </div>
 

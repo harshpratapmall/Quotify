@@ -1,5 +1,6 @@
 import { APP_ROUTES } from '../config/routes';
 import ActionIcon from './ActionIcon';
+import IconButton from './IconButton';
 import ClientSelector from './ClientSelector';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
@@ -79,7 +80,7 @@ function QuotationWorkspaceModal({
             Fill in project details, add pricing lines, and review totals
             instantly.
           </p>
-          <button type="button" className="workspace-close" aria-label="Close quotation workspace" onClick={() => closeWorkspace('button')}>x</button>
+          <IconButton icon="close" className="workspace-close" label="Close quotation workspace" onClick={() => closeWorkspace('button')} />
         </div>
 
         <form className="quotation-form" onSubmit={generateQuotation}>

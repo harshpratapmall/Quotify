@@ -104,12 +104,8 @@ function Clients({ navigate, startNewDocument, openDocument }) {
           <p>Keep client details ready for every quotation and bill.</p>
         </div>
         <div className="header-actions">
-          <button type="button" className="icon-button" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} aria-label="Add client">
-            <ActionIcon type="plus" />
-          </button>
-          <button type="button" className="icon-button" onClick={() => navigate('/')} aria-label="Back to overview">
-            <ActionIcon type="back" />
-          </button>
+          <IconButton icon="plus" className="accent-icon" label="Add client" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} />
+          <IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} />
         </div>
       </header>
       {message && <p className="admin-card save-status" role="status">{message}</p>}
