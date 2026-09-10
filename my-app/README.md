@@ -32,11 +32,13 @@ REACT_APP_ENV=local
 - Business profile editing and Vercel Blob logo uploads
 - Separate quotation and bill libraries with shared line-item pricing workflows
 - Client search, add/edit/delete, contact autofill, and linked quotation/bill history
-- Document lifecycle controls, quotation accepted/declined decisions, bill payment status, and optional bill due dates
+- Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), bill payment tracking with recorded date/amount entries and a derived payment status, and optional bill due dates. Payment details are hidden for `cancelled` bills.
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
 - Admin user search, creation, activation/deactivation, and password resets
 - Color-coded library and client action buttons (preview/edit/delete), and themed status/payment dropdowns
-- "Getting started" onboarding guide on the business profile page
+- "Getting started" onboarding guide on the business profile page, toggled behind a button
+- Popup close buttons and click-away return to the page the popup opened from
+- PDF downloads use lowercase filenames from the client name (e.g. `quotation-amit-06sep.pdf`)
 
 Share revocation is available through API service helpers but has no UI button. Client deletion removes the client row only; saved quotations and bills keep their stored client name but stop appearing in that client's linked history. Document templates and library search/filter controls are not implemented. Due dates display in the editor, library, and authenticated preview; PDF export does not currently include them. There is no separate print action.
 

@@ -1595,6 +1595,18 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
 .document-status-controls.quotation select { background-color: #e6f5ee; border-color: #bfe3d0; color: #1f6b4c; }
 .document-status-controls.bill label { color: #23407f; }
 .document-status-controls.bill select { background-color: #eef2ff; border-color: #cfdaf8; color: #23407f; }
+.payments-section { display: grid; gap: 0.55rem; flex: 1 1 100%; padding: 0.7rem 0.9rem; margin-top: 0.3rem; border: 1px dashed #cfdaf8; border-radius: 10px; background: #f7f9ff; }
+.payments-section .payments-heading { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #40608f; }
+.payments-section .payments-empty { font-size: 0.78rem; color: var(--muted); }
+.payments-section .payment-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.6rem; padding: 0.45rem 0; border-bottom: 1px solid #e3e8f5; font-size: 0.85rem; color: var(--navy); }
+.payments-section .payment-row:last-of-type { border-bottom: 0; }
+.payments-section .payment-row strong { color: #23407f; }
+.payments-section .payment-row .danger-icon { color: #b8493f; }
+.payments-section .payment-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem; }
+.payments-section .payment-form label { display: grid; gap: 0.3rem; min-width: 0; flex: 1 1 110px; font-size: 0.74rem; color: var(--muted); }
+.payments-section .payment-form input { width: 100%; min-height: 34px; padding: 0.45rem 0.55rem; border: 1px solid #cfdaf8; border-radius: 8px; background: #fff; color: var(--navy); font: inherit; }
+.payments-section .payment-form .secondary-action.compact-action { margin-bottom: 2px; }
+.document-status-controls .danger-icon { padding: 0.25rem; }
 .library-document-info { min-width: 0; }
 .library-document-info strong { overflow-wrap: anywhere; }
 .client-name-button { border: 0; background: none; padding: 0; color: var(--teal); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
@@ -1605,7 +1617,7 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
 .client-document-group .saved-quotation-card { margin-top: 0.6rem; }
 .status-badge { display: inline-block; width: fit-content; padding: 0.3rem 0.55rem; border-radius: 6px; background: #edf2f6; font-size: 0.75rem; }
 .status-accepted, .status-issued { color: #226048 !important; background: #e4f4e9; }
-.status-declined, .status-cancelled, .status-expired { color: #943f36 !important; background: #fbece6; }
+.status-declined, .status-cancelled { color: #943f36 !important; background: #fbece6; }
 .user-management-page .admin-header { padding: 1.6rem; border-radius: 20px; background: linear-gradient(115deg, #19334c, #33776c); box-shadow: 0 12px 30px #19334c20; }
 .user-management-page .admin-header h1 { color: #fff; font-size: clamp(1.45rem, 4vw, 2rem); }
 .user-management-page .admin-header p { color: #dceae6; }

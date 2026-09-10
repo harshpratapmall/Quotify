@@ -18,5 +18,9 @@ export function useAppRouter() {
     setPathname(path);
   };
 
-  return { pathname, navigate };
+  const goBack = () => {
+    window.history.back();
+  };
+
+  return { pathname, navigate, goBack };
 }

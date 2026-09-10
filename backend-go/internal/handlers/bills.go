@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -58,6 +59,7 @@ func CreateBill(c *gin.Context) {
 	bill.Owner = owner
 	bill.Status = "draft"
 	bill.PaymentStatus = "unpaid"
+	bill.Payments = ""
 	bill.CreatedAt = time.Now().UTC()
 	bill.UpdatedAt = bill.CreatedAt
 	if err := sheets.SaveBill(c.Request.Context(), bill); err != nil {
@@ -87,7 +89,7 @@ func UpdateBill(c *gin.Context) {
 		return
 	}
 	bill.ID, bill.Owner, bill.Row, bill.CreatedAt = existing.ID, owner, existing.Row, existing.CreatedAt
-	bill.Status, bill.SourceQuotationID, bill.PaymentStatus, bill.TemplateID = existing.Status, existing.SourceQuotationID, existing.PaymentStatus, existing.TemplateID
+	bill.Status, bill.SourceQuotationID, bill.PaymentStatus, bill.TemplateID, bill.Payments = existing.Status, existing.SourceQuotationID, existing.PaymentStatus, existing.TemplateID, existing.Payments
 	if !c.GetBool("clientIDProvided") {
 		bill.ClientID = existing.ClientID
 	}
@@ -131,11 +133,12 @@ func UpdateBillStatus(c *gin.Context) {
 		return
 	}
 	var request struct {
-		Status        string `json:"status"`
-		PaymentStatus string `json:"paymentStatus"`
+		Status        string         `json:"status"`
+		PaymentStatus string         `json:"paymentStatus"`
+		Payments      []paymentInput `json:"payments"`
 	}
-	if err := c.ShouldBindJSON(&request); err != nil || (request.Status == "" && request.PaymentStatus == "") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "A bill or payment status is required."})
+	if err := c.ShouldBindJSON(&request); err != nil || (request.Status == "" && request.PaymentStatus == "" && request.Payments == nil) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "A bill status, payment status, or payment record is required."})
 		return
 	}
 	bill, err := sheets.GetBill(c.Request.Context(), owner, c.Param("id"))
@@ -155,10 +158,23 @@ func UpdateBillStatus(c *gin.Context) {
 		}
 		bill.Status = request.Status
 	}
+	if request.Payments != nil {
+		encoded, valid := encodePayments(request.Payments)
+		if !valid {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Each payment needs a valid date and a positive amount."})
+			return
+		}
+		bill.Payments = encoded
+		paid := 0.0
+		for _, payment := range request.Payments {
+			paid += payment.Amount
+		}
+		bill.PaymentStatus = derivePaymentStatus(paid, bill.Total)
+	}
 	if request.PaymentStatus != "" {
 		request.PaymentStatus = strings.ToLower(strings.TrimSpace(request.PaymentStatus))
 		if !validPaymentStatus(request.PaymentStatus) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Payment status must be unpaid, partially_paid, paid, overdue, or cancelled."})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Payment status must be unpaid, partially_paid, paid, or overdue."})
 			return
 		}
 		bill.PaymentStatus = request.PaymentStatus
@@ -169,6 +185,37 @@ func UpdateBillStatus(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, bill)
+}
+
+type paymentInput struct {
+	Date   string  `json:"date"`
+	Amount float64 `json:"amount"`
+}
+
+func encodePayments(payments []paymentInput) (string, bool) {
+	for _, payment := range payments {
+		if payment.Amount <= 0 {
+			return "", false
+		}
+		if _, err := time.Parse("2006-01-02", payment.Date); err != nil {
+			return "", false
+		}
+	}
+	encoded, err := json.Marshal(payments)
+	if err != nil {
+		return "", false
+	}
+	return string(encoded), true
+}
+
+func derivePaymentStatus(paid, total float64) string {
+	if paid <= 0 {
+		return "unpaid"
+	}
+	if paid >= total {
+		return "paid"
+	}
+	return "partially_paid"
 }
 
 func validBillStatus(status string) bool {

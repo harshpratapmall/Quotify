@@ -84,6 +84,7 @@ export const parseSavedQuotationPayload = (saved) => {
       dueDate: saved.dueDate || '',
       status: saved.status || 'draft',
       paymentStatus: saved.paymentStatus || 'unpaid',
+      payments: saved.payments || [],
     },
     items: Array.isArray(payload?.items) && payload.items.length
       ? payload.items

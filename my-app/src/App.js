@@ -37,7 +37,7 @@ import './App.css';
 const isAdminUser = (user) => user?.role?.toLowerCase() === 'admin';
 
 function App() {
-  const { pathname, navigate } = useAppRouter();
+  const { pathname, navigate, goBack } = useAppRouter();
   const initialPathname = useRef(pathname);
   const [draftState] = useState(() => createDraftState(null, pathname === APP_ROUTES.quotationNew || pathname === APP_ROUTES.billNew));
   const [authStatus, setAuthStatus] = useState('checking');
@@ -126,7 +126,7 @@ function App() {
       const { response, data } = await updateDocumentStatus(type, id, changes);
       if (!response.ok) throw new Error(data?.error || 'Unable to update status.');
       setSavedDocuments((current) => ({ ...current, [type]: current[type].map((entry) => entry.id === id ? data : entry) }));
-      if (activeQuotationId === id && documentType === type) setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid' }));
+      if (activeQuotationId === id && documentType === type) setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid', payments: data.payments || current.payments || [] }));
       setSaveStatus('Status updated.');
     } catch (error) {
       setSaveStatus(error.message || 'Unable to update status.');
@@ -468,7 +468,6 @@ function App() {
         logoSource: businessProfile.logoUrl,
         businessProfile,
         documentType,
-        username: currentUser?.username || '',
       });
       trackAction(ANALYTICS_EVENTS.quotationPdfDownloaded, { source, documentType });
     } catch (error) {
@@ -508,12 +507,12 @@ function App() {
         startNewDocument={startNewDocument}
         savedDocuments={savedDocuments}
       />
-      <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} navigate={navigate} saveStatus={saveStatus} changeStatus={changeDocumentStatus} statusBusy={statusBusy} />
+      <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} goBack={goBack} saveStatus={saveStatus} changeStatus={changeDocumentStatus} statusBusy={statusBusy} />
       <QuotationWorkspaceModal
         pathname={pathname}
         documentType={documentType}
         previewOnly={previewOnly}
-        navigate={navigate}
+        goBack={goBack}
         activeQuotationId={activeQuotationId}
         quotation={quotation}
         items={items}
@@ -552,7 +551,7 @@ function App() {
         createShare={createShare}
         shareUrl={activeShareUrl}
         convertToBill={convertCurrentQuotationToBill}
-        navigate={navigate}
+        goBack={goBack}
         businessProfile={businessProfile}
         saveStatus={saveStatus}
         statusBusy={statusBusy}

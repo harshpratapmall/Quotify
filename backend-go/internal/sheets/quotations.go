@@ -43,6 +43,7 @@ type Quotation struct {
 	SourceQuotationID string          `json:"sourceQuotationId,omitempty"`
 	PaymentStatus     string          `json:"paymentStatus,omitempty"`
 	DueDate           string          `json:"dueDate,omitempty"`
+	Payments          string          `json:"payments,omitempty"`
 	Row               int             `json:"-"`
 }
 

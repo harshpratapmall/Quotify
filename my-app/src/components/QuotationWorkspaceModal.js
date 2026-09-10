@@ -9,7 +9,7 @@ function QuotationWorkspaceModal({
   pathname,
   documentType,
   previewOnly,
-  navigate,
+  goBack,
   activeQuotationId,
   quotation,
   items,
@@ -45,7 +45,7 @@ function QuotationWorkspaceModal({
 
   const closeWorkspace = (source) => {
     trackAction(ANALYTICS_EVENTS.workspaceClosed, { source, documentType });
-    navigate(APP_ROUTES.home, true);
+    goBack();
   };
 
   const resetWorkspace = () => {

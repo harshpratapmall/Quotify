@@ -66,7 +66,6 @@ export const downloadQuotationPdf = async ({
   logoSource,
   businessProfile = {},
   documentType = 'quotation',
-  username = '',
 }) => {
   const logo = await loadPdfLogo(logoSource);
   const isBill = documentType === 'bill';
@@ -81,6 +80,12 @@ export const downloadQuotationPdf = async ({
   for (let index = 0; index < printableItems.length; index += itemsPerPage) {
     itemPages.push(printableItems.slice(index, index + itemsPerPage));
   }
+
+  const logoAspect = logo.height / logo.width;
+  const logoDrawHeight = Math.min(30, 132 * logoAspect);
+  const logoDrawWidth = logoDrawHeight / logoAspect;
+  const logoDrawX = 59 + (132 - logoDrawWidth) / 2;
+  const logoDrawY = 735 + (30 - logoDrawHeight) / 2;
 
   let commands = [];
   const fill = (red, green, blue) => commands.push(`${red} ${green} ${blue} rg`);
@@ -109,24 +114,43 @@ export const downloadQuotationPdf = async ({
   const quoteSuffix = activeQuotationId ? activeQuotationId.slice(-6).toUpperCase() : 'DRAFT';
   const quoteNumber = `${isBill ? 'BILL' : businessProfile.quotePrefix || 'QUOTE'}-${clientInitials(quotation.clientName)}-${(quotation.quoteDate || today).replaceAll('-', '')}-${quoteSuffix}`;
 
-  // Generate filename in format: Quotation-Username-DDMonth / Bill-Username-DDMonth
   const dateObj = new Date(quotation.quoteDate || today);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
   const ddMonth = `${String(dateObj.getDate()).padStart(2, '0')}${months[dateObj.getMonth()]}`;
-  const displayName = username || businessProfile.businessName || 'User';
-  const filename = `${isBill ? 'Bill' : 'Quotation'}-${displayName}-${ddMonth}.pdf`;
+  const safeClient = String(quotation.clientName || 'client').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'client';
+  const filename = `${isBill ? 'bill' : 'quotation'}-${safeClient}-${ddMonth}.pdf`;
+
+  const drawFooter = (pageNumber, pageCount) => {
+    const footerTag = isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42];
+    const footerText = [0.3, 0.38, 0.45];
+    rectangle(22, 24, 551, 62, [0.975, 0.98, 0.96]);
+    border(22, 24, 551, 62, [0.81, 0.85, 0.86], 0.7);
+    rectangle(22, 24, 6, 62, accent);
+    text('CONTACT', 44, 76, 6, 'F2', footerTag);
+    text(shortText(businessProfile.phone || 'Phone not added', 34), 44, 64, 8, 'F1', footerText);
+    text(shortText(businessProfile.email || 'Email not added', 34), 44, 52, 8, 'F1', footerText);
+    text('ADDRESS', 226, 76, 6, 'F2', footerTag);
+    text(shortText(businessProfile.address || 'Address not added', 40), 226, 64, 8, 'F1', footerText);
+    text('REFERENCE', 430, 76, 6, 'F2', footerTag);
+    text(`#${quoteNumber}`, 430, 64, 8, 'F1', footerText);
+    text(`Page ${pageNumber} of ${pageCount}`, 430, 50, 8, 'F1', footerText);
+  };
 
   rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
   rectangle(22, 22, 551, 798, [1, 1, 1]);
   border(22, 22, 551, 798, [0.14, 0.22, 0.24], 1.1);
-  rectangle(22, 710, 551, 110, header);
-  rectangle(22, 790, 551, 30, accent);
-  rectangle(48, 738, 178, 48, [1, 1, 1]);
-  commands.push('q 160 0 0 37 57 744 cm /Logo Do Q');
-  rectangle(411, 778, 125, 21, [1, 1, 1]);
-  text(documentTitle, 433, 785, 9, 'F2', header);
-  text(quoteNumber, 352, 757, 9, 'F2', [1, 1, 1]);
-  text(`Issued ${quotation.quoteDate || today}`, 413, 739, 8, 'F1', [0.78, 0.85, 0.9]);
+  rectangle(22, 810, 551, 10, accent);
+  rectangle(22, 700, 551, 112, header);
+  rectangle(48, 724, 150, 44, [1, 1, 1]);
+  border(48, 724, 150, 44, accent, 0.9);
+  commands.push(`q ${logoDrawWidth.toFixed(2)} 0 0 ${logoDrawHeight.toFixed(2)} ${logoDrawX.toFixed(2)} ${logoDrawY.toFixed(2)} cm /Logo Do Q`);
+  text(shortText(businessProfile.businessName || 'Your Business', 34), 214, 792, 12, 'F2', [1, 1, 1]);
+  text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  ·  ') || 'Your business partner', 46), 214, 778, 8, 'F1', [0.78, 0.85, 0.9]);
+  if (businessProfile.gstin) text(shortText(`GSTIN ${businessProfile.gstin}`, 34), 214, 764, 8, 'F1', [0.78, 0.85, 0.9]);
+  text(documentTitle, 366, 786, 14, 'F2', [1, 1, 1]);
+  line(366, 780, 547, 780, [1, 1, 1]);
+  text(shortText(`#${quoteNumber}`, 26), 366, 766, 9, 'F1', [0.78, 0.85, 0.9]);
+  text(`Issued ${quotation.quoteDate || today}`, 366, 752, 8, 'F1', [0.78, 0.85, 0.9]);
 
   rectangle(48, 630, 499, 56, [0.97, 0.98, 0.96]);
   border(48, 630, 499, 56, [0.67, 0.75, 0.71]);
@@ -180,10 +204,7 @@ export const downloadQuotationPdf = async ({
     text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
   }
 
-  line(48, 78, 547, 78, accent);
-  text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
-  text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
-  text(`Page 1 of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
+  drawFooter(1, itemPages.length);
 
   const pageContents = [commands.join('\n')];
 
@@ -192,12 +213,15 @@ export const downloadQuotationPdf = async ({
     rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
     rectangle(22, 22, 551, 798, [1, 1, 1]);
     border(22, 22, 551, 798, [0.14, 0.22, 0.24], 1.1);
-    rectangle(22, 710, 551, 110, header);
-    rectangle(22, 790, 551, 30, accent);
-    rectangle(48, 738, 178, 48, [1, 1, 1]);
-    commands.push('q 160 0 0 37 57 744 cm /Logo Do Q');
-    text(`${documentTitle} - ITEMS CONTINUED`, 348, 770, 9, 'F2', [1, 1, 1]);
-    text(quoteNumber, 414, 752, 8, 'F1', [0.78, 0.85, 0.9]);
+    rectangle(22, 810, 551, 10, accent);
+    rectangle(22, 700, 551, 112, header);
+    rectangle(48, 724, 150, 44, [1, 1, 1]);
+    border(48, 724, 150, 44, accent, 0.9);
+    commands.push(`q ${logoDrawWidth.toFixed(2)} 0 0 ${logoDrawHeight.toFixed(2)} ${logoDrawX.toFixed(2)} ${logoDrawY.toFixed(2)} cm /Logo Do Q`);
+    text(shortText(businessProfile.businessName || 'Your Business', 34), 214, 792, 12, 'F2', [1, 1, 1]);
+    text(`${documentTitle} · ITEMS CONTINUED`, 366, 786, 11, 'F2', [1, 1, 1]);
+    text(shortText(`#${quoteNumber}`, 26), 366, 770, 9, 'F1', [0.78, 0.85, 0.9]);
+    text(`Page ${pageIndex + 2} of ${itemPages.length}`, 366, 754, 8, 'F1', [0.78, 0.85, 0.9]);
     const continuationTop = 650;
     rectangle(48, continuationTop, 499, 27, header);
     text('DESCRIPTION', 61, continuationTop + 10, 8, 'F2', [1, 1, 1]);
@@ -239,10 +263,7 @@ export const downloadQuotationPdf = async ({
       text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
     }
 
-    line(48, 78, 547, 78, accent);
-    text(shortText([businessProfile.phone, businessProfile.email].filter(Boolean).join('  |  ') || businessProfile.businessName || 'Quotify', 82), 58, 64, 7, 'F1', [0.37, 0.44, 0.53]);
-    text(shortText(businessProfile.address || '', 82), 58, 52, 7, 'F1', [0.37, 0.44, 0.53]);
-    text(`Page ${pageIndex + 2} of ${itemPages.length}`, 470, 40, 7, 'F1', [0.48, 0.55, 0.64]);
+    drawFooter(pageIndex + 2, itemPages.length);
     pageContents.push(commands.join('\n'));
   });
 

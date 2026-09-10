@@ -32,7 +32,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
 | POST | `/api/v1/quotations/:id/convert-to-bill` | Create a bill from a quotation |
-| PATCH | `/api/v1/bills/:id/status` | Update bill or payment status |
+| PATCH | `/api/v1/bills/:id/status` | Update bill or payment status and record payments |
 | POST | `/api/v1/bills/:id/share` | Create a public bill link |
 | DELETE | `/api/v1/bills/:id/share` | Revoke a public bill link |
 | GET | `/api/v1/public/share/:token` | Read a publicly shared quotation or bill |
@@ -55,9 +55,9 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 
 Quotation, bill, and client ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
 
-Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Client deletion removes only the row for the authenticated owner; linked documents keep their stored client name but no longer appear in that client's history. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (either bill field can be sent alone). Client history returns `quotation` and `bill` arrays linked by client ID.
+Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Client deletion removes only the row for the authenticated owner; linked documents keep their stored client name but no longer appear in that client's history. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (bill fields can be sent alone, and `payments` accepts an array of `{date, amount}` entries that re-derive the payment status). Client history returns `quotation` and `bill` arrays linked by client ID.
 
-Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `expired`, `cancelled`. Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue`, `cancelled`. Payment status is manually recorded; a due date does not automatically mark a bill overdue.
+Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `cancelled` (a public share view auto-marks a quotation `viewed`). Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue`. Payment status is derived from recorded payments but can be overridden; a due date does not automatically mark a bill overdue, and `cancelled` bills hide payment details.
 
 ## Google Sheets
 
@@ -97,6 +97,7 @@ Metadata follows the existing A:Q columns:
 
 - `Quotations!R:X`: `status, client_id, share_link_id, viewed_at, sent_at, template_id, source_quotation_id`
 - `Bills!R:W`: `status, client_id, source_quotation_id, payment_status, due_date, template_id`
+- `Bills!X`: a JSON `payments` array of `{date, amount}` records that drives the derived payment status
 
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
@@ -161,7 +162,8 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
-- Saved document libraries and previews provide lifecycle status controls. Quotations support accepted and declined decisions; declined, expired, and cancelled quotations cannot be converted to bills. Bills have separate payment status controls and an optional payment due date.
+- Saved document libraries and previews provide lifecycle status controls. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status, and `cancelled` bills hide payment details.
+- Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`).
 - Client links and bill due dates can be cleared when editing; older API clients that omit those fields preserve existing metadata. Cross-origin API requests allow PATCH for status changes.
 - Sessions use an HTTP-only `quotify_session` cookie signed with HMAC and expire after one hour.
 - New quotation dates use `Asia/Kolkata`.

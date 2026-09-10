@@ -162,7 +162,25 @@ func GetPublicShare(c *gin.Context) {
 		return
 	}
 	_ = sheets.RecordShareView(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339))
+	if link.DocumentType == "quotation" && quotesShouldMarkViewed(quote.Status) {
+		now := time.Now().UTC()
+		quote.Status = "viewed"
+		if quote.ViewedAt == "" {
+			quote.ViewedAt = now.Format(time.RFC3339)
+		}
+		quote.UpdatedAt = now
+		_ = sheets.UpdateQuotation(c.Request.Context(), quote)
+	}
 	c.JSON(http.StatusOK, publicDocument{ID: quote.ID, DocumentType: link.DocumentType, ClientName: quote.Client, ProjectName: quote.Project, Phone: quote.Phone, Email: quote.Email, Location: quote.Location, Date: quote.QuoteDate, Scope: quote.Scope, IncludeGST: quote.IncludeGST, GSTRate: quote.GSTRate, Payload: quote.Payload, Subtotal: quote.Subtotal, Tax: quote.Tax, Total: quote.Total, Business: profile, Username: link.OwnerID, ExpiresAt: link.ExpiresAt})
+}
+
+func quotesShouldMarkViewed(status string) bool {
+	switch status {
+	case "viewed", "accepted", "declined", "cancelled":
+		return false
+	default:
+		return true
+	}
 }
 
 func shareURL(token string) string {

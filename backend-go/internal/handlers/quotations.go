@@ -139,7 +139,7 @@ func UpdateQuotationStatus(c *gin.Context) {
 		Status string `json:"status" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&request); err != nil || !validQuotationStatus(request.Status) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be draft, sent, viewed, accepted, declined, expired, or cancelled."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status must be draft, sent, viewed, accepted, declined, or cancelled."})
 		return
 	}
 	quote, err := sheets.GetQuotation(c.Request.Context(), owner, c.Param("id"))
@@ -181,8 +181,8 @@ func ConvertQuotationToBill(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Quotation not found."})
 		return
 	}
-	if quote.Status == "cancelled" || quote.Status == "expired" || quote.Status == "declined" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cancelled, expired, or declined quotations cannot be converted."})
+	if quote.Status == "cancelled" || quote.Status == "declined" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cancelled or declined quotations cannot be converted."})
 		return
 	}
 	now := time.Now().UTC()
@@ -196,7 +196,7 @@ func ConvertQuotationToBill(c *gin.Context) {
 
 func validQuotationStatus(status string) bool {
 	switch strings.ToLower(strings.TrimSpace(status)) {
-	case "draft", "sent", "viewed", "accepted", "declined", "expired", "cancelled":
+	case "draft", "sent", "viewed", "accepted", "declined", "cancelled":
 		return true
 	default:
 		return false

@@ -45,11 +45,11 @@ See the [complete endpoint table](../README.md#api), verified against `internal/
 - Client history: `GET /api/v1/clients/:id/documents` returns owner-scoped `quotation` and `bill` arrays, matched by client ID.
 - Client archival: `PATCH /api/v1/clients/:id/status?status=archived`; use `status=active` to restore.
 - Client deletion: `DELETE /api/v1/clients/:id` deletes only the owner's row; linked documents keep their stored client name.
-- Quotation and bill status endpoints accept JSON. Bills keep lifecycle and payment status separate; accepted/declined decisions apply to quotations.
+- Quotation and bill status endpoints accept JSON. Bills keep lifecycle and payment status separate; accepted/declined decisions apply to quotations. Bill status patches also accept a `payments` array of `{date, amount}` entries, stored as JSON in column X, from which the payment status is re-derived (unpaid / partially_paid / paid). Opening a public quotation share auto-marks the quotation `viewed`.
 - Quotation and bill sharing both support POST to create and DELETE to revoke `/api/v1/{quotations|bills}/:id/share`. Public links use `GET /api/v1/public/share/:token`.
 - Document updates preserve client links and bill due dates when omitted, and clear them on explicit empty strings. Nonempty due dates must be valid `YYYY-MM-DD` dates; submitted client IDs must belong to the owner.
 
-Quotation, bill, and client access uses the owner from the signed session cookie. Preserve A:Q document columns and appended metadata positions. Payment status is manual; no payment processor or overdue scheduler is implemented.
+Quotation, bill, and client access uses the owner from the signed session cookie. Preserve A:Q document columns and appended metadata positions (bills use `Bills!R:W` plus a JSON `payments` array in column X). Payment status is derived from recorded payments but can be overridden; no payment processor or overdue scheduler is implemented.
 
 ## Checks
 

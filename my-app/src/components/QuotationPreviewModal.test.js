@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import QuotationPreviewModal from './QuotationPreviewModal';
 
-const renderPreview = (previewOnly, navigate) => render(
+const renderPreview = (previewOnly, goBack) => render(
   <QuotationPreviewModal
     pathname="/quotation/preview"
     previewOnly={previewOnly}
@@ -15,26 +15,27 @@ const renderPreview = (previewOnly, navigate) => render(
     activeQuotationId={null}
     saveQuotation={jest.fn()}
     downloadPdf={jest.fn()}
-    navigate={navigate}
+    navigate={jest.fn()}
+    goBack={goBack}
   />
 );
 
-test('closes a saved quotation preview to the dashboard when its backdrop is clicked', () => {
-  const navigate = jest.fn();
-  const { container } = renderPreview(true, navigate);
+test('closes a saved quotation preview to the previous page when its backdrop is clicked', () => {
+  const goBack = jest.fn();
+  const { container } = renderPreview(true, goBack);
 
   fireEvent.mouseDown(container.querySelector('.modal-backdrop'));
 
-  expect(navigate).toHaveBeenCalledWith('/', true);
+  expect(goBack).toHaveBeenCalledTimes(1);
 });
 
-test('closes an editable quotation preview to the workspace when its backdrop is clicked', () => {
-  const navigate = jest.fn();
-  const { container } = renderPreview(false, navigate);
+test('closes an editable quotation preview to the previous page when its backdrop is clicked', () => {
+  const goBack = jest.fn();
+  const { container } = renderPreview(false, goBack);
 
   fireEvent.mouseDown(container.querySelector('.modal-backdrop'));
 
-  expect(navigate).toHaveBeenCalledWith('/quotation/new', true);
+  expect(goBack).toHaveBeenCalledTimes(1);
 });
 
 test('requests a PDF download from the preview action', () => {
@@ -54,6 +55,7 @@ test('requests a PDF download from the preview action', () => {
       saveQuotation={jest.fn()}
       downloadPdf={downloadPdf}
       navigate={jest.fn()}
+      goBack={jest.fn()}
     />
   );
 

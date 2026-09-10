@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import ActionIcon from './ActionIcon';
+import ActionButton from './ActionButton';
 import IconButton from './IconButton';
 import UserGuide from './UserGuide';
 
@@ -16,6 +17,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
   const [isPreparingLogo, setIsPreparingLogo] = useState(false);
   const [message, setMessage] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const change = (field, value) =>
     setProfile({
@@ -76,6 +78,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
             <h3>Make every quotation yours</h3>
           </div>
           <div className="header-actions">
+            <ActionButton icon={showGuide ? 'close' : 'library'} label={showGuide ? 'Hide guide' : 'User guide'} className={showGuide ? '' : 'color-link'} onClick={() => setShowGuide((open) => !open)} />
             <IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} />
           </div>
         </div>
@@ -204,7 +207,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
           </form>
         )}
       </section>
-      <UserGuide />
+      {showGuide && <UserGuide />}
     </main>
   );
 }

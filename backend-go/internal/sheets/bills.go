@@ -8,13 +8,13 @@ import (
 	"time"
 )
 
-const billRange = "Bills!A:W"
+const billRange = "Bills!A:X"
 
 // Bill shares the editable data model used by quotations but is persisted separately.
 type Bill = Quotation
 
 func ListBills(ctx context.Context, owner string) ([]Bill, error) {
-	values, err := readValues(ctx, "Bills!A2:W")
+	values, err := readValues(ctx, "Bills!A2:X")
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func SaveBill(ctx context.Context, bill Bill) error {
 }
 
 func UpdateBill(ctx context.Context, bill Bill) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Bills!A%d:W%d?valueInputOption=RAW", bill.Row, bill.Row), [][]string{billToRow(bill)})
+	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Bills!A%d:X%d?valueInputOption=RAW", bill.Row, bill.Row), [][]string{billToRow(bill)})
 }
 
 func DeleteBill(ctx context.Context, row int) error {
@@ -68,9 +68,10 @@ func fromBillRow(row []string, rowNumber int) Bill {
 	bill.PaymentStatus = get(20)
 	bill.DueDate = get(21)
 	bill.TemplateID = get(22)
+	bill.Payments = get(23)
 	return bill
 }
 
 func billToRow(bill Bill) []string {
-	return []string{bill.ID, bill.CreatedAt.Format(time.RFC3339), bill.UpdatedAt.Format(time.RFC3339), bill.Owner, bill.Client, bill.Project, bill.Phone, bill.Email, bill.Location, bill.QuoteDate, bill.Scope, strconv.FormatBool(bill.IncludeGST), bill.GSTRate, string(bill.Payload), strconv.FormatFloat(bill.Subtotal, 'f', 2, 64), strconv.FormatFloat(bill.Tax, 'f', 2, 64), strconv.FormatFloat(bill.Total, 'f', 2, 64), bill.Status, bill.ClientID, bill.SourceQuotationID, bill.PaymentStatus, bill.DueDate, bill.TemplateID}
+	return []string{bill.ID, bill.CreatedAt.Format(time.RFC3339), bill.UpdatedAt.Format(time.RFC3339), bill.Owner, bill.Client, bill.Project, bill.Phone, bill.Email, bill.Location, bill.QuoteDate, bill.Scope, strconv.FormatBool(bill.IncludeGST), bill.GSTRate, string(bill.Payload), strconv.FormatFloat(bill.Subtotal, 'f', 2, 64), strconv.FormatFloat(bill.Tax, 'f', 2, 64), strconv.FormatFloat(bill.Total, 'f', 2, 64), bill.Status, bill.ClientID, bill.SourceQuotationID, bill.PaymentStatus, bill.DueDate, bill.TemplateID, bill.Payments}
 }

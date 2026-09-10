@@ -23,7 +23,7 @@ function QuotationPreviewModal({
   activeQuotationId,
   saveQuotation,
   downloadPdf,
-  navigate,
+  goBack,
   businessProfile,
   createShare,
   shareUrl,
@@ -39,7 +39,7 @@ function QuotationPreviewModal({
 
   const closePreview = (source) => {
     trackAction(ANALYTICS_EVENTS.previewClosed, { source, mode: previewOnly ? 'saved' : 'editable', documentType });
-    navigate(previewOnly ? APP_ROUTES.home : (documentType === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew), true);
+    goBack();
   };
 
   return (
@@ -62,7 +62,7 @@ function QuotationPreviewModal({
           <ActionButton icon="save" label={activeQuotationId ? `Update` : 'Save'} className="color-save" onClick={() => saveQuotation('preview')} />
           <ActionButton icon="download" label="Download as PDF" className="color-download" onClick={() => downloadPdf('preview')} />
           {activeQuotationId && <ActionButton icon="link" label="Share link" className="color-link" onClick={createShare} />}
-          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <ActionButton icon="bill" label="Convert to bill" className="color-convert" disabled={['declined', 'expired', 'cancelled'].includes(quotation.status)} onClick={convertToBill} />}
+          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <ActionButton icon="bill" label="Convert to bill" className="color-convert" disabled={['declined', 'cancelled'].includes(quotation.status)} onClick={convertToBill} />}
           <ActionButton icon="message" label="WhatsApp" className="color-message" onClick={async () => { let currentShareUrl = shareUrl; if (!currentShareUrl && activeQuotationId) { currentShareUrl = await createShare(); if (!currentShareUrl) return; } const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: currentShareUrl }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }} />
         </div>
         {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><IconButton icon="copy" label="Copy link" onClick={() => navigator.clipboard?.writeText(shareUrl)} /></div>}
