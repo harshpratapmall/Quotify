@@ -30,6 +30,7 @@ func SetupRouter() *gin.Engine {
 		v1.GET("/clients", handlers.ListClients)
 		v1.POST("/clients", handlers.CreateClient)
 		v1.GET("/clients/:id", handlers.GetClient)
+		v1.GET("/clients/:id/documents", handlers.GetClientDocuments)
 		v1.PUT("/clients/:id", handlers.UpdateClient)
 		v1.PATCH("/clients/:id/status", handlers.UpdateClientStatus)
 		v1.GET("/business-profile", handlers.BusinessProfile)
@@ -84,7 +85,7 @@ func cors() gin.HandlerFunc {
 			c.Header("Access-Control-Allow-Credentials", "true")
 		}
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)

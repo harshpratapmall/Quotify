@@ -1,6 +1,7 @@
 import { requestJson } from './apiClient';
 
 const clientPath = (id = '') => `/api/v1/clients${id ? `/${id}` : ''}`;
+export const listClientDocuments = (id) => requestJson(`${clientPath(id)}/documents`);
 
 export const listClients = (query = '') => requestJson(`${clientPath()}${query ? `?q=${encodeURIComponent(query)}` : ''}`);
 

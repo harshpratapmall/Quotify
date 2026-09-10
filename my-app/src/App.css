@@ -1549,3 +1549,57 @@ h1, h2, h3, h4, .login-brand h1, .login-copy h2, .login-card h2, .hero-copy h2, 
 .topbar-user, .login-card label, .document-summary-card p, .proposal-panel h3, .quotation-form label, .primary-action, .secondary-action, .bill-primary-action, .google-login-action, .clean-slate-action, .add-item-action, .create-document-menu button { font-weight: 600; }
 .eyebrow, .sidebar-label, .document-summary-card button, .login-error { font-weight: 600; }
 .sidebar-link, .sidebar-create, .admin-user-row strong { font-weight: 600; }
+
+/* Shared compact actions retain comfortable touch targets. */
+.icon-button { width: 42px; height: 42px; min-width: 42px; flex-shrink: 0; }
+.icon-button:disabled, button:disabled { cursor: not-allowed; opacity: 0.55; }
+.icon-button.accent-icon { color: #fff; background: var(--teal); border-color: var(--teal); }
+.bill .accent-icon, .bill-preview-modal .accent-icon { background: var(--blue); border-color: var(--blue); }
+.icon-button.danger-icon { color: #a3443b; background: #fff1ed; border-color: #eac5bd; }
+.compact-action, .primary-action, .secondary-action, .bill-primary-action { font-size: 0.85rem; }
+.compact-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 42px; padding: 0.6rem 0.8rem; }
+button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.preview-export-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.55rem; }
+.share-link-result { display: flex; align-items: center; gap: 0.75rem; }
+.share-link-result span { overflow-wrap: anywhere; min-width: 0; }
+.client-selector { padding: 1rem; border: 1px solid #c4dbd3; border-radius: 12px; background: #edf6f1; }
+.client-selector label, .document-status-controls label { display: grid; gap: 0.4rem; font-size: 0.8rem; color: var(--navy); }
+.client-selector select, .document-status-controls select { width: 100%; min-height: 40px; padding: 0.6rem 0.7rem; border: 1px solid #bfd1cc; border-radius: 8px; background: #fff; color: var(--navy); font: inherit; }
+.client-selector small { display: block; margin-top: 0.5rem; color: var(--muted); font-size: 0.75rem; line-height: 1.5; }
+.document-status-controls { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.75rem 0; }
+.document-status-controls label { min-width: 130px; }
+.library-document-info { min-width: 0; }
+.library-document-info strong { overflow-wrap: anywhere; }
+.client-name-button { border: 0; background: none; padding: 0; color: var(--teal); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.client-name-button:hover { text-decoration: underline; }
+.client-documents-modal { width: min(800px, 94vw); max-height: 90vh; overflow: auto; padding: 1.5rem; background: #fffdf8; border-radius: 20px; box-shadow: var(--shadow); }
+.client-document-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.client-document-group { margin-top: 1.5rem; }
+.client-document-group .saved-quotation-card { margin-top: 0.6rem; }
+.status-badge { display: inline-block; width: fit-content; padding: 0.3rem 0.55rem; border-radius: 6px; background: #edf2f6; font-size: 0.75rem; }
+.status-accepted, .status-issued { color: #226048 !important; background: #e4f4e9; }
+.status-declined, .status-cancelled, .status-expired { color: #943f36 !important; background: #fbece6; }
+.user-management-page .admin-header { padding: 1.6rem; border-radius: 20px; background: linear-gradient(115deg, #19334c, #33776c); box-shadow: 0 12px 30px #19334c20; }
+.user-management-page .admin-header h1 { color: #fff; font-size: clamp(1.45rem, 4vw, 2rem); }
+.user-management-page .admin-header p { color: #dceae6; }
+.user-management-page .admin-header .eyebrow { color: #f0cd8c; }
+.user-management-page .admin-card { border-top: 3px solid #d4a959; }
+.admin-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; width: min(100%, 1100px); margin: 0 auto 1.5rem; }
+.admin-summary article { padding: 1.1rem; border-radius: 14px; background: #fffdf8; border: 1px solid #d5e2dc; }
+.admin-summary article:nth-child(2) { background: #e7f4ec; }
+.admin-summary article:nth-child(3) { background: #fbefdf; }
+.admin-summary span { font-size: 0.78rem; color: var(--muted); }
+.admin-summary strong { display: block; font-size: 1.8rem; margin-top: 0.4rem; color: var(--navy); }
+@media (max-width: 600px) {
+  .compact-action, .primary-action, .secondary-action, .bill-primary-action { font-size: 0.78rem; }
+  .admin-page { padding: 1rem; }
+  .admin-header, .admin-user-row { align-items: stretch; }
+  .admin-summary { gap: 0.5rem; }
+  .admin-summary article { padding: 0.85rem; }
+  .admin-summary strong { font-size: 1.5rem; }
+  .saved-actions { flex-wrap: wrap; }
+  .saved-quotation-card { flex-wrap: wrap; }
+  .document-status-controls label { min-width: 0; flex: 1 1 120px; }
+  .library-document-info { width: 100%; }
+  .client-documents-modal { padding: 1rem; }
+}

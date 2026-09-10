@@ -28,6 +28,7 @@ describe('BusinessProfile', () => {
       />
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /edit profile/i }));
     fireEvent.change(screen.getByLabelText(/business logo/i), {
       target: {
         files: [new File(['logo'], 'logo.webp', { type: 'image/webp' })],
@@ -69,6 +70,7 @@ describe('BusinessProfile', () => {
       />
     );
 
+    fireEvent.click(screen.getByRole('button', { name: /edit profile/i }));
     fireEvent.change(screen.getByLabelText(/business logo/i), {
       target: {
         files: [new File([new Uint8Array(200 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],

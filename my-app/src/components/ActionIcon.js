@@ -1,5 +1,14 @@
 function ActionIcon({ type }) {
   const paths = {
+    close: <path d="m6 6 12 12M6 18 18 6" />,
+    archive: <><path d="M4 4h16v4H4zM6 8v12h12V8M10 12h4" /></>,
+    restore: <path d="M4 10a8 8 0 1 1 1 8M4 4v6h6" />,
+    save: <path d="M5 3h12l4 4v14H3V3h2Zm2 0v6h10V3M7 21v-8h10v8" />,
+    download: <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />,
+    link: <path d="m10 13 4-4M8 15l-2 2a3.5 3.5 0 0 1-5-5l5-5a3.5 3.5 0 0 1 5 0m2 2 2-2a3.5 3.5 0 0 1 5 5l-5 5a3.5 3.5 0 0 1-5 0" />,
+    copy: <><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M16 8V3H3v13h5" /></>,
+    message: <path d="M21 11a9 9 0 0 1-9 9 10 10 0 0 1-4-1l-5 2 1-5a9 9 0 1 1 17-5ZM8 8c1 4 3 6 7 7" />,
+    power: <><path d="M12 2v10M6 5a9 9 0 1 0 12 0" /></>,
     plus: <path d="M12 5v14M5 12h14" />,
     open: <path d="M4 12s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6Zm8 2.5A2.5 2.5 0 1 0 12 9a2.5 2.5 0 0 0 0 5Z" />,
     edit: <path d="m4 16.5-.7 3.2 3.2-.7L17.7 7.8l-2.8-2.8L4 16.5ZM13.5 6.4l2.8 2.8" />,

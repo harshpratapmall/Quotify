@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import ActionIcon from './ActionIcon';
+import IconButton from './IconButton';
 import { createUser, listUsers, resetUserPassword, updateUserStatus } from '../services/admin';
 
 function AdminUsers({ navigate, currentUser, logout }) {
@@ -8,6 +9,7 @@ function AdminUsers({ navigate, currentUser, logout }) {
   const [message, setMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingUser, setPendingUser] = useState(null);
 
   const refreshUsers = useCallback(async () => {
     const nextUsers = await listUsers();
@@ -39,10 +41,15 @@ function AdminUsers({ navigate, currentUser, logout }) {
   };
 
   const toggleStatus = async (user) => {
+    setPendingUser(user.id);
+    setMessage('');
+    try {
     const nextStatus = user.status === 'active' ? 'inactive' : 'active';
     const { response, data } = await updateUserStatus(user.id, nextStatus);
     setMessage(response.ok ? 'User status updated.' : (data?.error || 'Unable to update user status.'));
     if (response.ok) await refreshUsers();
+    } catch { setMessage('Unable to update user status. Please try again.'); }
+    finally { setPendingUser(null); }
   };
 
   const resetPassword = async (user) => {
@@ -57,17 +64,18 @@ function AdminUsers({ navigate, currentUser, logout }) {
     .some((value) => value?.toLowerCase().includes(normalizedSearchTerm)));
 
   return (
-    <main className="admin-page">
+    <main className="admin-page user-management-page">
       <header className="admin-header">
         <div><p className="eyebrow">Administration</p><h1>User management</h1><p>Signed in as {currentUser.displayName || currentUser.username}.</p></div>
-        <button type="button" className="logout-action" onClick={logout}><ActionIcon type="logout" /> Log out</button>
+        <div className="header-actions"><IconButton icon="back" label="Back to overview" onClick={() => navigate('/')} /><IconButton icon="logout" label="Log out" onClick={logout} /></div>
       </header>
+      <section className="admin-summary" aria-label="User summary"><article><span>Total users</span><strong>{users.length}</strong></article><article><span>Active</span><strong>{users.filter((user) => user.status === 'active').length}</strong></article><article><span>Inactive</span><strong>{users.filter((user) => user.status === 'inactive').length}</strong></article></section>
       <section className="admin-card">
         <h2>Create user</h2>
         <form className="admin-form" onSubmit={submitCreate}>
           <input aria-label="Username" placeholder="Username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} required />
           <input aria-label="Display name" placeholder="Display name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required />
-          <input aria-label="Temporary password" type="password" placeholder="Temporary password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+          <input aria-label="Temporary password" type="password" minLength={8} placeholder="Temporary password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
           <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Creating...' : 'Create user'}</button>
         </form>
       </section>
@@ -79,8 +87,8 @@ function AdminUsers({ navigate, currentUser, logout }) {
             <article className="admin-user-row" key={user.id}>
               <div><strong>{user.displayName || user.username}</strong><span>{user.username} · {user.role} · {user.status}</span></div>
               <div className="saved-actions">
-                <button type="button" className="secondary-action" onClick={() => toggleStatus(user)} disabled={user.id === currentUser.id}>{user.status === 'active' ? 'Deactivate' : 'Activate'}</button>
-                <button type="button" className="secondary-action" onClick={() => resetPassword(user)}>Reset password</button>
+                <button type="button" className="secondary-action compact-action" title={user.id === currentUser.id ? 'You cannot deactivate your own account' : undefined} onClick={() => toggleStatus(user)} disabled={user.id === currentUser.id || pendingUser !== null}><ActionIcon type="power" />{pendingUser === user.id ? 'Updating…' : user.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+                <button type="button" className="secondary-action compact-action" onClick={() => resetPassword(user)}>Reset password</button>
               </div>
             </article>
           ))}

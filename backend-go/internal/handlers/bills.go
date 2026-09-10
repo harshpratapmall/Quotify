@@ -56,12 +56,8 @@ func CreateBill(c *gin.Context) {
 	}
 	bill.ID = newBillID()
 	bill.Owner = owner
-	if bill.Status == "" {
-		bill.Status = "draft"
-	}
-	if bill.PaymentStatus == "" {
-		bill.PaymentStatus = "unpaid"
-	}
+	bill.Status = "draft"
+	bill.PaymentStatus = "unpaid"
 	bill.CreatedAt = time.Now().UTC()
 	bill.UpdatedAt = bill.CreatedAt
 	if err := sheets.SaveBill(c.Request.Context(), bill); err != nil {
@@ -91,7 +87,13 @@ func UpdateBill(c *gin.Context) {
 		return
 	}
 	bill.ID, bill.Owner, bill.Row, bill.CreatedAt = existing.ID, owner, existing.Row, existing.CreatedAt
-	bill.Status, bill.ClientID, bill.SourceQuotationID, bill.PaymentStatus, bill.DueDate, bill.TemplateID = existing.Status, existing.ClientID, existing.SourceQuotationID, existing.PaymentStatus, existing.DueDate, existing.TemplateID
+	bill.Status, bill.SourceQuotationID, bill.PaymentStatus, bill.TemplateID = existing.Status, existing.SourceQuotationID, existing.PaymentStatus, existing.TemplateID
+	if !c.GetBool("clientIDProvided") {
+		bill.ClientID = existing.ClientID
+	}
+	if !c.GetBool("dueDateProvided") {
+		bill.DueDate = existing.DueDate
+	}
 	bill.UpdatedAt = time.Now().UTC()
 	if err := sheets.UpdateBill(c.Request.Context(), bill); err != nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to update bill."})

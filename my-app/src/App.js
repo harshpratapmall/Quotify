@@ -19,6 +19,7 @@ import {
   saveDocumentRequest,
   createDocumentShare,
   convertQuotationToBill,
+  updateDocumentStatus,
 } from './services/documents';
 import { downloadQuotationPdf } from './utils/pdf';
 import { fetchBusinessProfile, saveBusinessProfile } from './services/businessProfile';
@@ -55,6 +56,7 @@ function App() {
   const [previewOnly, setPreviewOnly] = useState(false);
   const [businessProfile, setBusinessProfile] = useState({});
   const [activeShareUrl, setActiveShareUrl] = useState('');
+  const [statusBusy, setStatusBusy] = useState(false);
   const authenticatedHome = isAdminUser(currentUser) ? APP_ROUTES.adminUsers : APP_ROUTES.home;
   const document = documentCopy(documentType);
   const isPublicShare = pathname.startsWith('/share/');
@@ -105,12 +107,33 @@ function App() {
     setPreviewOnly(false);
   }, []);
 
-  const startNewDocument = useCallback((type, source) => {
+  const startNewDocument = useCallback((type, source, client = null) => {
     setDocumentType(type);
     trackAction(ANALYTICS_EVENTS.quotationStarted, { source, documentType: type });
     clearQuotation();
+    if (client) setQuotation({ ...createEmptyQuotation(), clientId: client.id, clientName: client.name, phone: client.phone || '', email: client.email || '', siteLocation: client.address || '' });
     navigate(type === DOCUMENT_TYPES.bill ? APP_ROUTES.billNew : APP_ROUTES.quotationNew);
   }, [clearQuotation, navigate]);
+
+  const selectClient = (client) => setQuotation((current) => client
+    ? { ...current, clientId: client.id, clientName: client.name, phone: client.phone || '', email: client.email || '', siteLocation: client.address || '' }
+    : { ...current, clientId: '' });
+
+  const changeDocumentStatus = async (type, id, changes) => {
+    setStatusBusy(true);
+    setSaveStatus('');
+    try {
+      const { response, data } = await updateDocumentStatus(type, id, changes);
+      if (!response.ok) throw new Error(data?.error || 'Unable to update status.');
+      setSavedDocuments((current) => ({ ...current, [type]: current[type].map((entry) => entry.id === id ? data : entry) }));
+      if (activeQuotationId === id && documentType === type) setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid' }));
+      setSaveStatus('Status updated.');
+    } catch (error) {
+      setSaveStatus(error.message || 'Unable to update status.');
+    } finally {
+      setStatusBusy(false);
+    }
+  };
 
   const saveQuotation = useCallback(async (source) => {
     const validationError = quotationValidationError();
@@ -138,6 +161,7 @@ function App() {
       }
 
       setActiveQuotationId(data.id);
+      setQuotation((current) => ({ ...current, status: data.status || 'draft', paymentStatus: data.paymentStatus || 'unpaid' }));
       setSavedDocuments((current) => ({
         ...current,
         [documentType]: [data, ...current[documentType].filter((entry) => entry.id !== data.id)],
@@ -368,6 +392,7 @@ function App() {
       setSaveStatus('Save the quotation before creating a share link.');
       return null;
     }
+    try {
     const { response, data } = await createDocumentShare(documentType, activeQuotationId);
     if (!response.ok) {
       setSaveStatus(data?.error || 'Unable to create share link.');
@@ -376,10 +401,16 @@ function App() {
     setActiveShareUrl(data.url || '');
     setSaveStatus('Share link ready.');
     return data.url || '';
+    } catch {
+      setSaveStatus('Unable to create share link. Please try again.');
+      return null;
+    }
   };
 
   const convertCurrentQuotationToBill = async () => {
     if (!activeQuotationId || documentType !== DOCUMENT_TYPES.quotation) return;
+    if (!await saveQuotation('convert')) return;
+    try {
     const { response, data } = await convertQuotationToBill(activeQuotationId);
     if (!response.ok) {
       setSaveStatus(data?.error || 'Unable to create bill.');
@@ -392,9 +423,13 @@ function App() {
     setGstRate(nextState.gstRate);
     setActiveQuotationId(data.id);
     setDocumentType(DOCUMENT_TYPES.bill);
+    setSavedDocuments((current) => ({ ...current, bill: [data, ...current.bill.filter((entry) => entry.id !== data.id)] }));
     setPreviewOnly(false);
     setActiveShareUrl('');
     navigate(APP_ROUTES.billNew, true);
+    } catch {
+      setSaveStatus('Unable to create bill. Please try again.');
+    }
   };
 
   const generateQuotation = (event) => {
@@ -458,7 +493,7 @@ function App() {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
   if (pathname === APP_ROUTES.clients) {
-    return <Clients navigate={navigate} />;
+    return <Clients navigate={navigate} startNewDocument={startNewDocument} openDocument={openSavedDocument} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 
@@ -473,7 +508,7 @@ function App() {
         startNewDocument={startNewDocument}
         savedDocuments={savedDocuments}
       />
-      <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} navigate={navigate} saveStatus={saveStatus} />
+      <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} navigate={navigate} saveStatus={saveStatus} changeStatus={changeDocumentStatus} statusBusy={statusBusy} />
       <QuotationWorkspaceModal
         pathname={pathname}
         documentType={documentType}
@@ -490,6 +525,7 @@ function App() {
         total={total}
         saveStatus={saveStatus}
         handleQuotationChange={handleQuotationChange}
+        selectClient={selectClient}
         handleItemChange={handleItemChange}
         removeLineItem={removeLineItem}
         addLineItem={addLineItem}
@@ -518,6 +554,9 @@ function App() {
         convertToBill={convertCurrentQuotationToBill}
         navigate={navigate}
         businessProfile={businessProfile}
+        saveStatus={saveStatus}
+        statusBusy={statusBusy}
+        changeStatus={(changes) => changeDocumentStatus(documentType, activeQuotationId, changes)}
       />
     </>
   );

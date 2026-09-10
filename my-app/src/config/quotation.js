@@ -22,6 +22,10 @@ export const getTodayDate = (date = new Date()) => {
 };
 
 export const createEmptyQuotation = () => ({
+  clientId: '',
+  dueDate: '',
+  status: 'draft',
+  paymentStatus: 'unpaid',
   clientName: '',
   projectName: '',
   phone: '',

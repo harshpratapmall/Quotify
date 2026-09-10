@@ -1,5 +1,6 @@
 import { APP_ROUTES } from '../config/routes';
 import ActionIcon from './ActionIcon';
+import ClientSelector from './ClientSelector';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
@@ -19,6 +20,7 @@ function QuotationWorkspaceModal({
   total,
   saveStatus,
   handleQuotationChange,
+  selectClient,
   handleItemChange,
   removeLineItem,
   addLineItem,
@@ -81,6 +83,7 @@ function QuotationWorkspaceModal({
         </div>
 
         <form className="quotation-form" onSubmit={generateQuotation}>
+          <ClientSelector clientId={quotation.clientId} onSelect={selectClient} />
           <div className="form-grid">
             <label>
               Client Name
@@ -106,6 +109,7 @@ function QuotationWorkspaceModal({
               {copy.dateLabel}
               <input type="date" value={quotation.quoteDate} onChange={(event) => handleQuotationChange('quoteDate', event.target.value)} />
             </label>
+            {isBill && <label>Payment due date<input type="date" value={quotation.dueDate || ''} onChange={(event) => handleQuotationChange('dueDate', event.target.value)} /></label>}
           </div>
 
           <div className="line-items">

@@ -1,17 +1,19 @@
 # Quotify API
 
-Go 1.22/Gin service for authentication and saved quotations. End-to-end setup, Google Sheets schema, deployment, and shared contracts are in the root `README.md`; agent routing notes are in `AGENTS.md`.
+Go 1.22/Gin service for authentication, quotations, bills, clients, public shares, business profiles, and administrator user management. The [root README](../README.md) owns the complete API inventory, Google Sheets schemas, and deployment instructions; [AGENTS.md](../AGENTS.md) contains operational notes.
 
 ## Run
 
 ```bash
-go mod tidy
+go mod download
 go run ./cmd/server
 ```
 
 The default address is `http://localhost:8000`.
 
-## Required Configuration
+Run these commands from `backend-go/`. Copy `.env.example` to `.env` and configure the spreadsheet and session secret before using authenticated endpoints. Existing environment variables take precedence over `.env`. `PORT` defaults to `8000`.
+
+## Configuration
 
 ```env
 GOOGLE_SHEET_ID=your-google-spreadsheet-id
@@ -28,35 +30,26 @@ OAUTH_FRONTEND_URL=http://localhost:3000/
 GOOGLE_ALLOWED_DOMAINS=
 ```
 
-Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path when appropriate. Share the spreadsheet with the service account as an Editor. User records are read from `Users!A2:J`: bcrypt hashes are in column C, the legacy plaintext fallback is in column H, and Google subject/email are in columns I/J. Quotation CRUD writes to `Quotations`; business profiles write to `BusinessProfiles`.
+Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the hard-coded `Users!A2:J` range: bcrypt hashes are in C, the legacy plaintext fallback is in H, and Google subject/email are in I/J. `GOOGLE_SHEET_RANGE` remains in deployment configuration but does not override this read range.
+
+Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
+
+The OAuth settings are required for Google sign-in, not password sign-in. `GOOGLE_ALLOWED_DOMAINS` is optional. `AUTH_DEBUG` defaults to false. In production set `COOKIE_SECURE=true` and explicitly configure `CORS_ALLOWED_ORIGINS` with the frontend origin; PATCH is required for status updates.
 
 In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`. Register the Render callback URL in the Google Cloud OAuth client.
 
-## Endpoints
+## API Reference
 
-- `GET /api/v1/ping`
-- `GET /api/v1/auth/health`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/google/start`
-- `GET /api/v1/auth/google/callback`
-- `GET /api/v1/auth/me`
-- `GET|POST /api/v1/clients`
-- `GET|PUT|PATCH /api/v1/clients/:id`
-- `GET|POST /api/v1/templates`
-- `PUT|DELETE /api/v1/templates/:id`
-- `PATCH /api/v1/quotations/:id/status`
-- `POST|DELETE /api/v1/quotations/:id/share`
-- `POST /api/v1/quotations/:id/convert-to-bill`
-- `PATCH /api/v1/bills/:id/status`
-- `GET /api/v1/public/share/:token`
-- `POST /api/v1/auth/logout`
-- `GET|PUT /api/v1/business-profile`
-- `GET|POST /api/v1/quotations`
-- `GET|PUT|DELETE /api/v1/quotations/:id`
-- `GET|POST /api/v1/bills`
-- `GET|PUT|DELETE /api/v1/bills/:id`
-- `GET|POST /api/v1/admin/users` (administrator only)
-- `PATCH /api/v1/admin/users/:id/status` (administrator only)
-- `POST /api/v1/admin/users/:id/reset-password` (administrator only)
+See the [complete endpoint table](../README.md#api), verified against `internal/routes/routes.go`.
 
-Quotation access is restricted to the owner encoded in the signed session cookie. Run `go test ./...` before backend changes.
+- Client history: `GET /api/v1/clients/:id/documents` returns owner-scoped `quotation` and `bill` arrays, matched by client ID.
+- Client archival: `PATCH /api/v1/clients/:id/status?status=archived`; use `status=active` to restore.
+- Quotation and bill status endpoints accept JSON. Bills keep lifecycle and payment status separate; accepted/declined decisions apply to quotations.
+- Quotation and bill sharing both support POST to create and DELETE to revoke `/api/v1/{quotations|bills}/:id/share`. Public links use `GET /api/v1/public/share/:token`.
+- Document updates preserve client links and bill due dates when omitted, and clear them on explicit empty strings. Nonempty due dates must be valid `YYYY-MM-DD` dates; submitted client IDs must belong to the owner.
+
+Quotation, bill, and client access uses the owner from the signed session cookie. Preserve A:Q document columns and appended metadata positions. Payment status is manual; no payment processor or overdue scheduler is implemented.
+
+## Checks
+
+Run `go test ./...` after backend changes. Metadata compatibility tests are in `internal/handlers/document_metadata_test.go`. Update this README and the root reference when backend contracts or setup change.

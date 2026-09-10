@@ -1,6 +1,6 @@
 # Quotify
 
-Quotify is a quotation workspace for Door2Door Interiors. Users sign in with credentials held in Google Sheets, create itemized quotations, preview them, save them to Google Sheets, and export printable PDFs in the browser.
+Quotify is a quotation and billing workspace for Door2Door Interiors. Users sign in with a password or Google, manage clients and business profiles, save itemized quotations and bills to Google Sheets, share public document links, and export PDFs in the browser. Administrators manage users and reset passwords.
 
 ## Structure
 
@@ -13,6 +13,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 ## API
 
 | Method | Path | Purpose |
+| --- | --- | --- |
 | GET | `/api/v1/ping` | Uptime check |
 | GET | `/api/v1/auth/health` | Check auth configuration |
 | POST | `/api/v1/auth/login` | Validate credentials and start session |
@@ -22,18 +23,18 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/auth/me` | Read current session |
 | GET | `/api/v1/clients` | List the current user's clients |
 | POST | `/api/v1/clients` | Create a client |
+| GET | `/api/v1/clients/:id` | Read a client owned by the current user |
+| GET | `/api/v1/clients/:id/documents` | List the owner's quotations and bills linked to this client |
 | PUT | `/api/v1/clients/:id` | Update a client |
 | PATCH | `/api/v1/clients/:id/status` | Archive or restore a client |
-| GET | `/api/v1/templates` | List document templates |
-| POST | `/api/v1/templates` | Create a document template |
-| PUT | `/api/v1/templates/:id` | Update a document template |
-| DELETE | `/api/v1/templates/:id` | Delete a document template |
 | PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle status |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
 | POST | `/api/v1/quotations/:id/convert-to-bill` | Create a bill from a quotation |
 | PATCH | `/api/v1/bills/:id/status` | Update bill or payment status |
-| GET | `/api/v1/public/share/:token` | Read a public quotation link |
+| POST | `/api/v1/bills/:id/share` | Create a public bill link |
+| DELETE | `/api/v1/bills/:id/share` | Revoke a public bill link |
+| GET | `/api/v1/public/share/:token` | Read a publicly shared quotation or bill |
 | GET | `/api/v1/business-profile` | Read the current user's business profile |
 | PUT | `/api/v1/business-profile` | Create or update the current user's business profile |
 | GET | `/api/v1/quotations` | List current owner's quotations |
@@ -51,7 +52,11 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | PATCH | `/api/v1/admin/users/:id/status` | Change a user's status (administrator only) |
 | POST | `/api/v1/admin/users/:id/reset-password` | Reset a user's password (administrator only) |
 
-Quotation ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
+Quotation, bill, and client ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
+
+Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (either bill field can be sent alone). Client history returns `quotation` and `bill` arrays linked by client ID.
+
+Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `expired`, `cancelled`. Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue`, `cancelled`. Payment status is manually recorded; a due date does not automatically mark a bill overdue.
 
 ## Google Sheets
 
@@ -60,6 +65,8 @@ Use one spreadsheet shared with the service account. User records are read from 
 | A | B | C | D | E | F | G | H | I | J |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password | google_subject | google_email |
+
+The current repository hard-codes worksheet ranges, including `Users!A2:J`; changing `GOOGLE_SHEET_RANGE` alone does not change the login read range.
 
 Passwords are verified with the bcrypt hash in column C. Column H is a legacy plaintext compatibility fallback and must not be exposed by the API; remove it after all existing accounts have been migrated.
 
@@ -85,16 +92,16 @@ items_json, subtotal, tax, total
 
 Bills use the same line-item payload and owner enforcement as quotations, while remaining in a separate worksheet and API collection.
 
-Phase 1 appends metadata after the existing A:Q columns:
+Metadata follows the existing A:Q columns:
 
 - `Quotations!R:X`: `status, client_id, share_link_id, viewed_at, sent_at, template_id, source_quotation_id`
 - `Bills!R:W`: `status, client_id, source_quotation_id, payment_status, due_date, template_id`
 
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
-The `Templates` tab uses: `template_id, owner_id, name, document_type, primary_color, secondary_color, accent_color, terms, footer, logo_url, is_default, created_at, updated_at, status`.
+Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
-Existing A:Q quotation and bill rows remain readable. Public quotation links are view-only, share tokens are stored as hashes, payment status is manually recorded, and WhatsApp sharing opens a prefilled browser draft without automated sending.
+Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending.
 
 The `BusinessProfiles` tab must keep row 1 in this order:
 
@@ -133,7 +140,7 @@ GOOGLE_ALLOWED_DOMAINS=
 
 `GOOGLE_SHEET_ID` is the ID between `/d/` and `/edit` in the spreadsheet URL. Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Keep credentials out of source control.
 
-Run the services:
+Run each command from the repository root in a separate terminal:
 
 ```bash
 cd backend-go && go run ./cmd/server
@@ -141,6 +148,8 @@ cd my-app && npm install && npm start
 ```
 
 The API runs on `http://localhost:8000`; the frontend runs on `http://localhost:3000`.
+
+Password sign-in does not require Google OAuth configuration; the Google sign-in button requires the OAuth settings and registered callback. See [frontend setup](my-app/README.md) for environment selection. Logo uploads additionally require the Vercel authorization function and Blob configuration; the React development server alone does not run that function.
 
 ## Deployment
 
@@ -150,18 +159,25 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 
 ## Behavior Notes
 
+- Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
+- Saved document libraries and previews provide lifecycle status controls. Quotations support accepted and declined decisions; declined, expired, and cancelled quotations cannot be converted to bills. Bills have separate payment status controls and an optional payment due date.
+- Client links and bill due dates can be cleared when editing; older API clients that omit those fields preserve existing metadata. Cross-origin API requests allow PATCH for status changes.
 - Sessions use an HTTP-only `quotify_session` cookie signed with HMAC and expire after one hour.
 - New quotation dates use `Asia/Kolkata`.
 - The active draft is stored in browser session storage.
+- Drafts are scoped by user and document type.
 - Totals, preview rendering, and PDF generation are client-side.
 - Analytics events are privacy-safe and must not contain credentials, client details, or quotation content.
 
+## Current Limitations
+
+- Document templates are not implemented.
+- Share revocation has API support and frontend service helpers, but no UI control.
+- Quotation and bill libraries do not have search/filter controls; the client directory and admin user list have search.
+- Bill due dates appear in the editor, library, and authenticated preview; the PDF generator does not currently print them.
+
 ## Checks
 
-```bash
-cd my-app && npm test
-cd my-app && npm run build
-cd backend-go && go test ./...
-```
+From `my-app/`, run `npm test -- --watchAll=false --runInBand` and `npm run build`. From `backend-go/`, run `go test ./...`. Use `npm test` for interactive watch mode.
 
-See `AGENTS.md` for concise code-routing notes. See `backend-go/README.md` for the backend-only quick reference.
+See [AGENTS.md](AGENTS.md) for operational notes, [backend setup](backend-go/README.md), and [frontend setup](my-app/README.md). When features, routes, schemas, or setup change, update this README and the affected service README in the same change. Verify claims against code and keep unfinished capabilities in Current Limitations.

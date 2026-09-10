@@ -43,6 +43,8 @@ export const buildQuotationPayload = ({
   tax,
   total,
 }) => ({
+  clientId: quotation.clientId || '',
+  dueDate: quotation.dueDate || '',
   clientName: quotation.clientName,
   projectName: quotation.projectName,
   phone: quotation.phone,
@@ -70,7 +72,19 @@ export const parseSavedQuotationPayload = (saved) => {
   }
 
   return {
-    quotation: payload?.quotation || createEmptyQuotation(),
+    quotation: {
+      ...createEmptyQuotation(),
+      ...payload?.quotation,
+      clientName: saved.clientName ?? payload?.quotation?.clientName ?? '',
+      projectName: saved.projectName ?? payload?.quotation?.projectName ?? '',
+      phone: saved.phone ?? payload?.quotation?.phone ?? '',
+      email: saved.email ?? payload?.quotation?.email ?? '',
+      siteLocation: saved.siteLocation ?? payload?.quotation?.siteLocation ?? '',
+      clientId: saved.clientId || '',
+      dueDate: saved.dueDate || '',
+      status: saved.status || 'draft',
+      paymentStatus: saved.paymentStatus || 'unpaid',
+    },
     items: Array.isArray(payload?.items) && payload.items.length
       ? payload.items
       : [{ ...lineItemTemplate }],

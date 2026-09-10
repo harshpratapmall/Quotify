@@ -52,6 +52,46 @@ func GetClient(c *gin.Context) {
 	c.JSON(http.StatusOK, client)
 }
 
+// GetClientDocuments matches stable IDs, never potentially ambiguous client names.
+func GetClientDocuments(c *gin.Context) {
+	owner, ok := quotationOwner(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated."})
+		return
+	}
+	client, err := sheets.GetClient(c.Request.Context(), owner, c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load client."})
+		return
+	}
+	if client.ID == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Client not found."})
+		return
+	}
+	quotes, err := sheets.ListQuotations(c.Request.Context(), owner)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load quotations."})
+		return
+	}
+	bills, err := sheets.ListBills(c.Request.Context(), owner)
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Unable to load bills."})
+		return
+	}
+	linkedQuotes, linkedBills := []sheets.Quotation{}, []sheets.Bill{}
+	for _, quote := range quotes {
+		if quote.ClientID == client.ID {
+			linkedQuotes = append(linkedQuotes, quote)
+		}
+	}
+	for _, bill := range bills {
+		if bill.ClientID == client.ID {
+			linkedBills = append(linkedBills, bill)
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"quotation": linkedQuotes, "bill": linkedBills})
+}
+
 func CreateClient(c *gin.Context) {
 	ownerID, ok := quotationOwner(c)
 	if !ok {

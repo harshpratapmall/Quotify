@@ -4,6 +4,9 @@ import { currency } from '../utils/formatters';
 import { ANALYTICS_EVENTS, trackAction } from '../utils/analytics';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 import { buildWhatsAppUrl } from '../utils/whatsapp';
+import IconButton from './IconButton';
+import ActionIcon from './ActionIcon';
+import DocumentStatus from './DocumentStatus';
 
 function QuotationPreviewModal({
   pathname,
@@ -24,6 +27,9 @@ function QuotationPreviewModal({
   createShare,
   shareUrl,
   convertToBill,
+  saveStatus,
+  changeStatus,
+  statusBusy,
 }) {
   if (pathname !== APP_ROUTES.quotationPreview && pathname !== APP_ROUTES.billPreview) {
     return null;
@@ -45,6 +51,7 @@ function QuotationPreviewModal({
           </div>
           <button type="button" className="close-button" aria-label={`Close ${copy.singular.toLowerCase()} preview`} onClick={() => closePreview('button')}>x</button>
         </div>
+        {activeQuotationId && <DocumentStatus type={documentType} document={quotation} onChange={changeStatus} disabled={statusBusy} />}
         <article className={`quotation-document ${documentType === DOCUMENT_TYPES.bill ? 'bill-document' : ''}`}>
           <div className="document-header">
             <div className="document-brand">{businessProfile?.logoUrl ? <img src={businessProfile.logoUrl} alt="" /> : <span>{(businessProfile?.businessName || 'Q').slice(0, 2).toUpperCase()}</span>}<div><strong>{businessProfile?.businessName || 'Your business'}</strong><small>{copy.singular}</small></div></div>
@@ -53,16 +60,18 @@ function QuotationPreviewModal({
           <div className="document-client"><div><small>TO</small><strong>{quotation.clientName || 'Your Client'}</strong><span>{quotation.phone || quotation.email || 'Mobile number to be added'}</span></div><div><small>ADDRESS</small><strong>{quotation.siteLocation || 'Site location to be added'}</strong></div><div><small>{copy.projectLabel.toUpperCase()}</small><strong>{quotation.projectName || 'Interior Project'}</strong></div></div>
           <div className="document-items"><div className="document-item heading"><span>Description</span><span>Qty</span><span>Rate</span><span>Amount</span></div>{items.filter((item) => item.description || item.rate).map((item, index) => <div className="document-item" key={`preview-${index}`}><span>{item.description || 'Untitled item'}</span><span>{item.quantity || 0}</span><span>{currency(Number(item.rate) || 0)}</span><strong>{currency((Number(item.quantity) || 0) * (Number(item.rate) || 0))}</strong></div>)}</div>
           <div className="document-total"><span>Subtotal <strong>{currency(subtotal)}</strong></span>{includeGst && <span>GST ({gstPercentage}%) <strong>{currency(tax)}</strong></span>}<span className="grand-total">{copy.totalLabel} <strong>{currency(total)}</strong></span></div>
+          {documentType === DOCUMENT_TYPES.bill && quotation.dueDate && <p className="document-footer">Payment due: {quotation.dueDate}</p>}
           {documentType === DOCUMENT_TYPES.quotation && <p className="document-footer">{businessProfile?.terms || 'Thank you for your business. This quotation is valid for 15 days.'}</p>}
         </article>
         <div className="preview-export-actions">
-          <button type="button" className="secondary-action" onClick={() => saveQuotation('preview')}>{activeQuotationId ? `Update Saved ${copy.singular}` : `Save ${copy.singular}`}</button>
-          <button type="button" className={documentType === DOCUMENT_TYPES.bill ? 'bill-primary-action' : 'primary-action'} onClick={() => downloadPdf('preview')}>Download as PDF</button>
-          {activeQuotationId && <button type="button" className="secondary-action" onClick={createShare}>Create public link</button>}
-          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action" onClick={convertToBill}>Convert to bill</button>}
-          <button type="button" className="secondary-action" onClick={async () => { let currentShareUrl = shareUrl; if (!currentShareUrl && activeQuotationId) { currentShareUrl = await createShare(); } const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: currentShareUrl }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }}>Draft WhatsApp message</button>
+          <IconButton icon="save" label={activeQuotationId ? `Update Saved ${copy.singular}` : `Save ${copy.singular}`} onClick={() => saveQuotation('preview')} />
+          <IconButton icon="download" label="Download as PDF" className="accent-icon" onClick={() => downloadPdf('preview')} />
+          {activeQuotationId && <IconButton icon="link" label="Create public link" onClick={createShare} />}
+          {documentType === DOCUMENT_TYPES.quotation && activeQuotationId && <button type="button" className="secondary-action compact-action" disabled={['declined', 'expired', 'cancelled'].includes(quotation.status)} onClick={convertToBill}><ActionIcon type="bill" /> Convert to bill</button>}
+          <IconButton icon="message" label="Draft WhatsApp message" onClick={async () => { let currentShareUrl = shareUrl; if (!currentShareUrl && activeQuotationId) { currentShareUrl = await createShare(); if (!currentShareUrl) return; } const url = buildWhatsAppUrl({ phone: quotation.phone, businessName: businessProfile?.businessName, documentType, total, shareUrl: currentShareUrl }); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }} />
         </div>
-        {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><button type="button" className="secondary-action" onClick={() => navigator.clipboard?.writeText(shareUrl)}>Copy link</button></div>}
+        {shareUrl && <div className="share-link-result" role="status"><span>{shareUrl}</span><IconButton icon="copy" label="Copy link" onClick={() => navigator.clipboard?.writeText(shareUrl)} /></div>}
+        {saveStatus && <p className="save-status" role="status">{saveStatus}</p>}
       </section>
     </div>
   );
