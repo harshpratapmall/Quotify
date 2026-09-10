@@ -15,7 +15,7 @@ const journeys = [
     steps: [
       'Create a quotation and pick an existing client to auto-fill their details.',
       'Add items with quantities and rates, then generate the preview.',
-      'Share from the preview: create a share link or send a WhatsApp message. When the client opens the link, the status updates to Viewed automatically.',
+      'Share from the preview: create a share link or send a WhatsApp message.',
       'Download the PDF, and convert the quotation to a bill once the client accepts.',
     ],
   },
@@ -25,7 +25,6 @@ const journeys = [
     steps: [
       'Create a bill for completed work and set a payment due date.',
       'Record every payment you receive with its date and amount. The payment status updates to Partially Paid or Paid automatically.',
-      'Payment details are hidden for bills marked as Cancelled.',
     ],
   },
   {

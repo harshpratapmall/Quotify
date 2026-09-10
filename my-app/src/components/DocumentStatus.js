@@ -17,6 +17,10 @@ export default function DocumentStatus({ type, document, onChange, disabled }) {
   const isBill = type === 'bill';
   const payments = parsePayments(document.payments);
   const cancelled = isBill && (document.status || '').toLowerCase() === 'cancelled';
+  const partialPayment = isBill && !cancelled && document.paymentStatus === 'partially_paid';
+  const received = payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+  const total = Number(document.total) || 0;
+  const pending = Math.max(0, Math.round((total - received) * 100) / 100);
   const [paymentDate, setPaymentDate] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
 
@@ -41,6 +45,13 @@ export default function DocumentStatus({ type, document, onChange, disabled }) {
       <label>Payment<select aria-label="Payment status" value={document.paymentStatus || 'unpaid'} disabled={disabled} onChange={(event) => onChange({ paymentStatus: event.target.value })}>
         {paymentStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
       </select></label>
+    </>}
+    {partialPayment && <>
+      <div className="payment-summary">
+        <span>Total <strong>{currency(total)}</strong></span>
+        <span>Received <strong>{currency(received)}</strong></span>
+        <span className="payment-summary-pending">Pending <strong>{currency(pending)}</strong></span>
+      </div>
       <div className="payments-section">
         <span className="payments-heading">Payments recorded{payments.length ? ` (${payments.length})` : ''}</span>
         {payments.length === 0 && <span className="payments-empty">No payments recorded. Add one below.</span>}

@@ -91,7 +91,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
               )}
               <div className="profile-info">
                 <h2>{profile.businessName || 'Your Business'}</h2>
-                <p>{profile.quotePrefix || 'QUOTE'}-{profile.businessName?.slice(0, 3).toUpperCase() || 'XXX'}</p>
               </div>
             </div>
 
@@ -102,12 +101,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                 <p><strong>Email:</strong> {profile.email || 'Not set'}</p>
                 <p><strong>Address:</strong> {profile.address || 'Not set'}</p>
                 <p><strong>GSTIN:</strong> {profile.gstin || 'Not set'}</p>
-              </div>
-
-              <div className="detail-group">
-                <h4>Quotation Settings</h4>
-                <p><strong>Prefix:</strong> {profile.quotePrefix || 'QUOTE'}</p>
-                <p><strong>Terms:</strong> {profile.terms || 'This quotation is valid for 15 days.'}</p>
               </div>
             </div>
 
@@ -124,15 +117,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                   value={profile.businessName || ''}
                   onChange={(event) => change('businessName', event.target.value)}
                   required
-                />
-              </label>
-
-              <label>
-                Quotation prefix
-                <input
-                  value={profile.quotePrefix || ''}
-                  onChange={(event) => change('quotePrefix', event.target.value.toUpperCase())}
-                  placeholder="ACME"
                 />
               </label>
 
@@ -176,16 +160,6 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                   value={profile.address || ''}
                   onChange={(event) => change('address', event.target.value)}
                   rows="2"
-                />
-              </label>
-
-              <label className="full-width">
-                Quotation terms
-                <textarea
-                  value={profile.terms || ''}
-                  onChange={(event) => change('terms', event.target.value)}
-                  rows="3"
-                  placeholder="This quotation is valid for 15 days."
                 />
               </label>
             </div>

@@ -162,8 +162,9 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
-- Saved document libraries and previews provide lifecycle status controls. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status, and `cancelled` bills hide payment details.
-- Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`).
+- Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status; the payment-records panel with a Total/Received/Pending summary only renders for `partially_paid` bills, and `cancelled` bills hide all payment details.
+- Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`) and wrap the business address across multiple lines in the footer.
+- The business profile page edits contact and logo fields; quote prefix and default terms are still stored in `BusinessProfiles!A:J` but are no longer editable in the UI (PDF output falls back to the stored values or built-in defaults).
 - Client links and bill due dates can be cleared when editing; older API clients that omit those fields preserve existing metadata. Cross-origin API requests allow PATCH for status changes.
 - Sessions use an HTTP-only `quotify_session` cookie signed with HMAC and expire after one hour.
 - New quotation dates use `Asia/Kolkata`.
@@ -176,7 +177,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 
 - Document templates are not implemented.
 - Share revocation has API support and frontend service helpers, but no UI control.
-- Quotation and bill libraries do not have search/filter controls; the client directory and admin user list have search.
+- Client, quotation, and bill libraries have per-library search; the admin user list also has search.
 - Bill due dates appear in the editor, library, and authenticated preview; the PDF generator does not currently print them.
 
 ## Checks

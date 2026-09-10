@@ -120,6 +120,24 @@ export const downloadQuotationPdf = async ({
   const safeClient = String(quotation.clientName || 'client').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'client';
   const filename = `${isBill ? 'bill' : 'quotation'}-${safeClient}-${ddMonth}.pdf`;
 
+  const wrapLines = (value, maxChars, maxLines) => {
+    const words = String(value || '').split(/\s+/).filter(Boolean);
+    const lines = [];
+    let current = '';
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (current && candidate.length > maxChars) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+      if (lines.length === maxLines) break;
+    }
+    if (current && lines.length < maxLines) lines.push(current);
+    return lines.slice(0, maxLines);
+  };
+
   const drawFooter = (pageNumber, pageCount) => {
     const footerTag = isBill ? [0.2, 0.32, 0.63] : [0.22, 0.43, 0.42];
     const footerText = [0.3, 0.38, 0.45];
@@ -130,7 +148,9 @@ export const downloadQuotationPdf = async ({
     text(shortText(businessProfile.phone || 'Phone not added', 34), 44, 64, 8, 'F1', footerText);
     text(shortText(businessProfile.email || 'Email not added', 34), 44, 52, 8, 'F1', footerText);
     text('ADDRESS', 226, 76, 6, 'F2', footerTag);
-    text(shortText(businessProfile.address || 'Address not added', 40), 226, 64, 8, 'F1', footerText);
+    wrapLines(businessProfile.address || 'Address not added', 42, 3).forEach((line, index) => {
+      text(line, 226, 64 - index * 12, 8, 'F1', footerText);
+    });
     text('REFERENCE', 430, 76, 6, 'F2', footerTag);
     text(`#${quoteNumber}`, 430, 64, 8, 'F1', footerText);
     text(`Page ${pageNumber} of ${pageCount}`, 430, 50, 8, 'F1', footerText);
