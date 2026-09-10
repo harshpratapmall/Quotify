@@ -266,7 +266,7 @@ function App() {
       .then(([quotations, bills]) => setSavedDocuments({ quotation: quotations, bill: bills }))
       .catch(() => setSavedDocuments({ quotation: [], bill: [] }));
     fetchBusinessProfile().then(({ response, data }) => response.ok && setBusinessProfile(data || {}));
-  }, [authStatus, currentUser]);
+  }, [authStatus, currentUser, setSavedDocuments]);
 
   useEffect(() => {
     if (authStatus !== 'checking') {
