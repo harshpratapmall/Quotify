@@ -41,7 +41,7 @@ Two-service quotation app for Door2Door Interiors:
 ## Current Contracts
 
 - Cookie: `quotify_session`, HTTP-only, HMAC-signed, one-hour lifetime.
-- Login reads `Users!A2:J`; deployment config sets `GOOGLE_SHEET_RANGE` to `Users!A:J`. Columns are `id, username, bcrypt_hash, display_name, role, status, updated_at, legacy_password, google_subject, google_email`.
+- Login reads the hard-coded `Users!A2:J` range. Columns are `id, username, bcrypt_hash, display_name, role, status, updated_at, legacy_password, google_subject, google_email`.
 - Authentication verifies bcrypt hashes first and uses the legacy plaintext password column only as a compatibility fallback.
 - Authenticated quotation requests derive the owner from the signed cookie; list/get/update/delete operations only use rows owned by that username.
 - Quotation rows preserve A:Q and append R:X metadata: `status, client_id, share_link_id, viewed_at, sent_at, template_id, source_quotation_id`.
@@ -49,7 +49,7 @@ Two-service quotation app for Door2Door Interiors:
 - Bill rows preserve A:Q and append R:W metadata: `status, client_id, source_quotation_id, payment_status, due_date, template_id`, with a JSON `payments` array (date/amount records) in column X.
 - Client history (`GET /api/v1/clients/:id/documents`) returns owner-scoped `quotation` and `bill` arrays matched by client ID, never by client name. Submitted client IDs must belong to the authenticated owner.
 - Document updates preserve client links and bill due dates when omitted; explicit empty strings clear them. Nonempty due dates use valid `YYYY-MM-DD` dates. Reopening documents takes status/link/due-date metadata from server fields rather than stale `items_json` metadata.
-- New documents start as `draft`; bills start `unpaid`. Status PATCH endpoints control lifecycle/payment changes. Quotation statuses are `draft, sent, viewed, accepted, declined, cancelled`; opening a public share URL auto-marks the quotation `viewed`. Declined or cancelled quotations cannot convert to bills. Bill lifecycle and payment statuses are separate; payment status is derived from recorded `payments` (unpaid/partially_paid/paid) but can be overridden (e.g. `overdue`). The payment-records panel (list, add/remove, and Total/Received/Pending summary) renders only for `partially_paid` bills; payment details never render for `cancelled` bills.
+- New documents start as `draft`; bills start `unpaid`. Status PATCH endpoints control lifecycle/payment changes. Quotation statuses are `draft, sent, viewed, accepted, declined, cancelled`; opening a public share URL auto-marks the quotation `viewed`. Declined or cancelled quotations cannot convert to bills. Bill lifecycle and payment statuses are separate; payment status is derived from recorded `payments` (unpaid/partially_paid/paid) but can be overridden (e.g. `overdue`). The payment-records panel (list, add/remove, and Total/Received/Pending summary) renders only for `partially_paid` bills; payment details never render for `cancelled` bills. The same Total/Received/Pending numbers are shown on the bills library, bill preview, downloaded PDF, and public bill share link.
 - Business profile rows use `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`.
 - Business logos accept JPEG, PNG, and WebP files up to 200 KB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
@@ -57,7 +57,7 @@ Two-service quotation app for Door2Door Interiors:
 - CORS must allow PATCH for client, document, payment, and admin status updates.
 - Production frontend API calls use `https://quotify-i62o.onrender.com` directly; preserve `credentials: 'include'` and Render CORS. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
 - Analytics must not include credentials, client data, or quotation content.
-- Public share tokens are stored as hashes; public quotation views are read-only and sanitized.
+- Public share tokens are stored as hashes; public document views are read-only and sanitized. Bill shares additionally expose `paymentStatus` and the raw `payments` JSON so the share page can render the same Received/Pending summary as the app.
 - Popup close buttons and click-away go back to the previous page they opened from (never the homepage).
 - PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`), not the username.
 - WhatsApp sharing uses browser-generated `wa.me` draft links; no WhatsApp credentials or automated sending are used.

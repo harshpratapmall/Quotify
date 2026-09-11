@@ -1,6 +1,7 @@
 import { getTodayDate } from '../config/quotation';
 import { clientInitials } from './formatters';
 import { getPrintableItems } from './quotation';
+import { parsePayments, getPaymentSummary } from './payments';
 
 const pdfText = (value) =>
   String(value ?? '')
@@ -69,6 +70,9 @@ export const downloadQuotationPdf = async ({
 }) => {
   const logo = await loadPdfLogo(logoSource);
   const isBill = documentType === 'bill';
+  const paymentSummary = isBill && quotation.paymentStatus === 'partially_paid'
+    ? getPaymentSummary(parsePayments(quotation.payments), total)
+    : null;
   const documentTitle = isBill ? 'BILL' : 'QUOTATION';
   const accent = isBill ? [0.2, 0.32, 0.63] : [0.72, 0.58, 0.35];
   const header = isBill ? [0.09, 0.16, 0.35] : [0.11, 0.21, 0.26];
@@ -156,6 +160,16 @@ export const downloadQuotationPdf = async ({
     text(`Page ${pageNumber} of ${pageCount}`, 430, 50, 8, 'F1', footerText);
   };
 
+  const drawPaymentSummary = (totalsTop) => {
+    if (!paymentSummary) return;
+    rectangle(330, totalsTop - 104, 217, 38, [0.96, 0.98, 0.96]);
+    border(330, totalsTop - 104, 217, 38, [0.66, 0.75, 0.71]);
+    text('RECEIVED', 342, totalsTop - 90, 9, 'F1', [0.37, 0.44, 0.53]);
+    text(pdfAmount(paymentSummary.received), 464, totalsTop - 90, 9, 'F2');
+    text('PENDING', 342, totalsTop - 77, 9, 'F1', [0.37, 0.44, 0.53]);
+    text(pdfAmount(paymentSummary.pending), 464, totalsTop - 77, 9, 'F2');
+  };
+
   rectangle(0, 0, 595, 842, [0.98, 0.97, 0.93]);
   rectangle(22, 22, 551, 798, [1, 1, 1]);
   border(22, 22, 551, 798, [0.14, 0.22, 0.24], 1.1);
@@ -220,6 +234,7 @@ export const downloadQuotationPdf = async ({
     border(totalX - 12, totalsTop - 62, 217, 36, header, 1);
     text(isBill ? 'TOTAL DUE' : 'TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
     text(pdfAmount(total), 464, totalsTop - 48, 12, 'F2', [1, 1, 1]);
+    drawPaymentSummary(totalsTop);
   } else {
     text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
   }
@@ -279,6 +294,7 @@ export const downloadQuotationPdf = async ({
       border(totalX - 12, totalsTop - 62, 217, 36, header, 1);
       text(isBill ? 'TOTAL DUE' : 'TOTAL ESTIMATE', totalX, totalsTop - 48, 10, 'F2', [1, 1, 1]);
       text(pdfAmount(total), 464, totalsTop - 48, 12, 'F2', [1, 1, 1]);
+      drawPaymentSummary(totalsTop);
     } else {
       text('Continued on the next page', 396, 110, 8, 'F2', [0.22, 0.43, 0.42]);
     }

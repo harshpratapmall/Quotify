@@ -47,7 +47,7 @@ function QuotationPreviewModal({
   return (
     <ModalOverlay onClose={() => closePreview('backdrop')} sectionClass={`quotation-modal ${documentType === DOCUMENT_TYPES.bill ? 'bill-preview-modal' : ''}`} sectionProps={{ 'aria-labelledby': 'quotation-preview-title' }}>
       <ModalHeader eyebrow="Ready to share" title={`${copy.singular} Preview`} titleId="quotation-preview-title" trailingAction={<IconButton icon="close" className="modal-close" label={`Close ${copy.singular.toLowerCase()} preview`} onClick={() => closePreview('button')} />} />
-        {activeQuotationId && <DocumentStatus type={documentType} document={quotation} onChange={changeStatus} disabled={statusBusy} />}
+        {activeQuotationId && <DocumentStatus type={documentType} document={{ ...quotation, total }} onChange={changeStatus} disabled={statusBusy} />}
         <article className={`quotation-document ${documentType === DOCUMENT_TYPES.bill ? 'bill-document' : ''}`}>
           <div className="document-header">
             <div className="document-brand">{businessProfile?.logoUrl ? <img src={businessProfile.logoUrl} alt="" /> : <span>{(businessProfile?.businessName || 'Q').slice(0, 2).toUpperCase()}</span>}<div><strong>{businessProfile?.businessName || 'Your business'}</strong><small>{copy.singular}</small></div></div>

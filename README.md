@@ -103,7 +103,7 @@ The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
-Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending.
+Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending. Bill share pages also receive `paymentStatus` and the raw `payments` record so their Received/Pending summary matches the app.
 
 The `BusinessProfiles` tab must keep row 1 in this order:
 
@@ -161,7 +161,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
-- Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status; the payment-records panel with a Total/Received/Pending summary only renders for `partially_paid` bills, and `cancelled` bills hide all payment details.
+- Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status; the Total/Received/Pending summary renders for `partially_paid` bills on the bills library, bill preview, downloaded PDF, and public share link, and `cancelled` bills hide all payment details.
 - Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`) and wrap the business address across multiple lines in the footer.
 - The business profile page edits contact and logo fields; quote prefix and default terms are still stored in `BusinessProfiles!A:J` but are no longer editable in the UI (PDF output falls back to the stored values or built-in defaults).
 - Client links and bill due dates can be cleared when editing; older API clients that omit those fields preserve existing metadata. Cross-origin API requests allow PATCH for status changes.
