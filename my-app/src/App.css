@@ -90,6 +90,8 @@
 .client-count { color: var(--muted); font-size: 0.9rem; }
 .client-row small { display: block; margin-top: 0.25rem; color: var(--muted); }
 .client-row.archived { opacity: 0.65; }
+.employee-row small { display: block; margin-top: 0.25rem; color: var(--muted); }
+.employee-row .employee-designation { color: var(--teal); font-weight: 600; }
 .template-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; align-items: end; }
 .template-form label { display: grid; gap: 0.45rem; color: var(--navy); font-weight: 600; }
 .template-form input:not([type="checkbox"]), .template-form select, .template-form textarea { width: 100%; padding: 0.75rem 0.85rem; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); }

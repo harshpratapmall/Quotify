@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dashboard from './components/Dashboard';
 import AdminUsers from './components/AdminUsers';
 import Clients from './components/Clients';
+import Employees from './components/Employees';
 import PublicShare from './components/PublicShare';
 import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
@@ -490,6 +491,9 @@ function App() {
   }
   if (pathname === APP_ROUTES.clients) {
     return <Clients navigate={navigate} startNewDocument={startNewDocument} openDocument={openSavedDocument} />;
+  }
+  if (pathname === APP_ROUTES.employees) {
+    return <Employees navigate={navigate} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
 

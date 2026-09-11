@@ -1,6 +1,6 @@
 # Quotify Frontend
 
-React 19 frontend for quotations, bills, client management, business profiles, sharing, and administrator user management. See the [root README](../README.md) for shared setup, API routes, schemas, and deployment.
+React 19 frontend for quotations, bills, clients, employees, business profiles, sharing, and administrator user management. See the [root README](../README.md) for shared setup, API routes, schemas, and deployment.
 
 ## Run
 
@@ -32,6 +32,7 @@ REACT_APP_ENV=local
 - Business profile editing and Vercel Blob logo uploads
 - Separate quotation and bill libraries with shared line-item pricing workflows
 - Client search, add/edit/delete, contact autofill, and linked quotation/bill history
+- Employee directory with search and add/edit/delete (name, phone, email, address, designation, notes); employees are never linked to quotations or bills
 - Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), and optional bill due dates. Bills track recorded payments by date and amount with a derived payment status; the payment-records panel with a Total/Received/Pending summary renders only for `partially_paid` bills, and payment details stay hidden for `cancelled` bills.
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
 - Admin user search, creation, activation/deactivation, and password resets
@@ -53,6 +54,7 @@ Share revocation is available through API service helpers but has no UI button. 
 - `src/services/apiClient.js`: shared `fetch` helper used by the document, client, auth, admin, and profile services
 - `src/hooks/useSavedDocuments.js`: document-library state with upsert/replace/remove mutations
 - `src/components/ClientSelector.js`, `Clients.js`: client reuse, edit/delete, and history
+- `src/components/Employees.js`, `src/services/employees.js`: employee directory with search and edit/delete
 - `src/components/DocumentStatus.js`, `src/config/statuses.js`: lifecycle/payment controls
 - `src/utils/quotation.js`: save/reopen metadata and pricing helpers; also `src/utils/payments.js` for payment records and summaries
 - `src/utils/pdf.js`: PDF export

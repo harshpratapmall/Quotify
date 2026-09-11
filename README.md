@@ -28,6 +28,11 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | PUT | `/api/v1/clients/:id` | Update a client |
 | PATCH | `/api/v1/clients/:id/status` | Archive or restore a client |
 | DELETE | `/api/v1/clients/:id` | Delete a client owned by the current user |
+| GET | `/api/v1/employees` | List the current user's employees |
+| POST | `/api/v1/employees` | Create an employee |
+| GET | `/api/v1/employees/:id` | Read an employee owned by the current user |
+| PUT | `/api/v1/employees/:id` | Update an employee |
+| DELETE | `/api/v1/employees/:id` | Delete an employee owned by the current user |
 | PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle status |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
@@ -100,6 +105,7 @@ Metadata follows the existing A:Q columns:
 - `Bills!X`: a JSON `payments` array of `{date, amount}` records that drives the derived payment status
 
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
+The `Employee` tab uses: `employee_id, owner_id, name, phone, email, address, designation, notes, created_at, updated_at`. Like clients, employee records are owner-scoped and read from `Employee!A2:J`, but they are never tagged to quotations or bills.
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
@@ -161,6 +167,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
+- The employees page keeps team contact details (name, phone, email, address, designation, notes) in an owner-scoped directory with search and delete; employees are never linked to quotations or bills.
 - Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status; the Total/Received/Pending summary renders for `partially_paid` bills on the bills library, bill preview, downloaded PDF, and public share link, and `cancelled` bills hide all payment details.
 - Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`) and wrap the business address across multiple lines in the footer.
 - The business profile page edits contact and logo fields; quote prefix and default terms are still stored in `BusinessProfiles!A:J` but are no longer editable in the UI (PDF output falls back to the stored values or built-in defaults).
@@ -176,7 +183,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 
 - Document templates are not implemented.
 - Share revocation has API support and frontend service helpers, but no UI control.
-- Client, quotation, and bill libraries have per-library search; the admin user list also has search.
+- Client, quotation, and bill libraries have per-library search; the admin user list and employee directory also have search.
 - Bill due dates appear in the editor, library, and authenticated preview; the PDF generator does not currently print them.
 
 ## Checks

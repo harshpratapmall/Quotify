@@ -10,4 +10,5 @@ export const APP_ROUTES = {
   adminUsers: '/admin/users',
   businessProfile: '/business-profile',
   clients: '/clients',
+  employees: '/employees',
 };
