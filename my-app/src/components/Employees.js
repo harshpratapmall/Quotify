@@ -134,7 +134,7 @@ function Employees({ navigate, pathname }) {
       </section>
 
       {showAddEmployee && (
-        <ModalOverlay onClose={() => resetForm()} sectionClass="record-form-modal employee-record-modal" sectionProps={{ 'aria-labelledby': 'employee-form-title' }}>
+        <ModalOverlay onClose={() => resetForm()} portal sectionClass="record-form-modal employee-record-modal" sectionProps={{ 'aria-labelledby': 'employee-form-title' }}>
           <div className="record-form-header">
             <div className="record-form-heading">
               <span className="record-form-icon"><ActionIcon type="profile" /></span>

@@ -145,7 +145,7 @@ if (pathname !== APP_ROUTES.clients) return null;
       </section>
 
       {showAddClient && (
-        <ModalOverlay onClose={() => resetForm()} sectionClass="record-form-modal client-record-modal" sectionProps={{ 'aria-labelledby': 'client-form-title' }}>
+        <ModalOverlay onClose={() => resetForm()} portal sectionClass="record-form-modal client-record-modal" sectionProps={{ 'aria-labelledby': 'client-form-title' }}>
           <div className="record-form-header">
             <div className="record-form-heading">
               <span className="record-form-icon"><ActionIcon type="profile" /></span>
@@ -181,7 +181,7 @@ if (pathname !== APP_ROUTES.clients) return null;
           </form>
         </ModalOverlay>
       )}
-      {selectedClient && <ModalOverlay onClose={() => setSelectedClient(null)} sectionClass="client-documents-modal" sectionProps={{ 'aria-labelledby': 'client-documents-title' }}>
+      {selectedClient && <ModalOverlay onClose={() => setSelectedClient(null)} portal sectionClass="client-documents-modal" sectionProps={{ 'aria-labelledby': 'client-documents-title' }}>
           <div className="modal-actions"><div><p className="eyebrow">Client workspace</p><h2 id="client-documents-title">{selectedClient.name}</h2><p>{[selectedClient.phone, selectedClient.email].filter(Boolean).join(' · ')}</p></div><IconButton icon="close" label="Close client documents" onClick={() => setSelectedClient(null)} /></div>
 <div className="client-document-actions">
             <button type="button" className="primary-action compact-action" onClick={() => startNewDocument('quotation', 'client', selectedClient)}><ActionIcon type="quotation" /> New quotation</button>
