@@ -106,7 +106,7 @@ Metadata follows the existing A:Q columns:
 
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
 The `Employee` tab uses: `employee_id, owner_id, name, phone, email, address, designation, notes, created_at, updated_at`. Like clients, employee records are owner-scoped and read from `Employee!A2:J`, but they are never tagged to quotations or bills.
-The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`.
+The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`. All five `ShareLinks` date columns are stored as Asia/Kolkata timestamps formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 30 days after creation; legacy rows without `expires_at` are treated as expiring 30 days after `created_at`, and expired or revoked links return `410 Gone`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
 Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending. Bill share pages also receive `paymentStatus` and the raw `payments` record so their Received/Pending summary matches the app.

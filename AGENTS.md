@@ -60,6 +60,7 @@ Two-service quotation app for Door2Door Interiors:
 - Production frontend API calls use `https://quotify-i62o.onrender.com` directly; preserve `credentials: 'include'` and Render CORS. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
 - Analytics must not include credentials, client data, or quotation content.
 - Public share tokens are stored as hashes; public document views are read-only and sanitized. Bill shares additionally expose `paymentStatus` and the raw `payments` JSON so the share page can render the same Received/Pending summary as the app.
+- ShareLinks date columns (`created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at`) are stored in Asia/Kolkata formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 30 days after creation; legacy rows without `expires_at` are treated as expiring 30 days after `created_at`. Expired or revoked links return `410 Gone`.
 - Popup close buttons and click-away go back to the previous page they opened from (never the homepage).
 - PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`), not the username.
 - WhatsApp sharing uses browser-generated `wa.me` draft links; no WhatsApp credentials or automated sending are used.

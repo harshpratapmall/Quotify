@@ -81,7 +81,7 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		unavailable(c, "Unable to load share link.")
 		return
 	} else if existing.ID != "" {
-		if err := sheets.RevokeShareLink(c.Request.Context(), existing, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		if err := sheets.RevokeShareLink(c.Request.Context(), existing, sheets.ISTTimestamp(time.Now())); err != nil {
 			unavailable(c, "Unable to rotate share link.")
 			return
 		}
@@ -92,7 +92,7 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		return
 	}
 	now := time.Now().UTC()
-	link := sheets.ShareLink{ID: "SH-" + token[:12], OwnerID: ownerID, DocumentType: documentType, DocumentID: documentID, TokenHash: tokenHash, CreatedAt: now.Format(time.RFC3339), ExpiresAt: now.Add(30 * 24 * time.Hour).Format(time.RFC3339)}
+	link := sheets.ShareLink{ID: "SH-" + token[:12], OwnerID: ownerID, DocumentType: documentType, DocumentID: documentID, TokenHash: tokenHash, CreatedAt: sheets.ISTTimestamp(now), ExpiresAt: sheets.ISTTimestamp(now.Add(30 * 24 * time.Hour))}
 	if err := sheets.SaveShareLink(c.Request.Context(), link); err != nil {
 		unavailable(c, "Unable to save share link.")
 		return
@@ -126,7 +126,7 @@ func revokeDocumentShare(c *gin.Context, documentType string) {
 		notFound(c, "Active share link not found.")
 		return
 	}
-	if err := sheets.RevokeShareLink(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339)); err != nil {
+	if err := sheets.RevokeShareLink(c.Request.Context(), link, sheets.ISTTimestamp(time.Now())); err != nil {
 		unavailable(c, "Unable to revoke share link.")
 		return
 	}
@@ -163,7 +163,7 @@ func GetPublicShare(c *gin.Context) {
 		unavailable(c, "Unable to load business branding.")
 		return
 	}
-	_ = sheets.RecordShareView(c.Request.Context(), link, time.Now().UTC().Format(time.RFC3339))
+	_ = sheets.RecordShareView(c.Request.Context(), link, sheets.ISTTimestamp(time.Now()))
 	if link.DocumentType == "quotation" && quotesShouldMarkViewed(quote.Status) {
 		now := time.Now().UTC()
 		quote.Status = "viewed"

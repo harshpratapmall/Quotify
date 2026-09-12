@@ -14,6 +14,20 @@ import (
 
 const shareLinkRange = "ShareLinks!A:K"
 
+const shareLinkTimeLayout = "02-01-2006 15:04:05"
+
+var istLocation = func() *time.Location {
+	location, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		location = time.FixedZone("IST", 5*3600+30*60)
+	}
+	return location
+}()
+
+func ISTTimestamp(t time.Time) string {
+	return t.In(istLocation).Format(shareLinkTimeLayout)
+}
+
 type ShareLink struct {
 	ID            string `json:"id"`
 	OwnerID       string `json:"ownerId"`
@@ -93,15 +107,30 @@ func shareLinkToRow(link ShareLink) []string {
 	return []string{link.ID, link.OwnerID, link.DocumentType, link.DocumentID, link.TokenHash, link.CreatedAt, link.ExpiresAt, link.RevokedAt, link.FirstViewedAt, link.LastViewedAt, strconv.Itoa(link.ViewCount)}
 }
 
+const ShareLinkLifetime = 10 * time.Minute
+
 func ShareLinkIsActive(link ShareLink, now time.Time) bool {
 	if link.ID == "" || link.RevokedAt != "" {
 		return false
 	}
-	if link.ExpiresAt == "" {
+	expiresAt := link.ExpiresAt
+	if expiresAt == "" && link.CreatedAt != "" {
+		if created, err := parseShareLinkTime(link.CreatedAt); err == nil {
+			expiresAt = created.Add(ShareLinkLifetime).Format(shareLinkTimeLayout)
+		}
+	}
+	if expiresAt == "" {
 		return true
 	}
-	expiresAt, err := time.Parse(time.RFC3339, link.ExpiresAt)
-	return err == nil && now.Before(expiresAt)
+	expiry, err := parseShareLinkTime(expiresAt)
+	return err == nil && now.Before(expiry)
+}
+
+func parseShareLinkTime(value string) (time.Time, error) {
+	if parsed, err := time.ParseInLocation(shareLinkTimeLayout, value, istLocation); err == nil {
+		return parsed, nil
+	}
+	return time.Parse(time.RFC3339, value)
 }
 
 func GetOwnerShareLink(ctx context.Context, ownerID, documentType, documentID string) (ShareLink, error) {
