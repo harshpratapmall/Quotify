@@ -22,9 +22,9 @@ import (
 	"sync"
 	"time"
 
-	"backend-go/internal/config"
-
 	"golang.org/x/crypto/bcrypt"
+
+	"backend-go/internal/config"
 )
 
 const sheetsScope = "https://www.googleapis.com/auth/spreadsheets"
@@ -109,7 +109,7 @@ func matchesPassword(record UserRecord, password string) bool {
 }
 
 func ListUsers(ctx context.Context) ([]UserRecord, error) {
-	values, err := readValues(ctx, "Users!A2:J")
+	values, err := readTable(ctx, usersTable)
 	if err != nil {
 		return nil, err
 	}
@@ -118,18 +118,13 @@ func ListUsers(ctx context.Context) ([]UserRecord, error) {
 		if len(row) < 6 || strings.TrimSpace(row[0]) == "" {
 			continue
 		}
-		get := func(column int) string {
-			if column < len(row) {
-				return strings.TrimSpace(row[column])
-			}
-			return ""
-		}
+		cells := usersTable.cells(row, true)
 		users = append(users, UserRecord{
-			User:          User{ID: get(0), Username: get(1), DisplayName: get(3), Role: get(4), Status: get(5)},
-			PasswordHash:  get(2),
-			Password:      get(7),
-			GoogleSubject: get(8),
-			GoogleEmail:   get(9),
+			User:          User{ID: cells.get("id"), Username: cells.get("username"), DisplayName: cells.get("display_name"), Role: cells.get("role"), Status: cells.get("status")},
+			PasswordHash:  cells.get("bcrypt_hash"),
+			Password:      cells.get("legacy_password"),
+			GoogleSubject: cells.get("google_subject"),
+			GoogleEmail:   cells.get("google_email"),
 			Row:           index + 2,
 		})
 	}
@@ -152,7 +147,32 @@ func CreateUser(ctx context.Context, user User, password string) error {
 	if err != nil {
 		return err
 	}
-	return writeValues(ctx, http.MethodPost, "Users!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, string(hash), user.DisplayName, "user", "active", time.Now().UTC().Format(time.RFC3339), password, "", ""}})
+	row := buildRow(usersTable, func(column string) string {
+		switch column {
+		case "id":
+			return user.ID
+		case "username":
+			return user.Username
+		case "bcrypt_hash":
+			return string(hash)
+		case "display_name":
+			return user.DisplayName
+		case "role":
+			return "user"
+		case "status":
+			return "active"
+		case "updated_at":
+			return time.Now().UTC().Format(time.RFC3339)
+		case "legacy_password":
+			return password
+		case "google_subject":
+			return ""
+		case "google_email":
+			return ""
+		}
+		return ""
+	})
+	return appendTable(ctx, usersTable, [][]string{row})
 }
 
 func UpdateUserStatus(ctx context.Context, id, status string) (User, error) {
@@ -164,7 +184,32 @@ func UpdateUserStatus(ctx context.Context, id, status string) (User, error) {
 	}
 	for _, record := range users {
 		if record.ID == id {
-			return record.User, writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, record.PasswordHash, record.DisplayName, record.Role, status, time.Now().UTC().Format(time.RFC3339), record.Password, record.GoogleSubject, record.GoogleEmail}})
+			row := buildRow(usersTable, func(column string) string {
+				switch column {
+				case "id":
+					return record.ID
+				case "username":
+					return record.Username
+				case "bcrypt_hash":
+					return record.PasswordHash
+				case "display_name":
+					return record.DisplayName
+				case "role":
+					return record.Role
+				case "status":
+					return status
+				case "updated_at":
+					return time.Now().UTC().Format(time.RFC3339)
+				case "legacy_password":
+					return record.Password
+				case "google_subject":
+					return record.GoogleSubject
+				case "google_email":
+					return record.GoogleEmail
+				}
+				return ""
+			})
+			return record.User, updateTableRow(ctx, usersTable, record.Row, row)
 		}
 	}
 	return User{}, errors.New("user not found")
@@ -183,8 +228,32 @@ func ResetUserPassword(ctx context.Context, id, password string) (User, error) {
 	}
 	for _, record := range users {
 		if record.ID == id {
-			err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", record.Row, record.Row), [][]string{{record.ID, record.Username, string(hash), record.DisplayName, record.Role, "active", time.Now().UTC().Format(time.RFC3339), password, record.GoogleSubject, record.GoogleEmail}})
-			return record.User, err
+			row := buildRow(usersTable, func(column string) string {
+				switch column {
+				case "id":
+					return record.ID
+				case "username":
+					return record.Username
+				case "bcrypt_hash":
+					return string(hash)
+				case "display_name":
+					return record.DisplayName
+				case "role":
+					return record.Role
+				case "status":
+					return "active"
+				case "updated_at":
+					return time.Now().UTC().Format(time.RFC3339)
+				case "legacy_password":
+					return password
+				case "google_subject":
+					return record.GoogleSubject
+				case "google_email":
+					return record.GoogleEmail
+				}
+				return ""
+			})
+			return record.User, updateTableRow(ctx, usersTable, record.Row, row)
 		}
 	}
 	return User{}, errors.New("user not found")
@@ -211,7 +280,7 @@ func ResolveGoogleUser(ctx context.Context, subject, email, displayName string) 
 
 	var match *UserRecord
 	for index := range users {
-		if strings.EqualFold(recordEmail(users[index]), email) {
+		if recordEmail(users[index]) == recordEmailMatch(email, users) {
 			if match != nil {
 				return User{}, errors.New("Google email matches multiple users")
 			}
@@ -222,16 +291,40 @@ func ResolveGoogleUser(ctx context.Context, subject, email, displayName string) 
 		if !strings.EqualFold(match.Status, "active") {
 			return User{}, errors.New("Google user is inactive")
 		}
-		match.GoogleSubject = subject
-		match.GoogleEmail = email
-		if err := writeValues(ctx, http.MethodPut, fmt.Sprintf("Users!A%d:J%d?valueInputOption=RAW", match.Row, match.Row), [][]string{{match.ID, match.Username, match.PasswordHash, match.DisplayName, match.Role, match.Status, time.Now().UTC().Format(time.RFC3339), match.Password, subject, email}}); err != nil {
+		row := buildRow(usersTable, func(column string) string {
+			switch column {
+			case "id":
+				return match.ID
+			case "username":
+				return match.Username
+			case "bcrypt_hash":
+				return match.PasswordHash
+			case "display_name":
+				return match.DisplayName
+			case "role":
+				return match.Role
+			case "status":
+				return match.Status
+			case "updated_at":
+				return time.Now().UTC().Format(time.RFC3339)
+			case "legacy_password":
+				return match.Password
+			case "google_subject":
+				return subject
+			case "google_email":
+				return email
+			}
+			return ""
+		})
+		if err := updateTableRow(ctx, usersTable, match.Row, row); err != nil {
 			return User{}, err
 		}
 		return match.User, nil
 	}
 
 	user := User{ID: newUserID(), Username: email, DisplayName: displayName, Role: "user", Status: "active"}
-	if err := writeValues(ctx, http.MethodPost, "Users!A:J:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{{user.ID, user.Username, "", user.DisplayName, user.Role, user.Status, time.Now().UTC().Format(time.RFC3339), "", subject, email}}); err != nil {
+	row := [][]string{{user.ID, user.Username, "", user.DisplayName, user.Role, user.Status, time.Now().UTC().Format(time.RFC3339), "", subject, email}}
+	if err := appendTable(ctx, usersTable, row); err != nil {
 		return User{}, err
 	}
 	return user, nil
@@ -242,6 +335,15 @@ func recordEmail(record UserRecord) string {
 		return record.GoogleEmail
 	}
 	return record.Username
+}
+
+func recordEmailMatch(email string, users []UserRecord) string {
+	for _, u := range users {
+		if recordEmail(u) == email {
+			return email
+		}
+	}
+	return ""
 }
 
 func newUserID() string {

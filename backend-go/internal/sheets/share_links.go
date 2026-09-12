@@ -5,14 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
-
-const shareLinkRange = "ShareLinks!A:K"
 
 const shareLinkTimeLayout = "02-01-2006 15:04:05"
 
@@ -44,11 +39,11 @@ type ShareLink struct {
 }
 
 func SaveShareLink(ctx context.Context, link ShareLink) error {
-	return writeValues(ctx, http.MethodPost, shareLinkRange+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{shareLinkToRow(link)})
+	return appendTable(ctx, shareLinkTable, [][]string{shareLinkToRow(link)})
 }
 
 func GetShareLink(ctx context.Context, tokenHash string) (ShareLink, error) {
-	values, err := readValues(ctx, "ShareLinks!A2:K")
+	values, err := readTable(ctx, shareLinkTable)
 	if err != nil {
 		return ShareLink{}, err
 	}
@@ -76,7 +71,7 @@ func RecordShareView(ctx context.Context, link ShareLink, viewedAt string) error
 }
 
 func updateShareLink(ctx context.Context, link ShareLink) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("ShareLinks!A%d:K%d?valueInputOption=RAW", link.Row, link.Row), [][]string{shareLinkToRow(link)})
+	return updateTableRow(ctx, shareLinkTable, link.Row, shareLinkToRow(link))
 }
 
 func NewShareToken() (string, string, error) {
@@ -90,21 +85,42 @@ func NewShareToken() (string, string, error) {
 }
 
 func shareLinkFromRow(row []string, rowNumber int) ShareLink {
-	get := func(index int) string {
-		if index < len(row) {
-			return strings.TrimSpace(row[index])
-		}
-		return ""
-	}
+	cells := shareLinkTable.cells(row, true)
 	viewCount := 0
-	if value, err := strconv.Atoi(get(10)); err == nil {
+	if value, err := strconv.Atoi(cells.get("view_count")); err == nil {
 		viewCount = value
 	}
-	return ShareLink{ID: get(0), OwnerID: get(1), DocumentType: get(2), DocumentID: get(3), TokenHash: get(4), CreatedAt: get(5), ExpiresAt: get(6), RevokedAt: get(7), FirstViewedAt: get(8), LastViewedAt: get(9), ViewCount: viewCount, Row: rowNumber}
+	return ShareLink{ID: cells.get("share_id"), OwnerID: cells.get("owner_id"), DocumentType: cells.get("document_type"), DocumentID: cells.get("document_id"), TokenHash: cells.get("token_hash"), CreatedAt: cells.get("created_at"), ExpiresAt: cells.get("expires_at"), RevokedAt: cells.get("revoked_at"), FirstViewedAt: cells.get("first_viewed_at"), LastViewedAt: cells.get("last_viewed_at"), ViewCount: viewCount, Row: rowNumber}
 }
 
 func shareLinkToRow(link ShareLink) []string {
-	return []string{link.ID, link.OwnerID, link.DocumentType, link.DocumentID, link.TokenHash, link.CreatedAt, link.ExpiresAt, link.RevokedAt, link.FirstViewedAt, link.LastViewedAt, strconv.Itoa(link.ViewCount)}
+	return buildRow(shareLinkTable, func(column string) string {
+		switch column {
+		case "share_id":
+			return link.ID
+		case "owner_id":
+			return link.OwnerID
+		case "document_type":
+			return link.DocumentType
+		case "document_id":
+			return link.DocumentID
+		case "token_hash":
+			return link.TokenHash
+		case "created_at":
+			return link.CreatedAt
+		case "expires_at":
+			return link.ExpiresAt
+		case "revoked_at":
+			return link.RevokedAt
+		case "first_viewed_at":
+			return link.FirstViewedAt
+		case "last_viewed_at":
+			return link.LastViewedAt
+		case "view_count":
+			return strconv.Itoa(link.ViewCount)
+		}
+		return ""
+	})
 }
 
 const ShareLinkLifetime = 10 * time.Minute
@@ -134,7 +150,7 @@ func parseShareLinkTime(value string) (time.Time, error) {
 }
 
 func GetOwnerShareLink(ctx context.Context, ownerID, documentType, documentID string) (ShareLink, error) {
-	values, err := readValues(ctx, "ShareLinks!A2:K")
+	values, err := readTable(ctx, shareLinkTable)
 	if err != nil {
 		return ShareLink{}, err
 	}

@@ -36,6 +36,34 @@ func AuthDebug() bool {
 	return os.Getenv("AUTH_DEBUG") == "true"
 }
 
+
+func SheetTabUsers() string {
+	return os.Getenv("SHEET_TAB_USERS")
+}
+
+func SheetTabQuotations() string {
+	return os.Getenv("SHEET_TAB_QUOTATIONS")
+}
+
+func SheetTabBills() string {
+	return os.Getenv("SHEET_TAB_BILLS")
+}
+
+func SheetTabClients() string {
+	return os.Getenv("SHEET_TAB_CLIENTS")
+}
+
+func SheetTabEmployees() string {
+	return os.Getenv("SHEET_TAB_EMPLOYEES")
+}
+
+func SheetTabShareLinks() string {
+	return os.Getenv("SHEET_TAB_SHARELINKS")
+}
+
+func SheetTabBusinessProfiles() string {
+	return os.Getenv("SHEET_TAB_BUSINESS_PROFILES")
+}
 func Port() string {
 	if port := os.Getenv("PORT"); port != "" {
 		return port

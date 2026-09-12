@@ -72,7 +72,7 @@ Use one spreadsheet shared with the service account. User records are read from 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | id | username | bcrypt_hash | display_name | role | status | updated_at | legacy_password | google_subject | google_email |
 
-All worksheet ranges are hard-coded in the repository, including `Users!A2:J`; there is no `GOOGLE_SHEET_RANGE` variable to override them.
+Google Sheets tab names and column order are now defined in a schema registry at `backend-go/internal/sheets/schema.go`. Per-tab names can be overridden via environment variables (\(SHEET_TAB_USERS\), \(SHEET_TAB_QUOTATIONS\), \(SHEET_TAB_BILLS\), \(SHEET_TAB_CLIENTS\), \(SHEET_TAB_EMPLOYEES\), \(SHEET_TAB_SHARELINKS\), \(SHEET_TAB_BUSINESS_PROFILES\)) so sheet renames never require a code change. Range strings are derived from the column count, making the system configurable for future DB migration.
 
 Passwords are verified with the bcrypt hash in column C. Column H is a legacy plaintext compatibility fallback and must not be exposed by the API; remove it after all existing accounts have been migrated.
 

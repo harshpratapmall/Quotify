@@ -68,7 +68,7 @@ Two-service quotation app for Door2Door Interiors:
 
 ## Configuration
 
-Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SHEET_RANGE`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`. Backend loads `backend-go/.env` (copy from `.env.example`), but existing environment variables take precedence over `.env`.
+Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`. Optional per-tab sheet name overrides: `\`SHEET_TAB_USERS\``, `\`SHEET_TAB_QUOTATIONS\``, `\`SHEET_TAB_BILLS\``, `\`SHEET_TAB_CLIENTS\``, `\`SHEET_TAB_EMPLOYEES\``, `\`SHEET_TAB_SHARELINKS\``, `\`SHEET_TAB_BUSINESS_PROFILES\``. Backend loads `backend-go/.env` (copy from `.env.example`), but existing environment variables take precedence over `.env`.
 
 Google sign-in: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL`, `OAUTH_FRONTEND_URL`, optional `GOOGLE_ALLOWED_DOMAINS`.
 

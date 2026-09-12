@@ -29,7 +29,7 @@ OAUTH_FRONTEND_URL=http://localhost:3000/
 GOOGLE_ALLOWED_DOMAINS=
 ```
 
-Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the hard-coded `Users!A2:J` range: bcrypt hashes are in C, the legacy plaintext fallback is in H, and Google subject/email are in I/J.
+Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the schema registry at `backend-go/internal/sheets/schema.go`; per-tab names can be overridden via the `SHEET_TAB_USERS` environment variable. Range strings are derived from the column count.
 
 Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
 

@@ -2,9 +2,6 @@ package sheets
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
 	"time"
 )
 
@@ -24,7 +21,7 @@ type BusinessProfile struct {
 }
 
 func GetBusinessProfile(ctx context.Context, id string) (BusinessProfile, error) {
-	rows, err := readValues(ctx, "BusinessProfiles!A2:K")
+	rows, err := readTable(ctx, businessProfileTable)
 	if err != nil {
 		return BusinessProfile{}, err
 	}
@@ -48,21 +45,42 @@ func SaveBusinessProfile(ctx context.Context, profile BusinessProfile) (Business
 	if profile.LogoURL == "" {
 		profile.LogoURL = existing.LogoURL
 	}
-	row := []string{profile.UserID, profile.BusinessName, profile.LogoURL, profile.Phone, profile.Email, profile.Address, profile.GSTIN, profile.QuotePrefix, profile.Terms, time.Now().UTC().Format(time.RFC3339), profile.Website}
+	row := buildRow(businessProfileTable, func(column string) string {
+		switch column {
+		case "user_id":
+			return profile.UserID
+		case "business_name":
+			return profile.BusinessName
+		case "logo_url":
+			return profile.LogoURL
+		case "phone":
+			return profile.Phone
+		case "email":
+			return profile.Email
+		case "address":
+			return profile.Address
+		case "gstin":
+			return profile.GSTIN
+		case "quote_prefix":
+			return profile.QuotePrefix
+		case "terms":
+			return profile.Terms
+		case "website":
+			return profile.Website
+		case "updated_at":
+			return time.Now().UTC().Format(time.RFC3339)
+		}
+		return ""
+	})
 	if profile.Row > 0 {
-		err = writeValues(ctx, http.MethodPut, fmt.Sprintf("BusinessProfiles!A%d:K%d?valueInputOption=RAW", profile.Row, profile.Row), [][]string{row})
+		err = updateTableRow(ctx, businessProfileTable, profile.Row, row)
 	} else {
-		err = writeValues(ctx, http.MethodPost, "BusinessProfiles!A:K:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{row})
+		err = appendTable(ctx, businessProfileTable, [][]string{row})
 	}
 	return profile, err
 }
 
 func profileRow(row []string, rowNumber int) BusinessProfile {
-	get := func(index int) string {
-		if index < len(row) {
-			return strings.TrimSpace(row[index])
-		}
-		return ""
-	}
-	return BusinessProfile{UserID: get(0), BusinessName: get(1), LogoURL: get(2), Phone: get(3), Email: get(4), Address: get(5), GSTIN: get(6), QuotePrefix: get(7), Terms: get(8), Website: get(10), Row: rowNumber}
+	cells := businessProfileTable.cells(row, true)
+	return BusinessProfile{UserID: cells.get("user_id"), BusinessName: cells.get("business_name"), LogoURL: cells.get("logo_url"), Phone: cells.get("phone"), Email: cells.get("email"), Address: cells.get("address"), GSTIN: cells.get("gstin"), QuotePrefix: cells.get("quote_prefix"), Terms: cells.get("terms"), Website: cells.get("website"), Row: rowNumber}
 }
