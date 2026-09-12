@@ -36,7 +36,7 @@ Two-service quotation app for Door2Door Interiors:
 - Payment records/summary: `my-app/src/utils/payments.js` (used by `DocumentStatus.js` and `DocumentLibraryModal.js`).
 - UI: `my-app/src/components/` and `my-app/src/App.css`.
 - Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths), `ModalOverlay.js` (modal backdrops), `SaveStatus.js` (save-result messages).
-- PDF download dispatch and legacy bill renderer: `my-app/src/utils/pdf.js`. Quotation generation: `my-app/src/utils/quotationPdf.js`, loaded on demand with jsPDF/AutoTable; returns `{ pdf, filename }` separately from download. Green A4 layout applies to quotation downloads only; do not change bill, app-preview, or public-share layouts with it.
+- PDF download dispatch: `my-app/src/utils/pdf.js`. Shared generation: `my-app/src/utils/documentPdf.js`, loaded on demand with jsPDF/AutoTable; returns `{ pdf, filename }` separately from download. `quotationPdf.js` retains a compatibility export. Quotations use green; bills use blue with `BILL / INVOICE`. App previews and public share layouts are separate and unchanged.
 - Logo upload authorization: `my-app/api/blob-upload.js`.
 
 ## Current Contracts
@@ -82,7 +82,7 @@ The service account needs Editor access to the spreadsheet for saved records and
 - Preserve the `Bills!A:Q` column order and `items_json` compatibility.
 - Preserve appended quotation/bill metadata positions and tolerate legacy rows without appended columns.
 - Preserve the `BusinessProfiles!A:J` column order; never store image data in the sheet.
-- Quotation PDFs use profile branding, omit unavailable footer details, and fall back to the business name for missing/failed logos. Keep wrapping, continuation headers/footers, final-page totals, numbering, and client-based filenames when editing the renderer. The initial redesign and website field were implemented without tests/builds/rendered verification at the user's request; do not imply they were verified.
+- Both PDF types use profile branding, omit unavailable footer details, and fall back to the business name for missing/failed logos. Footer icons and wrapped text blocks share a vertical center across all columns. Keep wrapping, continuation headers/footers, final-page totals, numbering, and client-based filenames. Partially paid, non-cancelled bills show a blue Payment Summary card: Partially Paid badge, Subtotal, optional GST, Total Due, Amount Received, and Balance Due; values come from the shared payment helpers. Other bills show ordinary totals without received/balance rows. PDF redesigns and the website field were implemented without tests/builds/rendered verification at the user's request; do not imply they were verified.
 - Reuse the shared UI primitives: close/plus buttons go through `IconButton`, preview export pills through `ActionButton` with `color-*` classes, modal headers through `ModalHeader`. Do not reintroduce hand-rolled `x` buttons.
 - For multi-user work, keep server-side owner enforcement and make browser draft state user-scoped; never rely on frontend hiding alone.
 - Local: `http://localhost:3000` frontend, `http://localhost:8000` backend; local cookies require `COOKIE_SECURE=false`.

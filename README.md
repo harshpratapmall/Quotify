@@ -121,11 +121,13 @@ Each user has one profile row. `logo_url` contains a public Vercel Blob URL, nev
 
 Append `website` as the header in `BusinessProfiles!K1`; keep A:J unchanged. Reads and writes now use A:K, and older rows without K remain supported. The profile API accepts an optional `website`: omitted values preserve the stored website, while an empty string clears it. Bare domains are normalized to HTTPS; only HTTP/HTTPS addresses are accepted. Deploy the backend support before a frontend that saves this field.
 
-## Quotation PDF Design
+## Quotation and Bill PDF Design
 
 Quotation downloads use the green A4 template: large profile logo (or business-name fallback), quotation reference/date, four client-detail sections, numbered item rows, a totals panel, pale house watermark, and profile contact footer including the optional website. Text wraps and additional pages repeat table headings and contact footers; totals stay together on the final page. GST is omitted when disabled. No terms or signatures are added.
 
-Generation remains browser-side using an on-demand jsPDF/AutoTable renderer. Calculations, quotation numbering, and lowercase client-based filenames are preserved. Bills, authenticated previews, and public share layouts retain their existing designs. This implementation has not been tested, built, or visually verified; verification was explicitly skipped for this change.
+Bill downloads use the same A4 layout in blue with a `BILL / INVOICE` header and bill numbering. Partially paid bills show a Payment Summary card with a Partially Paid badge, Subtotal, optional GST, a dark Total Due band, Amount Received, and a pale-blue Balance Due row. Received and balance amounts use the existing recorded-payment calculations. Cancelled bills and bills with other payment statuses show ordinary totals without received/balance rows. The entire summary stays together on the final page.
+
+Both PDF footers align icons and contact text blocks around a common vertical center, so multiline addresses remain aligned with single-line phone/email/website fields. Generation remains browser-side using a shared on-demand jsPDF/AutoTable renderer. Calculations, document numbering, and lowercase client-based filenames are preserved. Authenticated previews and public share layouts retain their existing designs. These implementations have not been tested, built, or visually verified; verification was explicitly skipped for these changes.
 
 ## Business Logos
 

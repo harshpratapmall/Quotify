@@ -58,15 +58,17 @@ Share revocation is available through API service helpers but has no UI button. 
 - `src/components/DocumentStatus.js`, `src/config/statuses.js`: lifecycle/payment controls
 - `src/utils/quotation.js`: save/reopen metadata and pricing helpers; also `src/utils/payments.js` for payment records and summaries
 - `src/utils/pdf.js`: PDF export
-- `src/utils/quotationPdf.js`: on-demand jsPDF/AutoTable quotation renderer; separate generation and download actions
+- `src/utils/documentPdf.js`: shared on-demand jsPDF/AutoTable quotation/bill renderer; separate generation and download actions. `quotationPdf.js` retains a compatibility export.
 - `src/components/ModalOverlay.js`, `SaveStatus.js`: shared popup backdrop and save-status primitives
 - `api/blob-upload.js`: authenticated Vercel Blob upload authorization
 
-## Quotation Downloads
+## Quotation and Bill Downloads
 
 Quotation PDFs use the green A4 design with a large business logo, quotation number/date, client/phone/address/project sections, numbered table, totals panel, house watermark, and contact footer. Text wraps, tables continue across pages, and totals stay together on the last page. Logos retain their aspect ratio; unavailable logos fall back to the business name. Missing footer fields are omitted. GST follows the document setting; calculations and filenames are unchanged.
 
-The Business Profile page includes an optional Website field. The API normalizes bare domains to HTTPS and persists it in the new `BusinessProfiles` column K; the backend must support this before the frontend field is deployed. Bills, app previews, and public share layouts keep their existing appearance. This change is unverified: no tests, builds, sample PDFs, or rendered inspections were run, as requested.
+Bill PDFs use the same template with a blue theme and `BILL / INVOICE` header. Partially paid, non-cancelled bills use a Payment Summary card with a Partially Paid badge, Subtotal, optional GST, Total Due, Amount Received, and Balance Due. Values use `getPaymentSummary`; the summary stays together on the final page. Other bills retain standard totals without payment-detail rows. Both PDF types center footer icons and wrapped contact text vertically across the footer columns.
+
+The Business Profile page includes an optional Website field. The API normalizes bare domains to HTTPS and persists it in the new `BusinessProfiles` column K; the backend must support this before the frontend field is deployed. App previews and public share layouts keep their existing appearance. These changes are unverified: no tests, builds, sample PDFs, or rendered inspections were run, as requested.
 
 ## Logo Uploads
 
