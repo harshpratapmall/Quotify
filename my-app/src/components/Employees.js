@@ -134,23 +134,23 @@ function Employees({ navigate, pathname }) {
       </section>
 
       {showAddEmployee && (
-        <ModalOverlay onClose={() => resetForm()} sectionClass="modal-content admin-card">
-          <div className="section-heading">
+        <ModalOverlay onClose={() => resetForm()} sectionClass="client-form-modal" sectionProps={{ 'aria-labelledby': 'employee-form-title' }}>
+          <div className="modal-actions">
             <div>
               <p className="eyebrow">Employee record</p>
-              <h2>{editingId ? 'Edit employee' : 'Add an employee'}</h2>
+              <h2 id="employee-form-title">{editingId ? 'Edit employee' : 'Add an employee'}</h2>
             </div>
-            <IconButton icon="close" label={editingId ? 'Cancel editing employee' : 'Close add employee'} onClick={resetForm} />
+            <IconButton icon="close" className="modal-close" label={editingId ? 'Cancel editing employee' : 'Close add employee'} onClick={resetForm} />
           </div>
           <form className="client-form" onSubmit={submit}>
             {message && <p role="status">{message}</p>}
-            <label>Name<input value={form.name} onChange={(event) => change('name', event.target.value)} required /></label>
-            <label>Phone<input type="tel" value={form.phone} onChange={(event) => change('phone', event.target.value)} /></label>
-            <label>Email<input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} /></label>
+            <label>Name<input value={form.name} onChange={(event) => change('name', event.target.value)} placeholder="Employee name" required /></label>
+            <label>Phone<input type="tel" value={form.phone} onChange={(event) => change('phone', event.target.value)} placeholder="+91 98765 43210" /></label>
+            <label>Email<input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} placeholder="employee@email.com" /></label>
             <label>Designation<input value={form.designation} onChange={(event) => change('designation', event.target.value)} placeholder="e.g. Carpenter, Painter, Labour" /></label>
             <label>Status<select value={form.status} onChange={(event) => change('status', event.target.value)}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-            <label>Address<input value={form.address} onChange={(event) => change('address', event.target.value)} /></label>
-            <label className="full-width">Notes<textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="2" /></label>
+            <label>Address<input value={form.address} onChange={(event) => change('address', event.target.value)} placeholder="Work address" /></label>
+            <label className="full-width">Notes<textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="2" placeholder="Skills, remarks" /></label>
             <div className="form-actions modal-form-actions">
               {editingId && <button type="button" className="secondary-action compact-action danger-action" disabled={isSaving} onClick={() => remove(editingId)}><ActionIcon type="delete" /> Delete employee</button>}
               <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save employee' : 'Add employee'}</button>
