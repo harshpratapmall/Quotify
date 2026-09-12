@@ -489,12 +489,6 @@ function App() {
   if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
-  if (pathname === APP_ROUTES.clients) {
-    return <Clients navigate={navigate} startNewDocument={startNewDocument} openDocument={openSavedDocument} />;
-  }
-  if (pathname === APP_ROUTES.employees) {
-    return <Employees navigate={navigate} />;
-  }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (!response.ok) throw new Error(data?.error || 'Unable to save your profile.'); setBusinessProfile(data); return true; }} />;
 
   return (
@@ -508,6 +502,8 @@ function App() {
         startNewDocument={startNewDocument}
         savedDocuments={savedDocuments}
       />
+      <Clients pathname={pathname} navigate={navigate} startNewDocument={startNewDocument} openDocument={openSavedDocument} />
+      <Employees pathname={pathname} navigate={navigate} />
       <DocumentLibraryModal pathname={pathname} documents={savedDocuments} openDocument={openSavedDocument} deleteDocument={deleteSavedDocument} startNewDocument={startNewDocument} goBack={goBack} saveStatus={saveStatus} changeStatus={changeDocumentStatus} statusBusy={statusBusy} />
       <QuotationWorkspaceModal
         pathname={pathname}

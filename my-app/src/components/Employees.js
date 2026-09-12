@@ -9,7 +9,7 @@ import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
 
 const emptyEmployee = { name: '', phone: '', email: '', address: '', designation: '', notes: '', status: 'active' };
 
-function Employees({ navigate }) {
+function Employees({ navigate, pathname }) {
   const [employees, setEmployees] = useState([]);
   const [form, setForm] = useState(emptyEmployee);
   const [editingId, setEditingId] = useState(null);
@@ -84,20 +84,19 @@ function Employees({ navigate }) {
     }
   };
 
+  if (pathname !== APP_ROUTES.employees) return null;
+
   return (
-    <main className="admin-page employees-page">
-      <header className="admin-header">
+    <ModalOverlay onClose={() => navigate(APP_ROUTES.home)} backdropClass="form-modal-backdrop" sectionClass="form-card form-workspace-modal" sectionProps={{ 'aria-labelledby': 'employees-title' }}>
+      <div className="section-heading">
         <div>
-          <p className="eyebrow">Workspace</p>
-          <h1>Employees</h1>
-          <p>Keep your team&apos;s contact details in one place.</p>
+          <p className="eyebrow">Employee Workspace</p>
+          <h3 id="employees-title">Employees</h3>
         </div>
-        <div className="header-actions">
-          <IconButton icon="plus" className="accent-icon" label="Add employee" onClick={() => { setEditingId(null); setForm(emptyEmployee); setShowAddEmployee(true); }} />
-          <IconButton icon="back" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
-        </div>
-      </header>
-      <SaveStatus message={message} className="admin-card" />
+        <p className="section-text">Keep your team&apos;s contact details in one place.</p>
+        <IconButton icon="close" className="workspace-close" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
+      </div>
+      <SaveStatus message={message} />
 
       <section className="admin-card">
         <div className="section-heading">
@@ -105,7 +104,10 @@ function Employees({ navigate }) {
             <p className="eyebrow">Your records</p>
             <h2>Employee directory</h2>
           </div>
-          <span className="client-count">{visibleEmployees.length} {visibleEmployees.length === 1 ? 'employee' : 'employees'}</span>
+          <div className="header-actions">
+            <span className="client-count">{visibleEmployees.length} {visibleEmployees.length === 1 ? 'employee' : 'employees'}</span>
+            <IconButton icon="plus" className="accent-icon" label="Add employee" onClick={() => { setEditingId(null); setForm(emptyEmployee); setShowAddEmployee(true); }} />
+          </div>
         </div>
         <input className="admin-search" aria-label="Search employees" placeholder="Search by name, phone, or email" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
         <label className="include-inactive"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Include inactive employees</label>
@@ -156,7 +158,7 @@ function Employees({ navigate }) {
           </form>
         </ModalOverlay>
       )}
-    </main>
+    </ModalOverlay>
   );
 }
 

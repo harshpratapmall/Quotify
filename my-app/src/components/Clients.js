@@ -10,7 +10,7 @@ import { createClient, deleteClient, listClients, listClientDocuments, updateCli
 
 const emptyClient = { name: '', phone: '', email: '', address: '', notes: '' };
 
-function Clients({ navigate, startNewDocument, openDocument }) {
+function Clients({ navigate, pathname, startNewDocument, openDocument }) {
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState(emptyClient);
   const [editingId, setEditingId] = useState(null);
@@ -100,20 +100,19 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
     }
   };
 
+if (pathname !== APP_ROUTES.clients) return null;
+
   return (
-    <main className="admin-page clients-page">
-      <header className="admin-header">
+    <ModalOverlay onClose={() => navigate(APP_ROUTES.home)} backdropClass="form-modal-backdrop" sectionClass="form-card form-workspace-modal" sectionProps={{ 'aria-labelledby': 'clients-title' }}>
+      <div className="section-heading">
         <div>
-          <p className="eyebrow">Workspace</p>
-          <h1>Clients</h1>
-          <p>Keep client details ready for every quotation and bill.</p>
+          <p className="eyebrow">Client Workspace</p>
+          <h3 id="clients-title">Clients</h3>
         </div>
-        <div className="header-actions">
-          <IconButton icon="plus" className="accent-icon" label="Add client" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} />
-          <IconButton icon="back" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
-        </div>
-      </header>
-      <SaveStatus message={message} className="admin-card" />
+        <p className="section-text">Keep client details ready for every quotation and bill.</p>
+        <IconButton icon="close" className="workspace-close" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
+      </div>
+      <SaveStatus message={message} />
 
       <section className="admin-card">
         <div className="section-heading">
@@ -121,7 +120,10 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
             <p className="eyebrow">Your records</p>
             <h2>Client directory</h2>
           </div>
-          <span className="client-count">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</span>
+          <div className="header-actions">
+            <span className="client-count">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</span>
+            <IconButton icon="plus" className="accent-icon" label="Add client" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} />
+          </div>
         </div>
         <input className="admin-search" aria-label="Search clients" placeholder="Search by name, phone, or email" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
         <div className="admin-user-list">
@@ -177,7 +179,7 @@ const [loadingDocuments, setLoadingDocuments] = useState(false);
             {documents[type]?.map((entry) => <article className="saved-quotation-card" key={entry.id}><div><strong>{entry.projectName}</strong><small>{entry.quoteDate} · {currency(entry.total)}</small><span className={`status-badge status-${entry.status || 'draft'}`}>{statusLabel(entry.status || 'draft')}{(entry.status || 'draft') !== 'cancelled' ? ` · ${statusLabel(entry.paymentStatus || 'unpaid')}` : ''}</span></div><div className="saved-actions"><IconButton icon="open" className="color-save" label={`Preview ${entry.projectName}`} onClick={() => openDocument(type, entry.id, true)} /><IconButton icon="edit" className="color-link" label={`Edit ${entry.projectName}`} onClick={() => openDocument(type, entry.id)} /></div></article>)}
 </section>)}
         </ModalOverlay>}
-    </main>
+    </ModalOverlay>
   );
 }
 

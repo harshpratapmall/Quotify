@@ -21,6 +21,7 @@ Two-service quotation app for Door2Door Interiors:
 - Bill API/ownership: `backend-go/internal/handlers/bills.go`, `backend-go/internal/sheets/bills.go`.`
 - Clients/history: `backend-go/internal/handlers/clients.go`, `backend-go/internal/sheets/clients.go`, and `my-app/src/components/Clients.js`. Delete is `DELETE /api/v1/clients/:id`; the archive `PATCH` endpoint remains for compatibility but the UI exposes delete, not archive/restore.
 - Employees: `backend-go/internal/handlers/employees.go`, `backend-go/internal/sheets/employees.go`, `my-app/src/services/employees.js`, and `my-app/src/components/Employees.js`. Owner-scoped CRUD only — no document tagging or documents/history endpoint. Rows live in the `Employee` tab and are read from `Employee!A2:K` (`Employee!A:K` for writes).
+- Clients and Employees open as workspace-style pop-ups over the dashboard (same `.form-modal-backdrop`/`.form-workspace-modal` shell as the quotation/bill workspace, with the top-right `.workspace-close`). They render as overlays in `my-app/src/App.js` beside `Dashboard` and self-hide by `pathname`; closing returns to the dashboard.
 - Client autofill: `my-app/src/components/ClientSelector.js`; selection and document creation are wired in `my-app/src/App.js` and share `applyClientToQuotation` (`my-app/src/utils/quotation.js`).
 - Document/payment status controls: `my-app/src/components/DocumentStatus.js`, `my-app/src/config/statuses.js`, and quotation/bill handlers.
 - Public shares: `backend-go/internal/handlers/share_links.go` and `backend-go/internal/sheets/share_links.go`. Template routes and implementations are absent in this checkout; preserve existing template metadata columns for compatibility.
@@ -61,7 +62,7 @@ Two-service quotation app for Door2Door Interiors:
 - Analytics must not include credentials, client data, or quotation content.
 - Public share tokens are stored as hashes; public document views are read-only and sanitized. Bill and quotation shares additionally expose `paymentStatus` and the raw `payments` JSON so the share page can render the same Received/Pending summary as the app.
 - ShareLinks date columns (`created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at`) are stored in Asia/Kolkata formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`. Expired or revoked links return `410 Gone`.
-- Popup close buttons and click-away go back to the previous page they opened from (never the homepage).
+- Popup close buttons and click-away go back to the previous page they opened from (never the homepage). Clients and Employees pop-ups open from the dashboard, so their close/back returns to the dashboard.
 - PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`), not the username.
 - WhatsApp sharing uses browser-generated `wa.me` draft links; no WhatsApp credentials or automated sending are used.
 

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import Employees from './Employees';
 import { deleteEmployee, listEmployees } from '../services/employees';
+import { APP_ROUTES } from '../config/routes';
 
 jest.mock('../services/employees', () => ({
   listEmployees: jest.fn(),
@@ -15,7 +16,7 @@ const inactiveEmployee = { id: 'EM-2', name: 'Sunil', phone: '', email: 'sunil@e
 test('loads and renders the employee directory', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee] });
 
-  render(<Employees navigate={jest.fn()} />);
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
 
   expect(screen.getByRole('heading', { name: /employees/i })).toBeTruthy();
   expect(await screen.findByText('Ravi')).toBeTruthy();
@@ -28,7 +29,7 @@ test('deletes an employee from the directory', async () => {
   deleteEmployee.mockResolvedValue({ response: { ok: true } });
   window.confirm = jest.fn(() => true);
 
-  render(<Employees navigate={jest.fn()} />);
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
 
   (await screen.findByRole('button', { name: 'Delete Sunil' })).click();
   expect(deleteEmployee).toHaveBeenCalledWith('EM-2');
@@ -37,7 +38,7 @@ test('deletes an employee from the directory', async () => {
 test('hides inactive employees by default and shows them on toggle', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee, inactiveEmployee] });
 
-  render(<Employees navigate={jest.fn()} />);
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
 
   expect(await screen.findByText('Ravi')).toBeTruthy();
   expect(screen.queryByText('Sunil')).toBeNull();
@@ -49,7 +50,7 @@ test('hides inactive employees by default and shows them on toggle', async () =>
 test('shows WhatsApp and call shortcuts when a phone is present', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee] });
 
-  render(<Employees navigate={jest.fn()} />);
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
 
   expect(await screen.findByRole('link', { name: 'WhatsApp Ravi' })).toHaveAttribute('href', 'https://wa.me/919876543210?text=Hello%2C%20Ravi.');
   expect(screen.getByRole('link', { name: 'Call Ravi' })).toHaveAttribute('href', 'tel:+919876543210');
@@ -59,7 +60,7 @@ test('shows WhatsApp and call shortcuts when a phone is present', async () => {
 test('shows no contact shortcuts without a phone', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [inactiveEmployee] });
 
-  render(<Employees navigate={jest.fn()} />);
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
 
   screen.getByLabelText(/include inactive/i).click();
   expect(await screen.findByText('Sunil')).toBeTruthy();
