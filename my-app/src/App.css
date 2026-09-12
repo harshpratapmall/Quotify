@@ -221,6 +221,12 @@ textarea {
   z-index: 1;
 }
 
+.login-brand.business-desk-brand {
+  width: min(100%, 280px);
+  height: 190px;
+  overflow: hidden;
+}
+
 .company-logo {
   display: block;
   width: auto;
@@ -235,9 +241,11 @@ textarea {
 }
 
 .login-logo.business-desk-logo {
-  width: min(100%, 360px);
+  width: 280px;
+  max-width: none;
   padding: 0;
   background: transparent;
+  transform: translateY(-45px);
 }
 
 .login-brand h1,
@@ -255,7 +263,7 @@ textarea {
   position: relative;
   z-index: 1;
   max-width: 38rem;
-  margin: 6rem 0;
+  margin: clamp(2rem, 6vh, 4rem) 0;
 }
 
 .login-copy .eyebrow {
@@ -1579,7 +1587,7 @@ textarea {
   }
 
   .login-copy {
-    margin: 3.5rem 0;
+    margin: 2rem 0;
   }
 
   .login-copy h2 {

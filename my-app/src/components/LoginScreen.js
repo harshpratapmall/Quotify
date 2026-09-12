@@ -13,7 +13,7 @@ function LoginScreen({ onLogin, onGoogleLogin, isLoggingIn, error }) {
   return (
     <main className="login-page">
       <section className="login-showcase">
-        <div className="login-brand">
+        <div className="login-brand business-desk-brand">
           <img className="company-logo login-logo business-desk-logo" src={businessDeskLogo} alt="Business Desk" />
         </div>
         <div className="login-copy">

@@ -24,7 +24,10 @@ async function authorizedUser(clientPayload) {
   }
 
   const payload = await response.json();
-  return payload.user;
+  if (typeof payload?.userId !== 'string' || !payload.userId) {
+    throw new Error('Invalid logo upload authorization.');
+  }
+  return payload.userId;
 }
 
 module.exports = async function handler(request, response) {
@@ -37,13 +40,13 @@ module.exports = async function handler(request, response) {
       body,
       request,
       onBeforeGenerateToken: async (_pathname, clientPayload) => {
-        const user = await authorizedUser(clientPayload);
+        const userId = await authorizedUser(clientPayload);
 
         return {
           allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
           maximumSizeInBytes: MAX_LOGO_FILE_SIZE_BYTES,
           addRandomSuffix: true,
-          tokenPayload: JSON.stringify({ userId: user.userId }),
+          tokenPayload: JSON.stringify({ userId }),
         };
       },
       onUploadCompleted: async () => {},
