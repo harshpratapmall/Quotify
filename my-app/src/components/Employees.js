@@ -3,6 +3,7 @@ import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
+import WorkspaceControls from './WorkspaceControls';
 import { APP_ROUTES } from '../config/routes';
 import { createEmployee, deleteEmployee, listEmployees, updateEmployee } from '../services/employees';
 import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
@@ -94,7 +95,10 @@ function Employees({ navigate, pathname }) {
           <h3 id="employees-title">Employees</h3>
         </div>
         <p className="section-text">Keep your team&apos;s contact details in one place.</p>
-        <IconButton icon="close" className="workspace-close" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
+        <WorkspaceControls className="workspace-actions" actions={[
+          { type: 'plus', label: 'Add employee', onClick: () => { setEditingId(null); setForm(emptyEmployee); setShowAddEmployee(true); } },
+          { type: 'close', label: 'Close employee workspace', onClick: () => navigate(APP_ROUTES.home) },
+        ]} />
       </div>
       <SaveStatus message={message} />
 
@@ -106,7 +110,6 @@ function Employees({ navigate, pathname }) {
           </div>
           <div className="header-actions">
             <span className="client-count">{visibleEmployees.length} {visibleEmployees.length === 1 ? 'employee' : 'employees'}</span>
-            <IconButton icon="plus" className="accent-icon" label="Add employee" onClick={() => { setEditingId(null); setForm(emptyEmployee); setShowAddEmployee(true); }} />
           </div>
         </div>
         <input className="admin-search" aria-label="Search employees" placeholder="Search by name, phone, or email" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />

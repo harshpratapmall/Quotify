@@ -5,6 +5,7 @@ import DocumentStatus from './DocumentStatus';
 import ModalHeader from './ModalHeader';
 import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
+import WorkspaceControls from './WorkspaceControls';
 import { APP_ROUTES } from '../config/routes';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 import { currency } from '../utils/formatters';
@@ -23,10 +24,10 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
   });
   const toggleEntry = (id) => setOpenEntry((current) => current === id ? null : id);
   return <ModalOverlay onClose={goBack} backdropClass="modal-backdrop library-backdrop" sectionClass={`document-library-modal ${type}`} sectionProps={{ 'aria-labelledby': 'document-library-title' }}>
-      <ModalHeader eyebrow="Saved work" title={`${copy.plural} library`} titleId="document-library-title" trailingAction={<div className="modal-action-cluster">
-        <IconButton icon="plus" className="accent-icon" label={`New ${copy.singular.toLowerCase()}`} onClick={() => startNewDocument(type, 'library')} />
-        <IconButton icon="close" className="modal-close" label={`Close ${copy.plural.toLowerCase()} library`} onClick={goBack} />
-      </div>} />
+      <ModalHeader eyebrow="Saved work" title={`${copy.plural} library`} titleId="document-library-title" trailingAction={<WorkspaceControls actions={[
+        { type: 'plus', label: `New ${copy.singular.toLowerCase()}`, onClick: () => startNewDocument(type, 'library') },
+        { type: 'close', label: `Close ${copy.plural.toLowerCase()} library`, onClick: goBack },
+      ]} />} />
       <div className="library-toolbar">
         <label className="library-search"><span className="library-search-icon" aria-hidden="true" /><input type="search" aria-label={`Search ${copy.plural.toLowerCase()} by username, client, or project`} placeholder="Search by username, client, or project" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
         <p>{entries.length ? `${entries.length} saved ${copy.plural.toLowerCase()}` : 'No saved documents match your search.'}</p>

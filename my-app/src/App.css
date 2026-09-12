@@ -964,14 +964,10 @@ textarea {
   margin: 0;
 }
 
-.workspace-close {
+.workspace-actions {
   position: absolute;
   top: 1.35rem;
   right: 1.35rem;
-}
-
-.workspace-close:hover {
-  transform: translateY(-2px) rotate(4deg);
 }
 
 @keyframes workspace-arrival {
@@ -1266,6 +1262,30 @@ textarea {
   gap: 0.55rem;
   flex-shrink: 0;
 }
+
+.workspace-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.icon-button.workspace-control {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.icon-button.workspace-control:hover { transform: translateY(-2px); }
+.icon-button.workspace-control-plus { color: #fff; background: var(--teal); border-color: var(--teal); box-shadow: 0 8px 18px rgba(60, 118, 109, 0.22); }
+.bill-workspace .icon-button.workspace-control-plus, .bill .icon-button.workspace-control-plus { background: var(--blue); border-color: var(--blue); box-shadow: 0 8px 18px rgba(49, 95, 131, 0.22); }
+.icon-button.workspace-control-plus:hover { background: #275e57; }
+.bill-workspace .icon-button.workspace-control-plus:hover, .bill .icon-button.workspace-control-plus:hover { background: #234c75; }
+.icon-button.workspace-control-close { color: var(--muted); background: rgba(16, 37, 66, 0.06); border-color: transparent; }
+.icon-button.workspace-control-close:hover { color: var(--navy); background: rgba(16, 37, 66, 0.12); }
+.icon-button.workspace-control-back { color: var(--navy); background: #fff; border-color: #bfd1cc; }
+.icon-button.workspace-control-back:hover { background: #eef7f4; }
 
 .modal-heading {
   min-width: 0;
@@ -1568,7 +1588,7 @@ textarea {
     padding-right: 2.7rem;
   }
 
-  .workspace-close {
+  .workspace-actions {
     top: 1rem;
     right: 1rem;
   }

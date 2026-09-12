@@ -3,6 +3,7 @@ import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
+import WorkspaceControls from './WorkspaceControls';
 import { statusLabel } from '../config/statuses';
 import { APP_ROUTES } from '../config/routes';
 import { currency } from '../utils/formatters';
@@ -110,7 +111,10 @@ if (pathname !== APP_ROUTES.clients) return null;
           <h3 id="clients-title">Clients</h3>
         </div>
         <p className="section-text">Keep client details ready for every quotation and bill.</p>
-        <IconButton icon="close" className="workspace-close" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} />
+        <WorkspaceControls className="workspace-actions" actions={[
+          { type: 'plus', label: 'Add client', onClick: () => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); } },
+          { type: 'close', label: 'Close client workspace', onClick: () => navigate(APP_ROUTES.home) },
+        ]} />
       </div>
       <SaveStatus message={message} />
 
@@ -122,7 +126,6 @@ if (pathname !== APP_ROUTES.clients) return null;
           </div>
           <div className="header-actions">
             <span className="client-count">{clients.length} {clients.length === 1 ? 'client' : 'clients'}</span>
-            <IconButton icon="plus" className="accent-icon" label="Add client" onClick={() => { setEditingId(null); setForm(emptyClient); setShowAddClient(true); }} />
           </div>
         </div>
         <input className="admin-search" aria-label="Search clients" placeholder="Search by name, phone, or email" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
