@@ -13,8 +13,8 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-test('renders the Quotify login screen', async () => {
+test('renders the Business Desk login screen', async () => {
   render(<App />);
-  expect(await screen.findByAltText(/Quotify/i)).toBeInTheDocument();
+  expect(await screen.findByAltText(/Business Desk/i)).toBeInTheDocument();
   expect(await screen.findByRole('button', { name: /sign in/i })).toBeInTheDocument();
 });

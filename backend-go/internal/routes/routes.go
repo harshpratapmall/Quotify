@@ -25,6 +25,8 @@ func SetupRouter() *gin.Engine {
 		v1.GET("/auth/google/callback", handlers.GoogleLoginCallback)
 		v1.POST("/auth/logout", handlers.Logout)
 		v1.GET("/auth/me", handlers.Me)
+		v1.GET("/auth/logo-upload-token", handlers.LogoUploadAuthorization)
+		v1.POST("/auth/logo-upload-token/verify", handlers.VerifyLogoUploadAuthorization)
 		v1.GET("/public/share/:token", handlers.GetPublicShare)
 		v1.GET("/clients", handlers.ListClients)
 		v1.POST("/clients", handlers.CreateClient)

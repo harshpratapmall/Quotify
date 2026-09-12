@@ -1,9 +1,9 @@
 {
-  "short_name": "Quotify",
-  "name": "Quotify Quotations",
+  "short_name": "Business Desk",
+  "name": "Business Desk",
   "icons": [
     {
-      "src": "quotify-mark.svg",
+      "src": "business-desk-mark.svg",
       "type": "image/svg+xml",
       "sizes": "any"
     }

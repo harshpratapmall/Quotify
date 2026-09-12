@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ActionIcon from './ActionIcon';
-import quotifyLogo from '../assets/quotify-logo.svg';
+import businessDeskLogo from '../assets/business-desk-logo.png';
 import { APP_ROUTES } from '../config/routes';
 import { DOCUMENT_TYPES, documentCopy } from '../config/documents';
 
@@ -45,7 +45,7 @@ function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument
           {profile?.logoUrl ? (
             <img src={profile.logoUrl} alt={`${profile.businessName || 'Business'} logo`} />
           ) : (
-            <img src={quotifyLogo} alt="Quotify" />
+            <img className="business-desk-logo" src={businessDeskLogo} alt="Business Desk" />
           )}
         </div>
         <div className="topbar-actions">

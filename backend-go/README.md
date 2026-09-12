@@ -1,4 +1,4 @@
-# Quotify API
+# Business Desk API
 
 Go 1.22/Gin service for authentication, quotations, bills, clients, public shares, business profiles, and administrator user management. The [root README](../README.md) owns the complete API inventory, Google Sheets schemas, and deployment instructions; [AGENTS.md](../AGENTS.md) contains operational notes.
 

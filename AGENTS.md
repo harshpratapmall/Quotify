@@ -1,4 +1,4 @@
-# Quotify Agent Notes
+# Business Desk Agent Notes
 
 Keep this file operational and short. The root `README.md` is the source of truth for setup and deployment; inspect code before trusting either document.
 
@@ -6,7 +6,7 @@ Update the root and affected service README files alongside feature, API, schema
 
 ## Product
 
-Two-service quotation app for Door2Door Interiors:
+Two-service business workspace for Door2Door Interiors:
 
 - `my-app/`: React 19 frontend, deployed from Vercel.
 - `backend-go/`: Go/Gin API, deployed on Render.
@@ -36,7 +36,7 @@ Two-service quotation app for Door2Door Interiors:
 - Document library state: `my-app/src/hooks/useSavedDocuments.js`.
 - Payment records/summary: `my-app/src/utils/payments.js` (used by `DocumentStatus.js`, `DocumentLibraryModal.js`, `PublicShare.js`, and `documentPdf.js`).
 - UI: `my-app/src/components/` and `my-app/src/App.css`.
-- Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths), `ModalOverlay.js` (modal backdrops), `SaveStatus.js` (save-result messages).
+- Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths), `WorkspaceControls.js` (reusable back/plus/close control groups), `ModalOverlay.js` (modal backdrops), `SaveStatus.js` (save-result messages).
 - PDF download dispatch: `my-app/src/utils/pdf.js`. Shared generation: `my-app/src/utils/documentPdf.js`, loaded on demand with jsPDF/AutoTable; returns `{ pdf, filename }` separately from download. `quotationPdf.js` retains a compatibility export. Quotations use green; bills use blue with `BILL / INVOICE`. App previews and public share layouts are separate and unchanged.
 - Logo upload authorization: `my-app/api/blob-upload.js`.
 
@@ -54,7 +54,7 @@ Two-service quotation app for Door2Door Interiors:
 - New documents start as `draft`; quotations and bills start `unpaid`. Status PATCH endpoints control lifecycle/payment changes. Quotation statuses are `draft, sent, viewed, accepted, declined, cancelled`; opening a public share URL auto-marks the quotation `viewed`. Declined or cancelled quotations cannot convert to bills; converting a quotation carries its payment records into the new bill with a derived payment status. Document lifecycle and payment statuses are separate; payment status is derived from recorded `payments` (unpaid/partially_paid/paid) but can be overridden (e.g. `overdue`). The payment-records panel (list, add/remove, and Total/Received/Pending summary) renders only for `partially_paid` quotations and bills; payment details never render for `cancelled` documents. The same Total/Received/Pending numbers are shown on the library, preview, downloaded PDF, and public share link for both document types.
 - Business profile rows preserve `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`; append `website` in K. Reads/writes use A:K and tolerate missing K. The profile API preserves website when omitted, clears it for an empty string, normalizes bare domains to HTTPS, and rejects non-HTTP(S) schemes.
 - Employee rows use `Employee!A:K`: `employee_id, owner_id, name, phone, email, address, designation, notes, status, created_at, updated_at`. Employee records are owner-scoped CRUD only and are never tagged to quotations or bills. New employees default to `active`; `status` accepts only `active` or `inactive` and is carried on update (omitted values preserve the existing status).
-- Business logos accept JPEG, PNG, and WebP files up to 200 KB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
+- Business logos accept JPEG, PNG, and WebP files up to 500 KB. The browser obtains a five-minute ticket from `GET /api/v1/auth/logo-upload-token`; `/api/blob/upload` verifies it through `POST /api/v1/auth/logo-upload-token/verify` because the Render session cookie is unavailable to Vercel. Only the resulting Blob URL is saved in `logo_url`.
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
 - Preserve `credentials: 'include'` on frontend requests.
 - CORS must allow PATCH for client, document, payment, and admin status updates.

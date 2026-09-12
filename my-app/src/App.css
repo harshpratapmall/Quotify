@@ -234,6 +234,12 @@ textarea {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.login-logo.business-desk-logo {
+  width: min(100%, 360px);
+  padding: 0;
+  background: transparent;
+}
+
 .login-brand h1,
 .login-copy h2,
 .login-card h2 {
@@ -423,6 +429,10 @@ textarea {
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+.topbar-brand img.business-desk-logo {
+  max-height: 106px;
 }
 
 .topbar-actions {

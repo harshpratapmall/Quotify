@@ -1,6 +1,6 @@
-# Quotify
+# Business Desk
 
-Quotify is a quotation and billing workspace for Door2Door Interiors. Users sign in with a password or Google, manage clients and business profiles, save itemized quotations and bills to Google Sheets, share public document links, and export PDFs in the browser. Administrators manage users and reset passwords.
+Business Desk is a workspace for Door2Door Interiors that keeps business profiles, clients, employees, quotations, bills, and payment follow-up together. Users sign in with a password or Google, save itemized documents to Google Sheets, share public document links, and export PDFs in the browser. Administrators manage users and reset passwords.
 
 ## Structure
 
@@ -21,6 +21,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/auth/google/callback` | Complete Google sign-in |
 | POST | `/api/v1/auth/logout` | Clear session |
 | GET | `/api/v1/auth/me` | Read current session |
+| GET | `/api/v1/auth/logo-upload-token` | Issue a short-lived authorization ticket for a logo upload |
 | GET | `/api/v1/clients` | List the current user's clients |
 | POST | `/api/v1/clients` | Create a client |
 | GET | `/api/v1/clients/:id` | Read a client owned by the current user |
@@ -132,7 +133,7 @@ Both PDF footers align icons and contact text blocks around a common vertical ce
 
 ## Business Logos
 
-Business logos are uploaded directly from the browser to Vercel Blob. The Vercel function at `/api/blob/upload` checks the existing signed session before issuing an upload token, permits JPEG, PNG, and WebP files up to 200 KB, and the profile save stores the returned public URL in `BusinessProfiles`. The app displays every uploaded logo inside the same fixed-size topbar frame.
+Business logos are uploaded directly from the browser to Vercel Blob. The browser first obtains a five-minute authorization ticket from the authenticated Render API, and the Vercel function at `/api/blob/upload` verifies that ticket with Render before issuing an upload token. This works across the separate Render and Vercel cookie domains. JPEG, PNG, and WebP files up to 500 KB are permitted, and the profile save stores the returned public URL in `BusinessProfiles`. The app displays every uploaded logo inside the same fixed-size topbar frame.
 
 Connect a public Vercel Blob store to the `my-app/` Vercel project. Vercel creates `BLOB_READ_WRITE_TOKEN` automatically. Set `QUOTIFY_API_URL` only if the upload authorization function must use a backend URL other than its current Render default.
 

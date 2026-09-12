@@ -6,8 +6,9 @@ import IconButton from './IconButton';
 import SaveStatus from './SaveStatus';
 import UserGuide from './UserGuide';
 import { APP_ROUTES } from '../config/routes';
+import { createLogoUploadAuthorization } from '../services/businessProfile';
 
-const MAX_LOGO_FILE_SIZE_BYTES = 200 * 1024;
+const MAX_LOGO_FILE_SIZE_BYTES = 500 * 1024;
 
 const logoPath = (file) => {
   const extension = file.name.split('.').pop()?.toLowerCase() || 'image';
@@ -50,24 +51,29 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
 
     if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
       event.target.value = '';
-      setMessage('Logo must be 200 KB or smaller.');
+      setMessage('Logo must be 500 KB or smaller.');
       return;
     }
 
     setIsPreparingLogo(true);
 
     try {
+      const { response, data } = await createLogoUploadAuthorization();
+      if (!response.ok || !data?.ticket) {
+        throw new Error(data?.error || 'Unable to authorize logo upload.');
+      }
       const blob = await upload(logoPath(file), file, {
         access: 'public',
         handleUploadUrl: '/api/blob/upload',
+        clientPayload: JSON.stringify({ ticket: data.ticket }),
       });
       setProfile({
         ...profile,
         logoUrl: blob.url,
       });
       setMessage('Logo selected. Save business profile to apply it.');
-    } catch {
-      setMessage('Unable to upload logo. Please try again.');
+    } catch (error) {
+      setMessage(error.message || 'Unable to upload logo. Please try again.');
     } finally {
       setIsPreparingLogo(false);
     }
@@ -164,7 +170,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
               </label>
 
               <label>
-                Business logo (JPEG, PNG, or WebP, up to 200 KB)
+                Business logo (JPEG, PNG, or WebP, up to 500 KB)
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"

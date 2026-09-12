@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import quotifyLogo from '../assets/quotify-logo.svg';
+import businessDeskLogo from '../assets/business-desk-logo.png';
 
 function LoginScreen({ onLogin, onGoogleLogin, isLoggingIn, error }) {
   const [username, setUsername] = useState('');
@@ -14,12 +14,12 @@ function LoginScreen({ onLogin, onGoogleLogin, isLoggingIn, error }) {
     <main className="login-page">
       <section className="login-showcase">
         <div className="login-brand">
-          <img className="company-logo login-logo" src={quotifyLogo} alt="Quotify" />
+          <img className="company-logo login-logo business-desk-logo" src={businessDeskLogo} alt="Business Desk" />
         </div>
         <div className="login-copy">
-          <p className="eyebrow">Welcome back</p>
-          <h2>Professional quotations, made for your business.</h2>
-          <p>Build, save, and share clear client-ready quotations from one secure workspace.</p>
+          <p className="eyebrow">Business Desk</p>
+          <h2>Everything your business needs between enquiry and handover.</h2>
+          <p>Keep client details, employee records, estimates, invoices, and payment follow-up connected.</p>
         </div>
         <div className="login-swatches" aria-hidden="true"><span /><span /><span /></div>
       </section>
@@ -28,7 +28,7 @@ function LoginScreen({ onLogin, onGoogleLogin, isLoggingIn, error }) {
         <form className="login-card" onSubmit={submitLogin}>
           <p className="eyebrow">Secure access</p>
           <h2>Sign in to your workspace</h2>
-          <p className="login-help">Use the Quotify account shared with you by your administrator.</p>
+          <p className="login-help">Use the Business Desk account shared with you by your administrator.</p>
           <label>
             Username
             <input type="text" autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Enter your username" required />

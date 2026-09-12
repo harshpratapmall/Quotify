@@ -1,14 +1,20 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { upload } from '@vercel/blob/client';
 import BusinessProfile from './BusinessProfile';
+import { createLogoUploadAuthorization } from '../services/businessProfile';
 
 jest.mock('@vercel/blob/client', () => ({
   upload: jest.fn(),
 }), { virtual: true });
 
+jest.mock('../services/businessProfile', () => ({
+  createLogoUploadAuthorization: jest.fn(),
+}));
+
 describe('BusinessProfile', () => {
   beforeEach(() => {
     upload.mockResolvedValue({ url: 'https://example.public.blob.vercel-storage.com/business-logos/logo.webp' });
+    createLogoUploadAuthorization.mockResolvedValue({ response: { ok: true }, data: { ticket: 'upload-ticket' } });
   });
 
   afterEach(() => {
@@ -51,6 +57,7 @@ describe('BusinessProfile', () => {
       expect.objectContaining({
         access: 'public',
         handleUploadUrl: '/api/blob/upload',
+        clientPayload: JSON.stringify({ ticket: 'upload-ticket' }),
       })
     );
     expect(
@@ -73,12 +80,12 @@ describe('BusinessProfile', () => {
     fireEvent.click(screen.getByRole('button', { name: /edit profile/i }));
     fireEvent.change(screen.getByLabelText(/business logo/i), {
       target: {
-        files: [new File([new Uint8Array(200 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
+        files: [new File([new Uint8Array(500 * 1024 + 1)], 'large-logo.webp', { type: 'image/webp' })],
       },
     });
 
     expect(
-      screen.getByText(/logo must be 200 KB or smaller/i)
+      screen.getByText(/logo must be 500 KB or smaller/i)
     ).toBeInTheDocument();
     expect(saveProfile).not.toHaveBeenCalled();
   });

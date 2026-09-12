@@ -1,4 +1,4 @@
-# Quotify Frontend
+# Business Desk Frontend
 
 React 19 frontend for quotations, bills, clients, employees, business profiles, sharing, and administrator user management. See the [root README](../README.md) for shared setup, API routes, schemas, and deployment.
 
@@ -72,7 +72,7 @@ The Business Profile page includes an optional Website field. The API normalizes
 
 ## Logo Uploads
 
-Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. JPEG, PNG, and WebP files are limited to 200 KB, and uploaded logos are displayed inside a fixed topbar frame. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to confirm the signed session before an upload is authorized.
+Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. The app obtains a five-minute upload ticket from the authenticated backend and includes it in the Blob request; the Vercel function verifies it with the backend because the Render session cookie is not available on the Vercel domain. JPEG, PNG, and WebP files are limited to 500 KB, and uploaded logos are displayed inside a fixed topbar frame. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to verify upload tickets.
 
 The React development server alone does not run `api/blob-upload.js`; upload testing requires the Vercel function and Blob configuration. Open Edit Profile before selecting a logo, then save the profile to persist its URL.
 

@@ -14,6 +14,7 @@ import (
 
 const sessionCookieName = "quotify_session"
 const sessionDuration = time.Hour
+const logoUploadAuthorizationDuration = 5 * time.Minute
 
 type loginRequest struct {
 	Username string `json:"username" binding:"required"`
@@ -65,6 +66,35 @@ func Me(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
+}
+
+// LogoUploadAuthorization issues a short-lived, opaque ticket for the Vercel
+// Blob upload handler. The browser's session cookie is scoped to the Render
+// API domain and cannot be forwarded to Vercel directly.
+func LogoUploadAuthorization(c *gin.Context) {
+	user, _, valid := authenticatedUser(c)
+	if !valid {
+		unauthorized(c)
+		return
+	}
+	ticket, err := createLogoUploadAuthorization(user.ID)
+	if err != nil {
+		internalError(c, "Unable to authorize logo upload.")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ticket": ticket})
+}
+
+// VerifyLogoUploadAuthorization lets the Vercel Blob handler verify a ticket
+// without requiring the browser's Render-domain session cookie.
+func VerifyLogoUploadAuthorization(c *gin.Context) {
+	ticket := strings.TrimSpace(strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer "))
+	userID, valid := readLogoUploadAuthorization(ticket)
+	if !valid {
+		unauthorized(c)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"userId": userID})
 }
 
 func RequireAdmin(c *gin.Context) {
@@ -146,6 +176,32 @@ func readToken(token string) (sheets.User, int64, bool) {
 		return sheets.User{}, 0, false
 	}
 	return claims.User, claims.ExpiresAt, true
+}
+
+func createLogoUploadAuthorization(userID string) (string, error) {
+	payloadBytes, err := json.Marshal(struct {
+		UserID    string `json:"userId"`
+		ExpiresAt int64  `json:"expiresAt"`
+	}{UserID: userID, ExpiresAt: time.Now().Add(logoUploadAuthorizationDuration).Unix()})
+	if err != nil {
+		return "", err
+	}
+	return signPayload(payloadBytes), nil
+}
+
+func readLogoUploadAuthorization(ticket string) (string, bool) {
+	payload := verifyPayload(ticket)
+	if payload == nil {
+		return "", false
+	}
+	var claims struct {
+		UserID    string `json:"userId"`
+		ExpiresAt int64  `json:"expiresAt"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil || claims.UserID == "" || time.Now().Unix() > claims.ExpiresAt {
+		return "", false
+	}
+	return claims.UserID, true
 }
 
 func sessionSecret() []byte {

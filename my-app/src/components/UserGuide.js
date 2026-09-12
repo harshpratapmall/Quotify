@@ -50,7 +50,7 @@ function UserGuide() {
     <section className="user-guide form-card">
       <div className="user-guide-header">
         <p className="eyebrow">A note for users</p>
-        <h3>Getting started with Quotify</h3>
+        <h3>Getting started with Business Desk</h3>
         <p>Manage quotations, bills, and clients in one place. Start with the simplest journey below and grow from there.</p>
       </div>
       <div className="user-guide-grid">

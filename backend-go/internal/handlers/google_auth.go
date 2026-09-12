@@ -110,7 +110,7 @@ func GoogleLoginCallback(c *gin.Context) {
 
 	user, err := sheets.ResolveGoogleUser(c.Request.Context(), claims.Subject, strings.ToLower(strings.TrimSpace(claims.Email)), claims.Name)
 	if err != nil {
-		googleAuthFailure(c, "Unable to create or load your Quotify account.")
+		googleAuthFailure(c, "Unable to create or load your Business Desk account.")
 		return
 	}
 	tokenValue, _, err := createToken(user)
