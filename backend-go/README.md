@@ -33,6 +33,8 @@ Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environment
 
 Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
 
+Business profiles read/write `BusinessProfiles!A:K`. Append `website` in K1 without moving A:J. Existing rows without K are supported. GET/PUT `/api/v1/business-profile` expose `website`; PUT preserves it when omitted and clears it when explicitly empty. Bare domains become HTTPS URLs, and other schemes are rejected. Backend support should be deployed before the frontend website field. These changes are unverified: tests and builds were skipped by request.
+
 The OAuth settings are required for Google sign-in, not password sign-in. `GOOGLE_ALLOWED_DOMAINS` is optional. `AUTH_DEBUG` defaults to false. In production set `COOKIE_SECURE=true` and explicitly configure `CORS_ALLOWED_ORIGINS` with the frontend origin; PATCH is required for status updates.
 
 In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`. Register the Render callback URL in the Google Cloud OAuth client.

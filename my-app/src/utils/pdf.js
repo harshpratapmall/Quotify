@@ -68,6 +68,15 @@ export const downloadQuotationPdf = async ({
   businessProfile = {},
   documentType = 'quotation',
 }) => {
+  if (documentType !== 'bill') {
+    const { generateQuotationPdf } = await import('./quotationPdf');
+    const { pdf, filename } = await generateQuotationPdf({
+      quotation, items, includeGst, gstPercentage, subtotal, tax, total,
+      activeQuotationId, logoSource, businessProfile,
+    });
+    pdf.save(filename);
+    return;
+  }
   const logo = await loadPdfLogo(logoSource);
   const isBill = documentType === 'bill';
   const paymentSummary = isBill && quotation.paymentStatus === 'partially_paid'

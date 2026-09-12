@@ -495,7 +495,7 @@ function App() {
   if (pathname === APP_ROUTES.employees) {
     return <Employees navigate={navigate} />;
   }
-  if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (response.ok) setBusinessProfile(data); return response.ok; }} />;
+  if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (!response.ok) throw new Error(data?.error || 'Unable to save your profile.'); setBusinessProfile(data); return true; }} />;
 
   return (
     <>

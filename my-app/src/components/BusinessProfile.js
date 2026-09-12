@@ -35,6 +35,8 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
       const saved = await saveProfile(profile);
       setMessage(saved ? 'Business profile saved.' : 'Unable to save your profile.');
       if (saved) setIsEditing(false);
+    } catch (error) {
+      setMessage(error.message || 'Unable to save your profile.');
     } finally {
       setIsSavingProfile(false);
     }
@@ -101,6 +103,7 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                 <h4>Contact Information</h4>
                 <p><strong>Phone:</strong> {profile.phone || 'Not set'}</p>
                 <p><strong>Email:</strong> {profile.email || 'Not set'}</p>
+                <p><strong>Website:</strong> {profile.website || 'Not set'}</p>
                 <p><strong>Address:</strong> {profile.address || 'Not set'}</p>
                 <p><strong>GSTIN:</strong> {profile.gstin || 'Not set'}</p>
               </div>
@@ -144,6 +147,19 @@ function BusinessProfile({ profile, setProfile, saveProfile, navigate }) {
                 <input
                   value={profile.gstin || ''}
                   onChange={(event) => change('gstin', event.target.value)}
+                />
+              </label>
+
+              <label>
+                Website (optional)
+                <input
+                  type="text"
+                  inputMode="url"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="www.example.com"
+                  value={profile.website || ''}
+                  onChange={(event) => change('website', event.target.value)}
                 />
               </label>
 

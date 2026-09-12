@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -31,10 +33,22 @@ func SaveBusinessProfile(c *gin.Context) {
 		unauthorized(c)
 		return
 	}
-	var p sheets.BusinessProfile
-	if c.ShouldBindJSON(&p) != nil || strings.TrimSpace(p.BusinessName) == "" {
+	var request struct {
+		sheets.BusinessProfile
+		Website *string `json:"website"`
+	}
+	if c.ShouldBindJSON(&request) != nil || strings.TrimSpace(request.BusinessName) == "" {
 		badRequest(c, "Business name is required.")
 		return
+	}
+	p := request.BusinessProfile
+	if request.Website != nil {
+		website, ok := normalizeWebsite(*request.Website)
+		if !ok {
+			badRequest(c, "Website must be a valid HTTP or HTTPS address.")
+			return
+		}
+		p.Website, p.WebsiteProvided = website, true
 	}
 	p.UserID = user.ID
 	saved, err := sheets.SaveBusinessProfile(c.Request.Context(), p)
@@ -44,4 +58,25 @@ func SaveBusinessProfile(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, saved)
+}
+
+var websiteScheme = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*:`)
+
+func normalizeWebsite(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", true
+	}
+	if !websiteScheme.MatchString(value) {
+		value = "https://" + value
+	}
+	parsed, err := url.Parse(value)
+	if err != nil || parsed.Hostname() == "" || parsed.User != nil {
+		return "", false
+	}
+	parsed.Scheme = strings.ToLower(parsed.Scheme)
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", false
+	}
+	return parsed.String(), true
 }

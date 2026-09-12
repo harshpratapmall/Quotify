@@ -114,10 +114,18 @@ Existing A:Q quotation and bill rows remain readable. Public quotation and bill 
 The `BusinessProfiles` tab must keep row 1 in this order:
 
 ```text
-user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at
+user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at, website
 ```
 
 Each user has one profile row. `logo_url` contains a public Vercel Blob URL, never image data. The service account needs Editor access for business profile persistence.
+
+Append `website` as the header in `BusinessProfiles!K1`; keep A:J unchanged. Reads and writes now use A:K, and older rows without K remain supported. The profile API accepts an optional `website`: omitted values preserve the stored website, while an empty string clears it. Bare domains are normalized to HTTPS; only HTTP/HTTPS addresses are accepted. Deploy the backend support before a frontend that saves this field.
+
+## Quotation PDF Design
+
+Quotation downloads use the green A4 template: large profile logo (or business-name fallback), quotation reference/date, four client-detail sections, numbered item rows, a totals panel, pale house watermark, and profile contact footer including the optional website. Text wraps and additional pages repeat table headings and contact footers; totals stay together on the final page. GST is omitted when disabled. No terms or signatures are added.
+
+Generation remains browser-side using an on-demand jsPDF/AutoTable renderer. Calculations, quotation numbering, and lowercase client-based filenames are preserved. Bills, authenticated previews, and public share layouts retain their existing designs. This implementation has not been tested, built, or visually verified; verification was explicitly skipped for this change.
 
 ## Business Logos
 

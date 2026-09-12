@@ -36,7 +36,7 @@ Two-service quotation app for Door2Door Interiors:
 - Payment records/summary: `my-app/src/utils/payments.js` (used by `DocumentStatus.js` and `DocumentLibraryModal.js`).
 - UI: `my-app/src/components/` and `my-app/src/App.css`.
 - Shared UI primitives: `ModalHeader.js` (modal headers for preview and library modals), `ActionButton.js` (colorful labeled pills), `IconButton.js` (all icon-only controls), `ActionIcon.js` (SVG icon paths), `ModalOverlay.js` (modal backdrops), `SaveStatus.js` (save-result messages).
-- PDF: `my-app/src/utils/pdf.js`.
+- PDF download dispatch and legacy bill renderer: `my-app/src/utils/pdf.js`. Quotation generation: `my-app/src/utils/quotationPdf.js`, loaded on demand with jsPDF/AutoTable; returns `{ pdf, filename }` separately from download. Green A4 layout applies to quotation downloads only; do not change bill, app-preview, or public-share layouts with it.
 - Logo upload authorization: `my-app/api/blob-upload.js`.
 
 ## Current Contracts
@@ -51,7 +51,7 @@ Two-service quotation app for Door2Door Interiors:
 - Client history (`GET /api/v1/clients/:id/documents`) returns owner-scoped `quotation` and `bill` arrays matched by client ID, never by client name. Submitted client IDs must belong to the authenticated owner.
 - Document updates preserve client links and bill due dates when omitted; explicit empty strings clear them. Nonempty due dates use valid `YYYY-MM-DD` dates. Reopening documents takes status/link/due-date metadata from server fields rather than stale `items_json` metadata.
 - New documents start as `draft`; bills start `unpaid`. Status PATCH endpoints control lifecycle/payment changes. Quotation statuses are `draft, sent, viewed, accepted, declined, cancelled`; opening a public share URL auto-marks the quotation `viewed`. Declined or cancelled quotations cannot convert to bills. Bill lifecycle and payment statuses are separate; payment status is derived from recorded `payments` (unpaid/partially_paid/paid) but can be overridden (e.g. `overdue`). The payment-records panel (list, add/remove, and Total/Received/Pending summary) renders only for `partially_paid` bills; payment details never render for `cancelled` bills. The same Total/Received/Pending numbers are shown on the bills library, bill preview, downloaded PDF, and public bill share link.
-- Business profile rows use `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`.
+- Business profile rows preserve `BusinessProfiles!A:J`: `user_id, business_name, logo_url, phone, email, address, gstin, quote_prefix, terms, updated_at`; append `website` in K. Reads/writes use A:K and tolerate missing K. The profile API preserves website when omitted, clears it for an empty string, normalizes bare domains to HTTPS, and rejects non-HTTP(S) schemes.
 - Employee rows use `Employee!A:J`: `employee_id, owner_id, name, phone, email, address, designation, notes, created_at, updated_at`. Employee records are owner-scoped CRUD only and are never tagged to quotations or bills.
 - Business logos accept JPEG, PNG, and WebP files up to 200 KB. Uploads require an authenticated session and use `/api/blob/upload`; only the resulting Blob URL is saved in `logo_url`.
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
@@ -82,6 +82,7 @@ The service account needs Editor access to the spreadsheet for saved records and
 - Preserve the `Bills!A:Q` column order and `items_json` compatibility.
 - Preserve appended quotation/bill metadata positions and tolerate legacy rows without appended columns.
 - Preserve the `BusinessProfiles!A:J` column order; never store image data in the sheet.
+- Quotation PDFs use profile branding, omit unavailable footer details, and fall back to the business name for missing/failed logos. Keep wrapping, continuation headers/footers, final-page totals, numbering, and client-based filenames when editing the renderer. The initial redesign and website field were implemented without tests/builds/rendered verification at the user's request; do not imply they were verified.
 - Reuse the shared UI primitives: close/plus buttons go through `IconButton`, preview export pills through `ActionButton` with `color-*` classes, modal headers through `ModalHeader`. Do not reintroduce hand-rolled `x` buttons.
 - For multi-user work, keep server-side owner enforcement and make browser draft state user-scoped; never rely on frontend hiding alone.
 - Local: `http://localhost:3000` frontend, `http://localhost:8000` backend; local cookies require `COOKIE_SECURE=false`.
