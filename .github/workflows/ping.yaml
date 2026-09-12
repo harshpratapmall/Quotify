@@ -13,4 +13,4 @@ jobs:
       - name: Ping API
         run: |
           curl --fail --show-error --silent \
-            quotify-i62o.onrender.com/api/v1/ping
+            https://quotify-i62o.onrender.com/api/v1/ping
