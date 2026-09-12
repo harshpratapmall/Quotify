@@ -13,6 +13,8 @@ func SetupRouter() *gin.Engine {
 	router.Use(middleware.APILogger())
 	router.Use(middleware.AuthMiddleware())
 
+	router.GET("/ping", handlers.Ping)
+
 	api := router.Group("/api")
 	v1 := api.Group("/v1")
 	{

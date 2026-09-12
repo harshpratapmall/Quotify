@@ -14,7 +14,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/api/v1/ping` | Uptime check |
+| GET | `/ping` or `/api/v1/ping` | Uptime check (keeps the Render instance awake) |
 | GET | `/api/v1/auth/health` | Check auth configuration |
 | POST | `/api/v1/auth/login` | Validate credentials and start session |
 | GET | `/api/v1/auth/google/start` | Start Google sign-in |
