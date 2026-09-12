@@ -92,7 +92,7 @@ func createDocumentShare(c *gin.Context, documentType string) {
 		return
 	}
 	now := time.Now().UTC()
-	link := sheets.ShareLink{ID: "SH-" + token[:12], OwnerID: ownerID, DocumentType: documentType, DocumentID: documentID, TokenHash: tokenHash, CreatedAt: sheets.ISTTimestamp(now), ExpiresAt: sheets.ISTTimestamp(now.Add(30 * 24 * time.Hour))}
+	link := sheets.ShareLink{ID: "SH-" + token[:12], OwnerID: ownerID, DocumentType: documentType, DocumentID: documentID, TokenHash: tokenHash, CreatedAt: sheets.ISTTimestamp(now), ExpiresAt: sheets.ISTTimestamp(now.Add(sheets.ShareLinkLifetime))}
 	if err := sheets.SaveShareLink(c.Request.Context(), link); err != nil {
 		unavailable(c, "Unable to save share link.")
 		return
