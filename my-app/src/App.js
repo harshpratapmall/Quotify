@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard';
 import AdminUsers from './components/AdminUsers';
 import Clients from './components/Clients';
 import Employees from './components/Employees';
+import EmployeeProfile from './components/EmployeeProfile';
 import PublicShare from './components/PublicShare';
 import BusinessProfile from './components/BusinessProfile';
 import LoginScreen from './components/LoginScreen';
@@ -490,6 +491,7 @@ function App() {
     return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (!response.ok) throw new Error(data?.error || 'Unable to save your profile.'); setBusinessProfile(data); return true; }} />;
+  if (pathname.startsWith('/employees/')) return <EmployeeProfile pathname={pathname} navigate={navigate} />;
 
   return (
     <>

@@ -11,4 +11,5 @@ export const APP_ROUTES = {
   businessProfile: '/business-profile',
   clients: '/clients',
   employees: '/employees',
+  employeeProfile: (id) => `/employees/${id}`,
 };

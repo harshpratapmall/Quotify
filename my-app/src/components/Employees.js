@@ -5,7 +5,7 @@ import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
 import WorkspaceControls from './WorkspaceControls';
 import { APP_ROUTES } from '../config/routes';
-import { createEmployee, deleteEmployee, listEmployees, updateEmployee } from '../services/employees';
+import { createEmployee, deleteEmployee, fetchPayrollOverview, listEmployees, updateEmployee } from '../services/employees';
 import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
 
 const emptyEmployee = { name: '', phone: '', email: '', address: '', designation: '', notes: '', status: 'active' };
@@ -19,6 +19,7 @@ function Employees({ navigate, pathname }) {
   const [isSaving, setIsSaving] = useState(false);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [message, setMessage] = useState('');
+  const [payrollOverview, setPayrollOverview] = useState(null);
 
   const refreshEmployees = useCallback(async () => {
     const { response, data } = await listEmployees(searchTerm);
@@ -31,6 +32,7 @@ function Employees({ navigate, pathname }) {
   useEffect(() => {
     refreshEmployees().catch((error) => setMessage(error.message));
   }, [refreshEmployees]);
+  useEffect(() => { fetchPayrollOverview(new Date().toISOString().slice(0, 7)).then(({ response, data }) => response.ok && setPayrollOverview(data)).catch(() => {}); }, []);
 
   const visibleEmployees = showInactive ? employees : employees.filter((employee) => employee.status !== 'inactive');
 
@@ -94,13 +96,15 @@ function Employees({ navigate, pathname }) {
           <p className="eyebrow">Employee Workspace</p>
           <h3 id="employees-title">Employees</h3>
         </div>
-        <p className="section-text">Keep your team&apos;s contact details in one place.</p>
+        <p className="section-text">Manage your team, monthly salary payments, advances, and dues.</p>
         <WorkspaceControls className="workspace-actions" actions={[
           { type: 'plus', label: 'Add employee', onClick: () => { setEditingId(null); setForm(emptyEmployee); setShowAddEmployee(true); } },
           { type: 'close', label: 'Close employee workspace', onClick: () => navigate(APP_ROUTES.home) },
         ]} />
       </div>
       <SaveStatus message={message} />
+
+      <section className="employee-kpi-grid" aria-label="Current month payroll summary"><article><span>Active team</span><strong>{payrollOverview?.activeHeadcount ?? '—'}</strong></article><article><span>Salary due</span><strong>Rs. {Number(payrollOverview?.totalDue || 0).toLocaleString('en-IN')}</strong></article><article><span>Paid</span><strong>Rs. {Number(payrollOverview?.paid || 0).toLocaleString('en-IN')}</strong></article><article><span>Balance</span><strong>Rs. {Number(payrollOverview?.balance || 0).toLocaleString('en-IN')}</strong></article></section>
 
       <section className="admin-card">
         <div className="section-heading">
@@ -125,6 +129,7 @@ function Employees({ navigate, pathname }) {
                 <small className={employee.status === 'inactive' ? 'employee-status employee-status-inactive' : 'employee-status'}>{employee.status === 'inactive' ? 'Inactive' : 'Active'}</small>
               </div>
               <div className="saved-actions">
+                <IconButton icon="open" className="color-link" label={`Open ${employee.name} payroll`} onClick={() => navigate(APP_ROUTES.employeeProfile(employee.id))} />
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildEmployeeWhatsAppUrl(employee.name, employee.phone)} className="color-link" icon="message" label={`WhatsApp ${employee.name}`} />}
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildPhoneLink(employee.phone)} className="color-link" icon="phone" label={`Call ${employee.name}`} />}
                 <IconButton icon="edit" className="color-link" label={`Edit ${employee.name}`} onClick={() => edit(employee)} />

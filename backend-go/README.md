@@ -1,6 +1,6 @@
 # Business Desk API
 
-Go 1.22/Gin service for authentication, quotations, bills, clients, public shares, business profiles, and administrator user management. The [root README](../README.md) owns the complete API inventory, Google Sheets schemas, and deployment instructions; [AGENTS.md](../AGENTS.md) contains operational notes.
+Go 1.22/Gin service for authentication, quotations, bills, clients, employees and payroll, public shares, business profiles, and administrator user management. The [root README](../README.md) owns the complete API inventory, Google Sheets schemas, and deployment instructions; [AGENTS.md](../AGENTS.md) contains operational notes.
 
 ## Run
 
@@ -31,7 +31,7 @@ GOOGLE_ALLOWED_DOMAINS=
 
 Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the schema registry at `backend-go/internal/sheets/schema.go`; per-tab names can be overridden via the `SHEET_TAB_USERS` environment variable. Range strings are derived from the column count.
 
-Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
+Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `EmployeePayroll`, `EmployeePayrollEntries`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
 
 Business profiles read/write `BusinessProfiles!A:K`. Append `website` in K1 without moving A:J. Existing rows without K are supported. GET/PUT `/api/v1/business-profile` expose `website`; PUT preserves it when omitted and clears it when explicitly empty. Bare domains become HTTPS URLs, and other schemes are rejected. Backend support should be deployed before the frontend website field. These changes are unverified: tests and builds were skipped by request.
 
@@ -46,7 +46,7 @@ See the [complete endpoint table](../README.md#api), verified against `internal/
 - Client history: `GET /api/v1/clients/:id/documents` returns owner-scoped `quotation` and `bill` arrays, matched by client ID.
 - Client archival: `PATCH /api/v1/clients/:id/status?status=archived`; use `status=active` to restore.
 - Client deletion: `DELETE /api/v1/clients/:id` deletes only the owner's row; linked documents keep their stored client name.
-- Employees: `GET/POST /api/v1/employees`, `GET/PUT/DELETE /api/v1/employees/:id`. Owner-scoped CRUD over `Employee!A2:K`; `status` accepts only `active` or `inactive` (new records default to `active`), there is no archival or documents endpoint, and employees are never tagged to quotations or bills.
+- Employees: `GET/POST /api/v1/employees`, `GET/PUT/DELETE /api/v1/employees/:id`, plus owner-scoped monthly payroll and entry endpoints beneath `/api/v1/employees/:id/payroll`. Payroll records calendar-month base salary and editable credit, deduction, advance, and payment entries. Status is calculated from monetary totals.
 - Quotation and bill status endpoints accept JSON with optional `status`, `paymentStatus`, and `payments` fields. Lifecycle and payment status are separate; accepted/declined decisions apply to quotations, and both document types accept a `payments` array of `{date, amount}` entries from which the payment status is re-derived (unpaid / partially_paid / paid). Quotation payments store `payment_status` in column Y and the JSON `payments` array in column Z; bill payments use `Bills!V:W` plus the `payments` array in column X. Opening a public quotation share auto-marks the quotation `viewed`.
 - `POST /api/v1/quotations/:id/convert-to-bill` carries the quotation's recorded payments into the new bill with a derived payment status. Declined or cancelled quotations cannot be converted.
 - Quotation and bill sharing both support POST to create and DELETE to revoke `/api/v1/{quotations|bills}/:id/share`. Public links use `GET /api/v1/public/share/:token`; bill and quotation share responses include `paymentStatus` and the raw `payments` array so the share page renders the same Received/Pending summary as the app. Share links expire 10 minutes after creation and return `410 Gone` once expired or revoked; `ShareLinks` timestamps are stored as Asia/Kolkata `DD-MM-YYYY HH:MM:SS`.

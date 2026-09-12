@@ -34,6 +34,11 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/employees/:id` | Read an employee owned by the current user |
 | PUT | `/api/v1/employees/:id` | Update an employee |
 | DELETE | `/api/v1/employees/:id` | Delete an employee owned by the current user |
+| GET | `/api/v1/employees/payroll` | Current owner's monthly payroll KPI summary |
+| GET | `/api/v1/employees/:id/payroll` | Employee payroll history and entries |
+| POST | `/api/v1/employees/:id/payroll` | Create or update one employee salary month |
+| POST | `/api/v1/employees/:id/payroll/entries` | Add a payment, advance, credit, or deduction |
+| PUT/DELETE | `/api/v1/employees/:id/payroll/entries/:entryId` | Edit or delete an employee payroll entry |
 | PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle or payment status and record payments |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
@@ -108,6 +113,8 @@ Metadata follows the existing A:Q columns:
 
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
 The `Employee` tab uses: `employee_id, owner_id, name, phone, email, address, designation, notes, status, created_at, updated_at`. Like clients, employee records are owner-scoped and read from `Employee!A2:K`, but they are never tagged to quotations or bills. New employees default to `active`; updates accept only `active` or `inactive`.
+
+Payroll uses two additional tabs: `EmployeePayroll` with `payroll_id, owner_id, employee_id, period, base_salary, created_at, updated_at`, and `EmployeePayrollEntries` with `entry_id, owner_id, employee_id, period, type, amount, entry_date, label, note, recovery_period, created_at, updated_at`. A salary month is a `YYYY-MM` calendar month. The app derives due, paid, balance, and payment status from salary and entries; advances are recovered in their selected month and carry forward when salary is insufficient.
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`. All five `ShareLinks` date columns are stored as Asia/Kolkata timestamps formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`, and expired or revoked links return `410 Gone`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
@@ -179,7 +186,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
-- The employees page keeps team contact details (name, phone, email, address, designation, notes, status) in an owner-scoped directory with search; each row offers WhatsApp and call shortcuts, employees can be marked inactive (hidden by default) instead of deleted, and employee records are never linked to quotations or bills.
+- The employees area keeps team contact details and a manager-only payroll view. Each employee profile records calendar-month salary, payments, advances, credits, deductions, due balance, and calculated payment status. Inactive staff retain their history but cannot start a new salary month. Attendance, leave, statutory deductions, and employee self-service are not implemented.
 - Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Quotations and bills track recorded payments (date and amount) with a derived payment status; the Total/Received/Pending summary renders for `partially_paid` documents on the library, preview, downloaded PDF, and public share link, and `cancelled` documents hide all payment details. Converting a quotation to a bill carries the quotation's recorded payments into the bill.
 - Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`) and wrap the business address across multiple lines in the footer.
 - The business profile page edits contact and logo fields; quote prefix and default terms are still stored in `BusinessProfiles!A:J` but are no longer editable in the UI (PDF output falls back to the stored values or built-in defaults).
