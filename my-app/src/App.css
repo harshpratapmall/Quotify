@@ -586,6 +586,8 @@ textarea {
 .document-hero-card .eyebrow { color: #edcf8a; }
 .document-hero-card h2 { max-width: 620px; margin: 0.2rem 0 1rem; font-size: clamp(2.1rem, 5vw, 4.25rem); line-height: 0.98; }
 .document-hero-card p:not(.eyebrow) { max-width: 540px; margin: 0; color: #dbe9e5; font-size: 1.05rem; line-height: 1.65; }
+.document-hero-features { display: flex; flex-wrap: wrap; gap: 0.5rem; max-width: 620px; margin: 1.25rem 0 0; padding: 0; list-style: none; }
+.document-hero-features li { padding: 0.4rem 0.7rem; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; color: #e7f1ef; background: rgba(255, 255, 255, 0.1); font-size: 0.78rem; font-weight: 600; }
 .document-hero-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 2rem; }
 
 .bill-primary-action {

@@ -75,10 +75,11 @@ function Dashboard({ profile, user, pathname, navigate, logout, startNewDocument
 
         <main className="dashboard-main">
           <section className="document-hero-card">
-            <p className="eyebrow">Document studio</p>
-            <h2>From first estimate to final payment.</h2>
-            <p>Build polished quotations and professional bills from one calm, organized workspace.</p>
-            <div className="document-hero-actions"><button type="button" className="primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'hero')}><ActionIcon type="quotation" /> Create quotation</button><button type="button" className="bill-primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'hero')}><ActionIcon type="bill" /> Create bill</button></div>
+            <p className="eyebrow">Business workspace</p>
+            <h2>Keep every client project moving.</h2>
+            <p>Manage your business profile, clients, team, quotations, bills, and payments from first enquiry to final handover.</p>
+            <ul className="document-hero-features" aria-label="Workspace features"><li>Business profile</li><li>Clients</li><li>Employees</li><li>Documents &amp; payments</li></ul>
+            <div className="document-hero-actions"><button type="button" className="primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.quotation, 'hero')}><ActionIcon type="quotation" /> New quotation</button><button type="button" className="bill-primary-action" onClick={() => launchDocument(DOCUMENT_TYPES.bill, 'hero')}><ActionIcon type="bill" /> New bill</button></div>
           </section>
 
           <section className="document-library-summary">
