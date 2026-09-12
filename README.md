@@ -123,7 +123,7 @@ Append `website` as the header in `BusinessProfiles!K1`; keep A:J unchanged. Rea
 
 ## Quotation and Bill PDF Design
 
-Quotation downloads use the green A4 template: large profile logo (or business-name fallback), quotation reference/date, four client-detail sections, numbered item rows, a totals panel, pale house watermark, and profile contact footer including the optional website. Text wraps and additional pages repeat table headings and contact footers; totals stay together on the final page. GST is omitted when disabled. No terms or signatures are added.
+Quotation downloads use the green A4 template: large profile logo (or business-name fallback), quotation reference/date, four client-detail sections, numbered item rows, a totals panel, pale house watermark, and profile contact footer including the optional website. Client details are ordered Client, Phone, Project, Address; the rightmost Address column is intentionally widest for long locations. Text wraps and additional pages repeat table headings and contact footers; totals stay together on the final page. GST is omitted when disabled. No terms or signatures are added.
 
 Bill downloads use the same A4 layout in blue with a `BILL / INVOICE` header and bill numbering. Partially paid bills show a Payment Summary card with a Partially Paid badge, Subtotal, optional GST, a dark Total Due band, Amount Received, and a pale-blue Balance Due row. Received and balance amounts use the existing recorded-payment calculations. Cancelled bills and bills with other payment statuses show ordinary totals without received/balance rows. The entire summary stays together on the final page.
 

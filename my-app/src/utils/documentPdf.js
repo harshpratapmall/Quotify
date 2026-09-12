@@ -173,9 +173,11 @@ export async function generateDocumentPdf({ quotation, items, includeGst, gstPer
   text(date, 163, dateY, 10);
 
   const clientTop = 20 + headerHeight + 5;
+  // Address is placed last and gets the widest column so long addresses do not
+  // squeeze the client, phone, or project details.
   const clientFields = [
-    ['person', 'Client', quotation.clientName, 56], ['phone', 'Phone', quotation.phone, 48],
-    ['location', 'Address', quotation.siteLocation, 39], ['project', 'Project', quotation.projectName, 55],
+    ['person', 'Client', quotation.clientName, 47], ['phone', 'Phone', quotation.phone, 44],
+    ['project', 'Project', quotation.projectName, 42], ['location', 'Address', quotation.siteLocation, 65],
   ].map(([type, label, value, width]) => ({ type, label, width, lines: wrap(value || '-', width - 21, 10, label === 'Client') }));
   const clientHeight = Math.max(22, ...clientFields.map((entry) => 12 + entry.lines.length * 4.1));
   if (clientTop + clientHeight > pageBottom - 40) throw new Error('Client details are too long for the quotation header. Please shorten them.');
