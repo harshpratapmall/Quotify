@@ -46,14 +46,23 @@ test('hides inactive employees by default and shows them on toggle', async () =>
   expect(screen.getByText('Sunil')).toBeTruthy();
 });
 
-test('shows contact shortcuts for phone and email', async () => {
+test('shows WhatsApp and call shortcuts when a phone is present', async () => {
+  listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee] });
+
+  render(<Employees navigate={jest.fn()} />);
+
+  expect(await screen.findByRole('link', { name: 'WhatsApp Ravi' })).toHaveAttribute('href', 'https://wa.me/919876543210?text=Hello%2C%20Ravi.');
+  expect(screen.getByRole('link', { name: 'Call Ravi' })).toHaveAttribute('href', 'tel:+919876543210');
+  expect(screen.queryByRole('link', { name: /email ravi/i })).toBeNull();
+});
+
+test('shows no contact shortcuts without a phone', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [inactiveEmployee] });
 
   render(<Employees navigate={jest.fn()} />);
 
   screen.getByLabelText(/include inactive/i).click();
   expect(await screen.findByText('Sunil')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Email Sunil' })).toHaveAttribute('href', 'mailto:sunil@example.com');
   expect(screen.queryByRole('link', { name: /whatsapp sunil/i })).toBeNull();
   expect(screen.queryByRole('link', { name: /call sunil/i })).toBeNull();
 });

@@ -122,7 +122,6 @@ function Employees({ navigate }) {
               <div className="saved-actions">
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildEmployeeWhatsAppUrl(employee.name, employee.phone)} className="color-link" icon="message" label={`WhatsApp ${employee.name}`} />}
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildPhoneLink(employee.phone)} className="color-link" icon="phone" label={`Call ${employee.name}`} />}
-                {employee.email && <IconButton href={`mailto:${employee.email}`} className="color-link" icon="email" label={`Email ${employee.name}`} />}
                 <IconButton icon="edit" className="color-link" label={`Edit ${employee.name}`} onClick={() => edit(employee)} />
                 <IconButton icon="delete" className="danger-icon" label={`Delete ${employee.name}`} onClick={() => remove(employee.id)} />
               </div>
