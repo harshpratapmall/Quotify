@@ -32,7 +32,7 @@ REACT_APP_ENV=local
 - Business profile editing and Vercel Blob logo uploads
 - Separate quotation and bill libraries with shared line-item pricing workflows
 - Client search, add/edit/delete, contact autofill, and linked quotation/bill history
-- Employee directory with search and add/edit/delete (name, phone, email, address, designation, notes); employees are never linked to quotations or bills
+- Employee directory with search, add/edit/delete, and active/inactive archive (inactive rows hidden by default) plus WhatsApp/call/email shortcuts; employees are never linked to quotations or bills
 - Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), and optional bill due dates. Bills track recorded payments by date and amount with a derived payment status; the payment-records panel with a Total/Received/Pending summary renders only for `partially_paid` bills, and payment details stay hidden for `cancelled` bills.
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
 - Admin user search, creation, activation/deactivation, and password resets

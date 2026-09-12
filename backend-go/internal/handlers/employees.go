@@ -62,6 +62,13 @@ func CreateEmployee(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if strings.TrimSpace(employee.Status) == "" {
+		employee.Status = "active"
+	}
+	if !validEmployeeStatus(employee.Status) {
+		badRequest(c, "Employee status must be active or inactive.")
+		return
+	}
 	now := time.Now().UTC().Format(time.RFC3339)
 	employee.ID = sheets.NewEmployeeID()
 	employee.OwnerID = ownerID
@@ -91,6 +98,13 @@ func UpdateEmployee(c *gin.Context) {
 	}
 	employee, ok := bindEmployee(c)
 	if !ok {
+		return
+	}
+	if strings.TrimSpace(employee.Status) == "" {
+		employee.Status = existing.Status
+	}
+	if !validEmployeeStatus(employee.Status) {
+		badRequest(c, "Employee status must be active or inactive.")
 		return
 	}
 	employee.ID = existing.ID
@@ -125,6 +139,11 @@ func DeleteEmployee(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func validEmployeeStatus(status string) bool {
+	status = strings.TrimSpace(strings.ToLower(status))
+	return status == "active" || status == "inactive"
 }
 
 func bindEmployee(c *gin.Context) (sheets.Employee, bool) {

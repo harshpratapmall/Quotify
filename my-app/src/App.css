@@ -92,6 +92,10 @@
 .client-row.archived { opacity: 0.65; }
 .employee-row small { display: block; margin-top: 0.25rem; color: var(--muted); }
 .employee-row .employee-designation { color: var(--teal); font-weight: 600; }
+.employee-row.inactive { opacity: 0.7; }
+.employee-status { display: inline-block; margin-top: 0.5rem; padding: 0.15rem 0.55rem; border-radius: 999px; background: #e7f4ef; color: var(--teal); font-size: 0.72rem; font-weight: 700; width: fit-content; }
+.employee-status-inactive { background: #f3ece8; color: var(--muted); }
+.include-inactive { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 1rem; color: var(--navy); font-size: 0.9rem; font-weight: 600; cursor: pointer; width: fit-content; }
 .template-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; align-items: end; }
 .template-form label { display: grid; gap: 0.45rem; color: var(--navy); font-weight: 600; }
 .template-form input:not([type="checkbox"]), .template-form select, .template-form textarea { width: 100%; padding: 0.75rem 0.85rem; border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); }

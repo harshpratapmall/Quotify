@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const employeeRange = "Employee!A:J"
+const employeeRange = "Employee!A:K"
 
 type Employee struct {
 	ID          string `json:"id"`
@@ -21,13 +21,14 @@ type Employee struct {
 	Address     string `json:"address"`
 	Designation string `json:"designation"`
 	Notes       string `json:"notes"`
+	Status      string `json:"status"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
 	Row         int    `json:"-"`
 }
 
 func ListEmployees(ctx context.Context, ownerID string) ([]Employee, error) {
-	values, err := readValues(ctx, "Employee!A2:J")
+	values, err := readValues(ctx, "Employee!A2:K")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func SaveEmployee(ctx context.Context, employee Employee) error {
 }
 
 func UpdateEmployee(ctx context.Context, employee Employee) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Employee!A%d:J%d?valueInputOption=RAW", employee.Row, employee.Row), [][]string{employeeToRow(employee)})
+	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Employee!A%d:K%d?valueInputOption=RAW", employee.Row, employee.Row), [][]string{employeeToRow(employee)})
 }
 
 func DeleteEmployee(ctx context.Context, row int) error {
@@ -90,12 +91,13 @@ func employeeFromRow(row []string, rowNumber int) Employee {
 		Address:     get(5),
 		Designation: get(6),
 		Notes:       get(7),
-		CreatedAt:   get(8),
-		UpdatedAt:   get(9),
+		Status:      get(8),
+		CreatedAt:   get(9),
+		UpdatedAt:   get(10),
 		Row:         rowNumber,
 	}
 }
 
 func employeeToRow(employee Employee) []string {
-	return []string{employee.ID, employee.OwnerID, employee.Name, employee.Phone, employee.Email, employee.Address, employee.Designation, employee.Notes, employee.CreatedAt, employee.UpdatedAt}
+	return []string{employee.ID, employee.OwnerID, employee.Name, employee.Phone, employee.Email, employee.Address, employee.Designation, employee.Notes, employee.Status, employee.CreatedAt, employee.UpdatedAt}
 }

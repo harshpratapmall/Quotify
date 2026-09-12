@@ -13,3 +13,15 @@ export const buildWhatsAppUrl = ({ phone, businessName, documentType, total, sha
     : `Hello, ${businessName || 'your business'} has shared your quotation. Total estimate: ${total}.${shareUrl ? ` View it here: ${shareUrl}` : ''}`;
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 };
+
+export const buildEmployeeWhatsAppUrl = (name, phone) => {
+  const normalizedPhone = normalizeWhatsAppPhone(phone);
+  if (!normalizedPhone) return '';
+  const message = `Hello, ${name}.`;
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+};
+
+export const buildPhoneLink = (phone) => {
+  const normalizedPhone = normalizeWhatsAppPhone(phone);
+  return normalizedPhone ? `tel:+${normalizedPhone}` : '';
+};

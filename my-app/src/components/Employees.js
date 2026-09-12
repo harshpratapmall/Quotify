@@ -5,14 +5,16 @@ import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
 import { APP_ROUTES } from '../config/routes';
 import { createEmployee, deleteEmployee, listEmployees, updateEmployee } from '../services/employees';
+import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
 
-const emptyEmployee = { name: '', phone: '', email: '', address: '', designation: '', notes: '' };
+const emptyEmployee = { name: '', phone: '', email: '', address: '', designation: '', notes: '', status: 'active' };
 
 function Employees({ navigate }) {
   const [employees, setEmployees] = useState([]);
   const [form, setForm] = useState(emptyEmployee);
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [message, setMessage] = useState('');
@@ -28,6 +30,8 @@ function Employees({ navigate }) {
   useEffect(() => {
     refreshEmployees().catch((error) => setMessage(error.message));
   }, [refreshEmployees]);
+
+  const visibleEmployees = showInactive ? employees : employees.filter((employee) => employee.status !== 'inactive');
 
   const change = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
@@ -58,7 +62,7 @@ function Employees({ navigate }) {
 
   const edit = (employee) => {
     setEditingId(employee.id);
-    setForm({ name: employee.name || '', phone: employee.phone || '', email: employee.email || '', address: employee.address || '', designation: employee.designation || '', notes: employee.notes || '' });
+    setForm({ name: employee.name || '', phone: employee.phone || '', email: employee.email || '', address: employee.address || '', designation: employee.designation || '', notes: employee.notes || '', status: employee.status || 'active' });
     setShowAddEmployee(true);
   };
 
@@ -101,26 +105,31 @@ function Employees({ navigate }) {
             <p className="eyebrow">Your records</p>
             <h2>Employee directory</h2>
           </div>
-          <span className="client-count">{employees.length} {employees.length === 1 ? 'employee' : 'employees'}</span>
+          <span className="client-count">{visibleEmployees.length} {visibleEmployees.length === 1 ? 'employee' : 'employees'}</span>
         </div>
         <input className="admin-search" aria-label="Search employees" placeholder="Search by name, phone, or email" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+        <label className="include-inactive"><input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} /> Include inactive employees</label>
         <div className="admin-user-list">
-          {employees.map((employee) => (
-            <article className="admin-user-row employee-row" key={employee.id}>
+          {visibleEmployees.map((employee) => (
+            <article className={`admin-user-row employee-row${employee.status === 'inactive' ? ' inactive' : ''}`} key={employee.id}>
               <div>
                 <strong>{employee.name}</strong>
                 <span>{employee.phone || 'No phone'}{employee.email ? ` · ${employee.email}` : ''}</span>
                 {employee.designation && <small className="employee-designation">{employee.designation}</small>}
                 {employee.address && <small>{employee.address}</small>}
+                <small className={employee.status === 'inactive' ? 'employee-status employee-status-inactive' : 'employee-status'}>{employee.status === 'inactive' ? 'Inactive' : 'Active'}</small>
               </div>
               <div className="saved-actions">
+                {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildEmployeeWhatsAppUrl(employee.name, employee.phone)} className="color-link" icon="message" label={`WhatsApp ${employee.name}`} />}
+                {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildPhoneLink(employee.phone)} className="color-link" icon="phone" label={`Call ${employee.name}`} />}
+                {employee.email && <IconButton href={`mailto:${employee.email}`} className="color-link" icon="email" label={`Email ${employee.name}`} />}
                 <IconButton icon="edit" className="color-link" label={`Edit ${employee.name}`} onClick={() => edit(employee)} />
                 <IconButton icon="delete" className="danger-icon" label={`Delete ${employee.name}`} onClick={() => remove(employee.id)} />
               </div>
             </article>
           ))}
         </div>
-        {!employees.length && <p className="section-text">No employees match your search.</p>}
+        {!visibleEmployees.length && <p className="section-text">No employees match your search.</p>}
       </section>
 
       {showAddEmployee && (
@@ -138,6 +147,7 @@ function Employees({ navigate }) {
             <label>Phone<input type="tel" value={form.phone} onChange={(event) => change('phone', event.target.value)} /></label>
             <label>Email<input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} /></label>
             <label>Designation<input value={form.designation} onChange={(event) => change('designation', event.target.value)} placeholder="e.g. Carpenter, Painter, Labour" /></label>
+            <label>Status<select value={form.status} onChange={(event) => change('status', event.target.value)}><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
             <label>Address<input value={form.address} onChange={(event) => change('address', event.target.value)} /></label>
             <label className="full-width">Notes<textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="2" /></label>
             <div className="form-actions modal-form-actions">

@@ -40,7 +40,7 @@ func TestShareLinkIsActive(t *testing.T) {
 		},
 		{
 			name:   "legacy link with no expiry still fresh",
-			link:   ShareLink{ID: "SH-1", CreatedAt: "01-09-2026 10:00:00"},
+			link:   ShareLink{ID: "SH-1", CreatedAt: "11-09-2026 11:55:00"},
 			now:    base,
 			active: true,
 		},
