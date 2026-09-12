@@ -144,27 +144,41 @@ if (pathname !== APP_ROUTES.clients) return null;
         {!clients.length && <p className="section-text">No clients match your search.</p>}
       </section>
 
-{showAddClient && (
-        <ModalOverlay onClose={() => resetForm()} sectionClass="client-form-modal" sectionProps={{ 'aria-labelledby': 'client-form-title' }}>
-            <div className="modal-actions">
+      {showAddClient && (
+        <ModalOverlay onClose={() => resetForm()} sectionClass="record-form-modal client-record-modal" sectionProps={{ 'aria-labelledby': 'client-form-title' }}>
+          <div className="record-form-header">
+            <div className="record-form-heading">
+              <span className="record-form-icon"><ActionIcon type="profile" /></span>
               <div>
                 <p className="eyebrow">Client record</p>
                 <h2 id="client-form-title">{editingId ? 'Edit client' : 'Add a client'}</h2>
+                <p className="record-form-description">Save the contact details you use for quotations and bills.</p>
               </div>
-              <IconButton icon="close" className="modal-close" label={editingId ? 'Cancel editing client' : 'Close add client'} onClick={resetForm} />
             </div>
-            <form className="client-form" onSubmit={submit}>
-              {message && <p role="status">{message}</p>}
-              <label>Name<input value={form.name} onChange={(event) => change('name', event.target.value)} placeholder="Client name" required /></label>
-              <label>Phone<input type="tel" value={form.phone} onChange={(event) => change('phone', event.target.value)} placeholder="+91 98765 43210" /></label>
-              <label>Email<input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} placeholder="client@email.com" /></label>
-              <label>Address<input value={form.address} onChange={(event) => change('address', event.target.value)} placeholder="Project or office address" /></label>
-              <label className="full-width">Notes<textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="2" placeholder="Preferences, site notes, remarks" /></label>
-              <div className="form-actions modal-form-actions">
-                {editingId && <button type="button" className="secondary-action compact-action danger-action" disabled={isSaving} onClick={remove}><ActionIcon type="delete" /> Delete client</button>}
-                <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save client' : 'Add client'}</button>
+            <IconButton icon="close" className="modal-close" label={editingId ? 'Cancel editing client' : 'Close add client'} onClick={resetForm} />
+          </div>
+          <form className="record-form" onSubmit={submit}>
+            <SaveStatus message={message} className="record-form-status" />
+            <section className="record-form-section" aria-labelledby="client-contact-title">
+              <div className="record-form-section-heading">
+                <p className="eyebrow">Contact details</p>
+                <span id="client-contact-title">Name is required</span>
               </div>
-            </form>
+              <div className="record-form-grid">
+                <label className="record-field"><span>Name <b>Required</b></span><input value={form.name} onChange={(event) => change('name', event.target.value)} placeholder="Client name" required /></label>
+                <label className="record-field"><span>Phone</span><input type="tel" value={form.phone} onChange={(event) => change('phone', event.target.value)} placeholder="+91 98765 43210" /></label>
+                <label className="record-field"><span>Email</span><input type="email" value={form.email} onChange={(event) => change('email', event.target.value)} placeholder="client@email.com" /></label>
+                <label className="record-field"><span>Address</span><input value={form.address} onChange={(event) => change('address', event.target.value)} placeholder="Project or office address" /></label>
+              </div>
+            </section>
+            <section className="record-form-section record-notes-section">
+              <label className="record-field"><span>Notes <em>Optional</em></span><textarea value={form.notes} onChange={(event) => change('notes', event.target.value)} rows="3" placeholder="Preferences, site notes, or remarks" /></label>
+            </section>
+            <div className="record-form-actions">
+              {editingId && <button type="button" className="secondary-action compact-action danger-action" disabled={isSaving} onClick={remove}><ActionIcon type="delete" /> Delete client</button>}
+              <button type="submit" className="primary-action" disabled={isSaving}>{isSaving ? 'Saving...' : editingId ? 'Save client' : 'Add client'}</button>
+            </div>
+          </form>
         </ModalOverlay>
       )}
       {selectedClient && <ModalOverlay onClose={() => setSelectedClient(null)} sectionClass="client-documents-modal" sectionProps={{ 'aria-labelledby': 'client-documents-title' }}>
