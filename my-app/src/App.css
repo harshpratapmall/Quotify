@@ -107,7 +107,7 @@
 .template-row strong, .template-row span { display: block; }
 .template-row span { margin-top: 0.25rem; color: var(--muted); font-size: 0.9rem; }
 @media (max-width: 760px) { .template-form { grid-template-columns: 1fr; } .template-row { flex-direction: column; align-items: stretch; } }
-@media (max-width: 760px) { .admin-header, .admin-user-row { flex-direction: column; } .admin-form { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .admin-header, .admin-user-row { flex-direction: column; } .admin-form { grid-template-columns: 1fr; } .admin-header .header-actions, .section-heading .header-actions, .section-heading > .icon-button { margin-left: auto; } }
 
 * {
   box-sizing: border-box;

@@ -88,6 +88,31 @@ func TestDerivePaymentStatus(t *testing.T) {
 	}
 }
 
+func TestCarryQuotationPayments(t *testing.T) {
+	cases := []struct {
+		name, payments string
+		total          float64
+		status         string
+		carried        bool
+	}{
+		{"no payments", "", 10000, "unpaid", false},
+		{"invalid json", "not-json", 10000, "unpaid", false},
+		{"partial", `[{"date":"2026-09-01","amount":2500}]`, 10000, "partially_paid", true},
+		{"paid", `[{"date":"2026-09-01","amount":10000}]`, 10000, "paid", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			status, payments := carryQuotationPayments(tc.payments, tc.total)
+			if status != tc.status {
+				t.Fatalf("status = %q, want %q", status, tc.status)
+			}
+			if (payments != "") != tc.carried {
+				t.Fatalf("carried = %v, want %v", payments != "", tc.carried)
+			}
+		})
+	}
+}
+
 func TestQuotesShouldMarkViewed(t *testing.T) {
 	for _, status := range []string{"", "draft", "sent"} {
 		if !quotesShouldMarkViewed(status) {

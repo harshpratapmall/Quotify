@@ -32,8 +32,8 @@ REACT_APP_ENV=local
 - Business profile editing and Vercel Blob logo uploads
 - Separate quotation and bill libraries with shared line-item pricing workflows
 - Client search, add/edit/delete, contact autofill, and linked quotation/bill history
-- Employee directory with search, add/edit/delete, and active/inactive archive (inactive rows hidden by default) plus WhatsApp/call/email shortcuts; employees are never linked to quotations or bills
-- Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), and optional bill due dates. Bills track recorded payments by date and amount with a derived payment status; the payment-records panel with a Total/Received/Pending summary renders only for `partially_paid` bills, and payment details stay hidden for `cancelled` bills.
+- Employee directory with search, add/edit/delete, and active/inactive archive (inactive rows hidden by default) plus WhatsApp and call shortcuts; employees are never linked to quotations or bills
+- Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), and optional bill due dates. Quotations and bills track recorded payments by date and amount with a derived payment status; the payment-records panel with a Total/Received/Pending summary renders only for `partially_paid` documents, and payment details stay hidden for `cancelled` documents. Converting a quotation to a bill carries its recorded payments into the bill.
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
 - Admin user search, creation, activation/deactivation, and password resets
 - Per-library search (by username, client name, or project) and collapsible library tiles that reveal status and payment controls on click
@@ -66,7 +66,7 @@ Share revocation is available through API service helpers but has no UI button. 
 
 Quotation PDFs use the green A4 design with a large business logo, quotation number/date, client/phone/address/project sections, numbered table, totals panel, house watermark, and contact footer. Text wraps, tables continue across pages, and totals stay together on the last page. Logos retain their aspect ratio; unavailable logos fall back to the business name. Missing footer fields are omitted. GST follows the document setting; calculations and filenames are unchanged.
 
-Bill PDFs use the same template with a blue theme and `BILL / INVOICE` header. Partially paid, non-cancelled bills use a Payment Summary card with a Partially Paid badge, Subtotal, optional GST, Total Due, Amount Received, and Balance Due. Values use `getPaymentSummary`; the summary stays together on the final page. Other bills retain standard totals without payment-detail rows. Both PDF types center footer icons and wrapped contact text vertically across the footer columns.
+Bill PDFs use the same template with a blue theme and `BILL / INVOICE` header. Partially paid, non-cancelled quotations and bills use a theme-colored Payment Summary card (green for quotations, blue for bills) with a Partially Paid badge, Subtotal, optional GST, Total Due, Amount Received, and Balance Due. Values use `getPaymentSummary`; the summary stays together on the final page. Other documents retain standard totals without payment-detail rows. Both PDF types center footer icons and wrapped contact text vertically across the footer columns.
 
 The Business Profile page includes an optional Website field. The API normalizes bare domains to HTTPS and persists it in the new `BusinessProfiles` column K; the backend must support this before the frontend field is deployed. App previews and public share layouts keep their existing appearance. These changes are unverified: no tests, builds, sample PDFs, or rendered inspections were run, as requested.
 

@@ -95,7 +95,7 @@ export async function generateDocumentPdf({ quotation, items, includeGst, gstPer
   const PALE = theme.pale;
   const RULE = theme.rule;
   const title = isBill ? 'BILL / INVOICE' : 'QUOTATION';
-  const paymentSummary = isBill && quotation.status !== 'cancelled' && quotation.paymentStatus === 'partially_paid'
+  const paymentSummary = quotation.status !== 'cancelled' && quotation.paymentStatus === 'partially_paid'
     ? getPaymentSummary(parsePayments(quotation.payments), total) : null;
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
   const logo = await loadLogo(logoSource || businessProfile.logoUrl);
@@ -244,7 +244,7 @@ export async function generateDocumentPdf({ quotation, items, includeGst, gstPer
       summaryRow(`GST (${gstPercentage}%)`, tax, 8, '#ffffff', 9);
     }
     summaryRow('Total Due', total, 12, PRIMARY, 13, true, '#ffffff');
-    summaryRow('Amount Received', paymentSummary.received, 9, '#f4f9fe', 10);
+    summaryRow('Amount Received', paymentSummary.received, 9, theme.pale, 10);
     summaryRow('Balance Due', paymentSummary.pending, 10, theme.icon, 12, true);
     pdf.setDrawColor(RULE); pdf.setLineWidth(0.25);
     pdf.roundedRect(totalX, totalTop, 104, panelHeight, 1.5, 1.5, 'S');

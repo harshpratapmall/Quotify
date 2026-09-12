@@ -35,6 +35,37 @@ test('renders Received and Pending for a partially paid bill share', async () =>
   expect(screen.getByText(/Pending/)).toBeTruthy();
 });
 
+test('renders Received and Pending for a partially paid quotation share', async () => {
+  fetchPublicShare.mockResolvedValue({ response: { ok: true }, data: { ...share, documentType: 'quotation', paymentStatus: 'partially_paid', payments: '[{"date":"2026-09-01","amount":4000}]' } });
+
+  render(<PublicShare token="ghi" />);
+
+  expect((await screen.findAllByText('₹ 4,000')).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/₹ 6,000/).length).toBeGreaterThan(0);
+  expect(screen.getByText(/Received/)).toBeTruthy();
+  expect(screen.getByText(/Pending/)).toBeTruthy();
+});
+
+test('omits payment summary when the quotation share is not partially paid', async () => {
+  fetchPublicShare.mockResolvedValue({ response: { ok: true }, data: { ...share, documentType: 'quotation', paymentStatus: 'unpaid' } });
+
+  render(<PublicShare token="jkl" />);
+
+  expect((await screen.findAllByText('₹ 10,000')).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/Received/)).toBeNull();
+  expect(screen.queryByText(/Pending/)).toBeNull();
+});
+
+test('omits payment summary for a cancelled partial payment share', async () => {
+  fetchPublicShare.mockResolvedValue({ response: { ok: true }, data: { ...share, documentType: 'bill', status: 'cancelled', paymentStatus: 'partially_paid', payments: '[{"date":"2026-09-01","amount":5000}]' } });
+
+  render(<PublicShare token="mno" />);
+
+  expect((await screen.findAllByText('₹ 10,000')).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/Received/)).toBeNull();
+  expect(screen.queryByText(/Pending/)).toBeNull();
+});
+
 test('omits payment summary when the bill share is not partially paid', async () => {
   fetchPublicShare.mockResolvedValue({ response: { ok: true }, data: { ...share, paymentStatus: 'paid', payments: '[{"date":"2026-09-01","amount":10000}]' } });
 

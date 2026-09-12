@@ -63,6 +63,8 @@ func CreateQuotation(c *gin.Context) {
 	quote.ID = newQuotationID()
 	quote.Owner = owner
 	quote.Status = "draft"
+	quote.PaymentStatus = "unpaid"
+	quote.Payments = ""
 	quote.ShareLinkID, quote.ViewedAt, quote.SentAt = "", "", ""
 	quote.CreatedAt = time.Now().UTC()
 	quote.UpdatedAt = quote.CreatedAt
@@ -94,6 +96,7 @@ func UpdateQuotation(c *gin.Context) {
 	}
 	quote.ID, quote.Owner, quote.Row, quote.CreatedAt = existing.ID, owner, existing.Row, existing.CreatedAt
 	quote.Status, quote.ShareLinkID, quote.ViewedAt, quote.SentAt, quote.TemplateID, quote.SourceQuotationID = existing.Status, existing.ShareLinkID, existing.ViewedAt, existing.SentAt, existing.TemplateID, existing.SourceQuotationID
+	quote.PaymentStatus, quote.Payments = existing.PaymentStatus, existing.Payments
 	if !c.GetBool("clientIDProvided") {
 		quote.ClientID = existing.ClientID
 	}
@@ -134,10 +137,12 @@ func UpdateQuotationStatus(c *gin.Context) {
 		return
 	}
 	var request struct {
-		Status string `json:"status" binding:"required"`
+		Status        string         `json:"status"`
+		PaymentStatus string         `json:"paymentStatus"`
+		Payments      []paymentInput `json:"payments"`
 	}
-	if err := c.ShouldBindJSON(&request); err != nil || !validQuotationStatus(request.Status) {
-		badRequest(c, "Status must be draft, sent, viewed, accepted, declined, or cancelled.")
+	if err := c.ShouldBindJSON(&request); err != nil || (request.Status == "" && request.PaymentStatus == "" && request.Payments == nil) {
+		badRequest(c, "A quotation status, payment status, or payment record is required.")
 		return
 	}
 	quote, err := sheets.GetQuotation(c.Request.Context(), owner, c.Param("id"))
@@ -149,7 +154,35 @@ func UpdateQuotationStatus(c *gin.Context) {
 		notFound(c, "Quotation not found.")
 		return
 	}
-	quote.Status = strings.ToLower(strings.TrimSpace(request.Status))
+	if request.Status != "" {
+		request.Status = strings.ToLower(strings.TrimSpace(request.Status))
+		if !validQuotationStatus(request.Status) {
+			badRequest(c, "Status must be draft, sent, viewed, accepted, declined, or cancelled.")
+			return
+		}
+		quote.Status = request.Status
+	}
+	if request.Payments != nil {
+		encoded, valid := encodePayments(request.Payments)
+		if !valid {
+			badRequest(c, "Each payment needs a valid date and a positive amount.")
+			return
+		}
+		quote.Payments = encoded
+		paid := 0.0
+		for _, payment := range request.Payments {
+			paid += payment.Amount
+		}
+		quote.PaymentStatus = derivePaymentStatus(paid, quote.Total)
+	}
+	if request.PaymentStatus != "" {
+		request.PaymentStatus = strings.ToLower(strings.TrimSpace(request.PaymentStatus))
+		if !validPaymentStatus(request.PaymentStatus) {
+			badRequest(c, "Payment status must be unpaid, partially_paid, paid, or overdue.")
+			return
+		}
+		quote.PaymentStatus = request.PaymentStatus
+	}
 	quote.UpdatedAt = time.Now().UTC()
 	if quote.Status == "viewed" && quote.ViewedAt == "" {
 		quote.ViewedAt = quote.UpdatedAt.Format(time.RFC3339)
@@ -184,12 +217,25 @@ func ConvertQuotationToBill(c *gin.Context) {
 		return
 	}
 	now := time.Now().UTC()
-	bill := sheets.Bill{ID: newBillID(), CreatedAt: now, UpdatedAt: now, Owner: owner, Client: quote.Client, Project: quote.Project, Phone: quote.Phone, Email: quote.Email, Location: quote.Location, QuoteDate: quote.QuoteDate, Scope: quote.Scope, IncludeGST: quote.IncludeGST, GSTRate: quote.GSTRate, Payload: quote.Payload, Subtotal: quote.Subtotal, Tax: quote.Tax, Total: quote.Total, Status: "draft", ClientID: quote.ClientID, SourceQuotationID: quote.ID, PaymentStatus: "unpaid"}
+	bill := sheets.Bill{ID: newBillID(), CreatedAt: now, UpdatedAt: now, Owner: owner, Client: quote.Client, Project: quote.Project, Phone: quote.Phone, Email: quote.Email, Location: quote.Location, QuoteDate: quote.QuoteDate, Scope: quote.Scope, IncludeGST: quote.IncludeGST, GSTRate: quote.GSTRate, Payload: quote.Payload, Subtotal: quote.Subtotal, Tax: quote.Tax, Total: quote.Total, Status: "draft", ClientID: quote.ClientID, SourceQuotationID: quote.ID}
+	bill.PaymentStatus, bill.Payments = carryQuotationPayments(quote.Payments, bill.Total)
 	if err := sheets.SaveBill(c.Request.Context(), bill); err != nil {
 		unavailable(c, "Unable to create bill.")
 		return
 	}
 	c.JSON(http.StatusCreated, bill)
+}
+
+func carryQuotationPayments(encoded string, total float64) (string, string) {
+	var payments []paymentInput
+	if err := json.Unmarshal([]byte(encoded), &payments); err != nil || len(payments) == 0 {
+		return "unpaid", ""
+	}
+	paid := 0.0
+	for _, payment := range payments {
+		paid += payment.Amount
+	}
+	return derivePaymentStatus(paid, total), encoded
 }
 
 func validQuotationStatus(status string) bool {

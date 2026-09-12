@@ -7,8 +7,8 @@ import { billStatuses, paymentStatuses, quotationStatuses, statusLabel } from '.
 export default function DocumentStatus({ type, document, onChange, disabled }) {
   const isBill = type === 'bill';
   const payments = parsePayments(document.payments);
-  const cancelled = isBill && (document.status || '').toLowerCase() === 'cancelled';
-  const partialPayment = isBill && !cancelled && document.paymentStatus === 'partially_paid';
+  const cancelled = (document.status || '').toLowerCase() === 'cancelled';
+  const partialPayment = !cancelled && document.paymentStatus === 'partially_paid';
   const { received, pending, total } = getPaymentSummary(payments, document.total);
   const [paymentDate, setPaymentDate] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -30,7 +30,7 @@ export default function DocumentStatus({ type, document, onChange, disabled }) {
     <label>Status<select aria-label={`${type} status`} value={document.status || 'draft'} disabled={disabled} onChange={(event) => onChange({ status: event.target.value })}>
       {(isBill ? billStatuses : quotationStatuses).map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
     </select></label>
-    {isBill && !cancelled && <>
+    {!cancelled && <>
       <label>Payment<select aria-label="Payment status" value={document.paymentStatus || 'unpaid'} disabled={disabled} onChange={(event) => onChange({ paymentStatus: event.target.value })}>
         {paymentStatuses.map((status) => <option key={status} value={status}>{statusLabel(status)}</option>)}
       </select></label>

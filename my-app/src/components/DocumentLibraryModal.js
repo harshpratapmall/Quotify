@@ -34,7 +34,7 @@ function DocumentLibraryModal({ pathname, documents, openDocument, deleteDocumen
       {entries.length === 0 ? <div className="library-empty"><ActionIcon type={type} /><h3>{query ? 'No matches found' : `No ${copy.plural.toLowerCase()} yet`}</h3><p>{query ? 'Try a different username, client, or project.' : `Create your first ${copy.singular.toLowerCase()} to keep it ready for later.`}</p></div> : <div className="saved-quotation-list document-library-list">
         {entries.map((entry) => {
           const isOpen = openEntry === entry.id;
-          const partial = type === DOCUMENT_TYPES.bill && (entry.status || 'draft') !== 'cancelled' && entry.paymentStatus === 'partially_paid';
+          const partial = (entry.status || 'draft') !== 'cancelled' && entry.paymentStatus === 'partially_paid';
           const summary = partial ? getPaymentSummary(parsePayments(entry.payments), entry.total) : null;
           return <article className={`saved-quotation-card ${isOpen ? 'is-open' : ''}`} key={entry.id}>
             <div className="library-tile" role="button" tabIndex={0} aria-expanded={isOpen} onClick={() => toggleEntry(entry.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleEntry(entry.id); } }}>

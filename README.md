@@ -33,7 +33,7 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | GET | `/api/v1/employees/:id` | Read an employee owned by the current user |
 | PUT | `/api/v1/employees/:id` | Update an employee |
 | DELETE | `/api/v1/employees/:id` | Delete an employee owned by the current user |
-| PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle status |
+| PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle or payment status and record payments |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
 | POST | `/api/v1/quotations/:id/convert-to-bill` | Create a bill from a quotation |
@@ -60,9 +60,9 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 
 Quotation, bill, and client ownership is enforced by the backend from the signed session cookie; the client does not submit an owner identity.
 
-Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Client deletion removes only the row for the authenticated owner; linked documents keep their stored client name but no longer appear in that client's history. Document status updates accept JSON: `{"status":"accepted"}` for a quotation, or `{"status":"issued","paymentStatus":"paid"}` for a bill (bill fields can be sent alone, and `payments` accepts an array of `{date, amount}` entries that re-derive the payment status). Client history returns `quotation` and `bill` arrays linked by client ID.
+Client listing accepts a `q` search query. Client status updates use `?status=active` or `?status=archived`. Client deletion removes only the row for the authenticated owner; linked documents keep their stored client name but no longer appear in that client's history. Document status updates accept JSON with optional `status`, `paymentStatus`, and `payments` fields. Quotations and bills both support payment data on their `/status` endpoint: `{"status":"accepted"}` updates lifecycle, `{"status":"issued","paymentStatus":"paid"}` updates both, and a `payments` array of `{date, amount}` entries re-derives the payment status. Client history returns `quotation` and `bill` arrays linked by client ID.
 
-Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `cancelled` (a public share view auto-marks a quotation `viewed`). Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue`. Payment status is derived from recorded payments but can be overridden; a due date does not automatically mark a bill overdue, and `cancelled` bills hide payment details.
+Quotation statuses: `draft`, `sent`, `viewed`, `accepted`, `declined`, `cancelled` (a public share view auto-marks a quotation `viewed`). Bill statuses: `draft`, `issued`, `cancelled`. Payment statuses: `unpaid`, `partially_paid`, `paid`, `overdue` for both quotations and bills. Payment status is derived from recorded payments but can be overridden; a due date does not automatically mark a bill overdue, and `cancelled` documents hide all payment details. Declined or cancelled quotations cannot convert to bills; converting a quotation carries its recorded payments into the new bill with a derived payment status.
 
 ## Google Sheets
 
@@ -101,6 +101,7 @@ Bills use the same line-item payload and owner enforcement as quotations, while 
 Metadata follows the existing A:Q columns:
 
 - `Quotations!R:X`: `status, client_id, share_link_id, viewed_at, sent_at, template_id, source_quotation_id`
+- `Quotations!Y:Z`: `payment_status` and a JSON `payments` array of `{date, amount}` records that drives the derived payment status
 - `Bills!R:W`: `status, client_id, source_quotation_id, payment_status, due_date, template_id`
 - `Bills!X`: a JSON `payments` array of `{date, amount}` records that drives the derived payment status
 
@@ -109,7 +110,7 @@ The `Employee` tab uses: `employee_id, owner_id, name, phone, email, address, de
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`. All five `ShareLinks` date columns are stored as Asia/Kolkata timestamps formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`, and expired or revoked links return `410 Gone`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 
-Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending. Bill share pages also receive `paymentStatus` and the raw `payments` record so their Received/Pending summary matches the app.
+Existing A:Q quotation and bill rows remain readable. Public quotation and bill links are view-only, share tokens are stored as hashes, and WhatsApp sharing opens a prefilled browser draft without automated sending. Bill and quotation share pages also receive `paymentStatus` and the raw `payments` record so their Received/Pending summary matches the app.
 
 The `BusinessProfiles` tab must keep row 1 in this order:
 
@@ -125,7 +126,7 @@ Append `website` as the header in `BusinessProfiles!K1`; keep A:J unchanged. Rea
 
 Quotation downloads use the green A4 template: large profile logo (or business-name fallback), quotation reference/date, four client-detail sections, numbered item rows, a totals panel, pale house watermark, and profile contact footer including the optional website. Client details are ordered Client, Phone, Project, Address; the rightmost Address column is intentionally widest for long locations. Text wraps and additional pages repeat table headings and contact footers; totals stay together on the final page. GST is omitted when disabled. No terms or signatures are added.
 
-Bill downloads use the same A4 layout in blue with a `BILL / INVOICE` header and bill numbering. Partially paid bills show a Payment Summary card with a Partially Paid badge, Subtotal, optional GST, a dark Total Due band, Amount Received, and a pale-blue Balance Due row. Received and balance amounts use the existing recorded-payment calculations. Cancelled bills and bills with other payment statuses show ordinary totals without received/balance rows. The entire summary stays together on the final page.
+Bill downloads use the same A4 layout in blue with a `BILL / INVOICE` header and bill numbering. Quotation downloads and bill downloads that are partially paid (and not cancelled) show a theme-colored Payment Summary card (blue for bills, green for quotations) with a Partially Paid badge, Subtotal, optional GST, a dark Total Due band, Amount Received, and a pale Balance Due row. Received and balance amounts use the existing recorded-payment calculations. Cancelled documents and documents with other payment statuses show ordinary totals without received/balance rows. The entire summary stays together on the final page.
 
 Both PDF footers align icons and contact text blocks around a common vertical center, so multiline addresses remain aligned with single-line phone/email/website fields. Generation remains browser-side using a shared on-demand jsPDF/AutoTable renderer. Calculations, document numbering, and lowercase client-based filenames are preserved. Authenticated previews and public share layouts retain their existing designs. These implementations have not been tested, built, or visually verified; verification was explicitly skipped for these changes.
 
@@ -177,8 +178,8 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 ## Behavior Notes
 
 - Select an existing client in a quotation or bill to fill their contact details and save a stable client link. The client directory shows linked documents and provides shortcuts to create quotations and bills. Older documents can be linked by editing and selecting a client.
-- The employees page keeps team contact details (name, phone, email, address, designation, notes, status) in an owner-scoped directory with search; each row offers WhatsApp/call/email shortcuts, employees can be marked inactive (hidden by default) instead of deleted, and employee records are never linked to quotations or bills.
-- Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Bills track recorded payments (date and amount) with a derived payment status; the Total/Received/Pending summary renders for `partially_paid` bills on the bills library, bill preview, downloaded PDF, and public share link, and `cancelled` bills hide all payment details.
+- The employees page keeps team contact details (name, phone, email, address, designation, notes, status) in an owner-scoped directory with search; each row offers WhatsApp and call shortcuts, employees can be marked inactive (hidden by default) instead of deleted, and employee records are never linked to quotations or bills.
+- Saved document libraries provide a per-library search box (by username, client name, or project) and collapsible tiles; status and payment controls are revealed when a tile is expanded. Quotations support accepted and declined decisions; declined and cancelled quotations cannot be converted to bills. Opening a public share link auto-marks the quotation `viewed`. Quotations and bills track recorded payments (date and amount) with a derived payment status; the Total/Received/Pending summary renders for `partially_paid` documents on the library, preview, downloaded PDF, and public share link, and `cancelled` documents hide all payment details. Converting a quotation to a bill carries the quotation's recorded payments into the bill.
 - Popup close buttons and click-away return to the page the popup opened from. PDF downloads use lowercase filenames built from the client name (e.g. `quotation-amit-06sep.pdf`) and wrap the business address across multiple lines in the footer.
 - The business profile page edits contact and logo fields; quote prefix and default terms are still stored in `BusinessProfiles!A:J` but are no longer editable in the UI (PDF output falls back to the stored values or built-in defaults).
 - Client links and bill due dates can be cleared when editing; older API clients that omit those fields preserve existing metadata. Cross-origin API requests allow PATCH for status changes.
