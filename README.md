@@ -199,7 +199,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 - The active draft is stored in browser session storage.
 - Drafts are scoped by user and document type.
 - Totals, preview rendering, and PDF generation are client-side.
-- Backend PostHog telemetry is optional and non-blocking. It records only parameterized API route, HTTP method, response status, duration, authentication state, and a HMAC-pseudonymized user ID—never credentials, cookies, query strings, client details, or document content.
+- Backend PostHog telemetry is optional and non-blocking. It records only parameterized API route, HTTP method, response status, duration, login username, and a HMAC-pseudonymized user ID. Server-side events disable IP and GeoIP collection; they never include request bodies, cookies, query strings, client details, or document content.
 
 ## Current Limitations
 

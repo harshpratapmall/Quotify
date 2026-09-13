@@ -64,6 +64,9 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 			c.Set("username", displayName)
 			c.Set("user_id", user.ID)
+			// Keep the login username separate from the display name so telemetry
+			// and operational logs use a stable, unambiguous account identifier.
+			c.Set("analytics_username", user.Username)
 		}
 		c.Next()
 	}

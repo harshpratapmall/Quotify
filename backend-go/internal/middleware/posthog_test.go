@@ -40,6 +40,7 @@ func TestPostHogCapturesSanitizedRouteEvent(t *testing.T) {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user_id", "user-123")
+		c.Set("analytics_username", "amit")
 		c.Next()
 	})
 	router.Use(PostHog())
@@ -60,6 +61,15 @@ func TestPostHogCapturesSanitizedRouteEvent(t *testing.T) {
 		}
 		if capture.Properties["endpoint"] != "/api/v1/quotations/:id" {
 			t.Fatalf("event included a non-parameterized route: %#v", capture.Properties)
+		}
+		if capture.Properties["username"] != "amit" {
+			t.Fatalf("event omitted the username: %#v", capture.Properties)
+		}
+		if capture.Properties["$ip"] != "0" {
+			t.Fatalf("event did not disable IP enrichment: %#v", capture.Properties)
+		}
+		if _, present := capture.Properties["authenticated"]; present {
+			t.Fatal("redundant authenticated property was sent")
 		}
 		if _, leaked := capture.Properties["token"]; leaked {
 			t.Fatal("query data leaked into telemetry")

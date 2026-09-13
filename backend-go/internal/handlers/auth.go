@@ -48,6 +48,8 @@ func Login(c *gin.Context) {
 		return
 	}
 	setSessionCookie(c, token, int(sessionDuration.Seconds()))
+	c.Set("user_id", user.ID)
+	c.Set("analytics_username", user.Username)
 	c.JSON(http.StatusOK, gin.H{"user": user, "expiresAt": expiresAt})
 }
 

@@ -119,6 +119,8 @@ func GoogleLoginCallback(c *gin.Context) {
 		return
 	}
 	setSessionCookie(c, tokenValue, int(sessionDuration.Seconds()))
+	c.Set("user_id", user.ID)
+	c.Set("analytics_username", user.Username)
 	c.Redirect(http.StatusFound, frontendURL())
 }
 

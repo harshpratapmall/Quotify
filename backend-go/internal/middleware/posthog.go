@@ -45,9 +45,15 @@ func PostHog() gin.HandlerFunc {
 		}
 
 		distinctID := "anonymous"
+		username := "anonymous"
 		if userID, exists := c.Get("user_id"); exists {
 			if id, ok := userID.(string); ok && id != "" {
 				distinctID = anonymizedDistinctID(id)
+			}
+		}
+		if usernameValue, exists := c.Get("analytics_username"); exists {
+			if value, ok := usernameValue.(string); ok && value != "" {
+				username = value
 			}
 		}
 
@@ -55,13 +61,15 @@ func PostHog() gin.HandlerFunc {
 			APIKey: apiKey,
 			Event:  postHogEventName,
 			Properties: map[string]any{
-				"$lib":          "quotify-go-api",
-				"distinct_id":   distinctID,
-				"endpoint":      route,
-				"method":        c.Request.Method,
-				"status_code":   c.Writer.Status(),
-				"duration_ms":   time.Since(startedAt).Milliseconds(),
-				"authenticated": distinctID != "anonymous",
+				// PostHog uses this reserved property to disable IP and GeoIP
+				// collection for this server-originated event.
+				"$ip":         "0",
+				"distinct_id": distinctID,
+				"endpoint":    route,
+				"method":      c.Request.Method,
+				"status_code": c.Writer.Status(),
+				"duration_ms": time.Since(startedAt).Milliseconds(),
+				"username":    username,
 			},
 		})
 		if err != nil {
