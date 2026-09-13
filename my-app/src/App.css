@@ -234,7 +234,7 @@ textarea {
 }
 
 .login-brand.business-desk-brand {
-  width: min(100%, 300px);
+  width: min(100%, 225px);
   min-height: 0;
   padding: 0.6rem 0.9rem;
   border: 1px solid rgba(255, 255, 255, 0.24);
@@ -258,7 +258,7 @@ textarea {
 
 .login-logo.business-desk-logo {
   width: 100%;
-  max-width: 280px;
+  max-width: 210px;
   padding: 0;
   background: transparent;
   transform: none;
@@ -1612,6 +1612,16 @@ textarea {
   .login-showcase {
     min-height: 400px;
     padding: 1.5rem;
+  }
+
+  .login-brand.business-desk-brand {
+    width: min(100%, 145px);
+    padding: 0.35rem 0.5rem;
+    border-radius: 16px;
+  }
+
+  .login-logo.business-desk-logo {
+    max-width: 135px;
   }
 
   .login-copy {
