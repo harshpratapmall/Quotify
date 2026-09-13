@@ -9,7 +9,7 @@ const hostnameEnvironment = {
   '127.0.0.1': 'local',
   'dev-quotify.intermesh.net': 'development',
   'quotify.intermesh.net': 'production',
-  'quotify-net.vercel.app': 'production',
+  'business-desk-net.vercel.app': 'production',
 };
 
 const configuredEnvironment = process.env.REACT_APP_ENV;

@@ -21,7 +21,7 @@ services:
       - key: GOOGLE_OAUTH_REDIRECT_URL
         value: https://quotify-i62o.onrender.com/api/v1/auth/google/callback
       - key: OAUTH_FRONTEND_URL
-        value: https://quotify-net.vercel.app/
+        value: https://business-desk-net.vercel.app/
       - key: GOOGLE_ALLOWED_DOMAINS
         sync: false
       - key: AUTH_SESSION_SECRET
@@ -29,7 +29,7 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: CORS_ALLOWED_ORIGINS
-        value: https://quotify-net.vercel.app
+        value: https://business-desk-net.vercel.app
       - key: AUTH_DEBUG
         value: "false"
       - key: POSTHOG_API_KEY

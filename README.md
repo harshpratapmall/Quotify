@@ -182,7 +182,7 @@ Password sign-in does not require Google OAuth configuration; the Google sign-in
 
 ## Deployment
 
-Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
+Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://business-desk-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
 
 Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://quotify-i62o.onrender.com/api/v1/auth/google/callback` as authorized redirect URIs in the Google Cloud OAuth client.
 

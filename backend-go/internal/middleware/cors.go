@@ -13,9 +13,10 @@ import (
 // credentials while keeping CORS disabled for every other origin.
 func CORS() gin.HandlerFunc {
 	allowedOrigins := map[string]struct{}{
-		"http://localhost:3000":             {},
-		"https://dev-quotify.intermesh.net": {},
-		"https://quotify.intermesh.net":     {},
+		"http://localhost:3000":                {},
+		"https://dev-quotify.intermesh.net":    {},
+		"https://quotify.intermesh.net":        {},
+		"https://business-desk-net.vercel.app": {},
 	}
 	if configuredOrigins := config.CORSAllowedOrigins(); configuredOrigins != "" {
 		allowedOrigins = make(map[string]struct{})
