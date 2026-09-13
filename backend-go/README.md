@@ -27,6 +27,10 @@ GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8000/api/v1/auth/google/callback
 OAUTH_FRONTEND_URL=http://localhost:3000/
 # Optional: comma-separated Workspace domains
 GOOGLE_ALLOWED_DOMAINS=
+# Optional server-side PostHog telemetry. This is a backend-only project API key.
+POSTHOG_API_KEY=
+# Optional self-hosted endpoint; defaults to https://us.i.posthog.com.
+POSTHOG_HOST=
 ```
 
 Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the schema registry at `backend-go/internal/sheets/schema.go`; per-tab names can be overridden via the `SHEET_TAB_USERS` environment variable. Range strings are derived from the column count.
@@ -35,7 +39,7 @@ Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `Employe
 
 Business profiles read/write `BusinessProfiles!A:K`. Append `website` in K1 without moving A:J. Existing rows without K are supported. GET/PUT `/api/v1/business-profile` expose `website`; PUT preserves it when omitted and clears it when explicitly empty. Bare domains become HTTPS URLs, and other schemes are rejected. Backend support should be deployed before the frontend website field. These changes are unverified: tests and builds were skipped by request.
 
-The OAuth settings are required for Google sign-in, not password sign-in. `GOOGLE_ALLOWED_DOMAINS` is optional. `AUTH_DEBUG` defaults to false. In production set `COOKIE_SECURE=true` and explicitly configure `CORS_ALLOWED_ORIGINS` with the frontend origin; PATCH is required for status updates.
+The OAuth settings are required for Google sign-in, not password sign-in. `GOOGLE_ALLOWED_DOMAINS` is optional. `AUTH_DEBUG` defaults to false. `POSTHOG_API_KEY` enables non-blocking server-side API telemetry; events contain only the parameterized route, HTTP method, response status, duration, authentication state, and a HMAC-pseudonymized user ID. They never include request bodies, cookies, query strings, client data, credentials, or document content. In production set `COOKIE_SECURE=true` and explicitly configure `CORS_ALLOWED_ORIGINS` with the frontend origin; PATCH is required for status updates.
 
 In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://quotify-net.vercel.app/`. Register the Render callback URL in the Google Cloud OAuth client.
 

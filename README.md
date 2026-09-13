@@ -162,6 +162,9 @@ GOOGLE_OAUTH_CLIENT_SECRET=your-google-oauth-client-secret
 GOOGLE_OAUTH_REDIRECT_URL=http://localhost:8000/api/v1/auth/google/callback
 OAUTH_FRONTEND_URL=http://localhost:3000/
 GOOGLE_ALLOWED_DOMAINS=
+POSTHOG_API_KEY=
+# Optional self-hosted endpoint; defaults to https://us.i.posthog.com.
+POSTHOG_HOST=
 ```
 
 `GOOGLE_SHEET_ID` is the ID between `/d/` and `/edit` in the spreadsheet URL. Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Keep credentials out of source control.
@@ -196,7 +199,7 @@ Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://q
 - The active draft is stored in browser session storage.
 - Drafts are scoped by user and document type.
 - Totals, preview rendering, and PDF generation are client-side.
-- Analytics events are privacy-safe and must not contain credentials, client details, or quotation content.
+- Backend PostHog telemetry is optional and non-blocking. It records only parameterized API route, HTTP method, response status, duration, authentication state, and a HMAC-pseudonymized user ID—never credentials, cookies, query strings, client details, or document content.
 
 ## Current Limitations
 

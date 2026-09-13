@@ -59,7 +59,7 @@ Two-service business workspace for Door2Door Interiors:
 - Preserve `credentials: 'include'` on frontend requests.
 - CORS must allow PATCH for client, document, payment, and admin status updates.
 - Production frontend API calls use `https://quotify-i62o.onrender.com` directly; preserve `credentials: 'include'` and Render CORS. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
-- Analytics must not include credentials, client data, or quotation content.
+- PostHog API telemetry is optional, non-blocking, and excludes request bodies, cookies, query strings, credentials, client data, and quotation content. It records parameterized routes, method, status, duration, authentication state, and a HMAC-pseudonymized authenticated user ID.
 - Public share tokens are stored as hashes; public document views are read-only and sanitized. Bill and quotation shares additionally expose `paymentStatus` and the raw `payments` JSON so the share page can render the same Received/Pending summary as the app.
 - ShareLinks date columns (`created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at`) are stored in Asia/Kolkata formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`. Expired or revoked links return `410 Gone`.
 - Popup close buttons and click-away go back to the previous page they opened from (never the homepage). Clients and Employees pop-ups open from the dashboard, so their close/back returns to the dashboard.
@@ -68,7 +68,7 @@ Two-service business workspace for Door2Door Interiors:
 
 ## Configuration
 
-Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`. Optional per-tab sheet name overrides: `\`SHEET_TAB_USERS\``, `\`SHEET_TAB_QUOTATIONS\``, `\`SHEET_TAB_BILLS\``, `\`SHEET_TAB_CLIENTS\``, `\`SHEET_TAB_EMPLOYEES\``, `\`SHEET_TAB_SHARELINKS\``, `\`SHEET_TAB_BUSINESS_PROFILES\``. Backend loads `backend-go/.env` (copy from `.env.example`), but existing environment variables take precedence over `.env`.
+Backend: `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_FILE` or `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE`, `CORS_ALLOWED_ORIGINS`, `AUTH_DEBUG`, `PORT`. Optional PostHog telemetry uses backend-only `POSTHOG_API_KEY` and optional self-hosted `POSTHOG_HOST` (hosted default: `https://us.i.posthog.com`). Optional per-tab sheet name overrides: `\`SHEET_TAB_USERS\``, `\`SHEET_TAB_QUOTATIONS\``, `\`SHEET_TAB_BILLS\``, `\`SHEET_TAB_CLIENTS\``, `\`SHEET_TAB_EMPLOYEES\``, `\`SHEET_TAB_SHARELINKS\``, `\`SHEET_TAB_BUSINESS_PROFILES\``. Backend loads `backend-go/.env` (copy from `.env.example`), but existing environment variables take precedence over `.env`.
 
 Google sign-in: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL`, `OAUTH_FRONTEND_URL`, optional `GOOGLE_ALLOWED_DOMAINS`.
 

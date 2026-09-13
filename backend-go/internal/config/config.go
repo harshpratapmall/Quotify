@@ -36,6 +36,20 @@ func AuthDebug() bool {
 	return os.Getenv("AUTH_DEBUG") == "true"
 }
 
+// PostHogAPIKey enables privacy-safe server-side API telemetry when set.
+// It is intentionally optional so local development remains self-contained.
+func PostHogAPIKey() string {
+	return os.Getenv("POSTHOG_API_KEY")
+}
+
+// PostHogHost allows self-hosted PostHog deployments. The hosted endpoint is
+// used unless explicitly overridden.
+func PostHogHost() string {
+	if host := os.Getenv("POSTHOG_HOST"); host != "" {
+		return host
+	}
+	return "https://us.i.posthog.com"
+}
 
 func SheetTabUsers() string {
 	return os.Getenv("SHEET_TAB_USERS")

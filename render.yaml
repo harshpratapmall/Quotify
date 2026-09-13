@@ -32,3 +32,7 @@ services:
         value: https://quotify-net.vercel.app
       - key: AUTH_DEBUG
         value: "false"
+      - key: POSTHOG_API_KEY
+        sync: false
+      - key: POSTHOG_HOST
+        value: https://us.i.posthog.com
