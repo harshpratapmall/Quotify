@@ -182,9 +182,9 @@ textarea {
 
 .login-page {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(380px, 0.85fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(400px, 0.9fr);
   min-height: 100vh;
-  background: #fffaf3;
+  background: #f7f8ff;
 }
 
 .login-showcase {
@@ -193,24 +193,36 @@ textarea {
   flex-direction: column;
   justify-content: space-between;
   min-height: 100%;
-  padding: clamp(2rem, 5vw, 4.5rem);
+  padding: clamp(2rem, 5vw, 4.25rem);
   overflow: hidden;
   color: var(--white);
   background:
-    linear-gradient(110deg, rgba(20, 45, 63, 0.94), rgba(25, 55, 69, 0.77)),
-    url('./assets/interior-workspace-background.png') center / cover;
+    linear-gradient(104deg, rgba(7, 24, 48, 0.97) 0%, rgba(11, 42, 69, 0.9) 46%, rgba(10, 39, 64, 0.28) 100%),
+    url('./assets/business-desk-login-showcase.png') center / cover;
+}
+
+.login-showcase::before {
+  position: absolute;
+  top: 12%;
+  left: -8rem;
+  width: 19rem;
+  height: 19rem;
+  border: 1px solid rgba(118, 236, 226, 0.42);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.8rem rgba(29, 121, 187, 0.16), 0 0 5rem rgba(18, 176, 199, 0.25);
+  content: '';
 }
 
 .login-showcase::after {
   position: absolute;
-  right: -10rem;
-  bottom: -13rem;
-  width: 32rem;
-  height: 32rem;
-  border: 2rem solid rgba(255, 255, 255, 0.11);
-  border-radius: 48% 52% 45% 55%;
+  right: -8rem;
+  bottom: -11rem;
+  width: 28rem;
+  height: 28rem;
+  border: 1.5rem solid rgba(255, 186, 111, 0.2);
+  border-radius: 50%;
   content: '';
-  transform: rotate(24deg);
+  transform: rotate(18deg);
 }
 
 .login-brand {
@@ -222,9 +234,13 @@ textarea {
 }
 
 .login-brand.business-desk-brand {
-  width: min(100%, 280px);
-  height: 190px;
-  overflow: hidden;
+  width: min(100%, 300px);
+  min-height: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 40px rgba(1, 18, 35, 0.22);
 }
 
 .company-logo {
@@ -241,11 +257,11 @@ textarea {
 }
 
 .login-logo.business-desk-logo {
-  width: 280px;
-  max-width: none;
+  width: 100%;
+  max-width: 280px;
   padding: 0;
   background: transparent;
-  transform: translateY(-45px);
+  transform: none;
 }
 
 .login-brand h1,
@@ -267,20 +283,25 @@ textarea {
 }
 
 .login-copy .eyebrow {
-  color: #9df0e7;
+  color: #77f1e2;
+  text-shadow: 0 1px 12px rgba(14, 222, 201, 0.35);
 }
 
 .login-copy h2 {
   font-size: clamp(2.25rem, 4vw, 4rem);
   line-height: 1.04;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  text-shadow: 0 5px 24px rgba(2, 16, 31, 0.32);
 }
 
 .login-copy > p:last-child {
   max-width: 34rem;
   margin: 1.4rem 0 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.05rem;
   line-height: 1.7;
+  text-shadow: 0 2px 14px rgba(2, 16, 31, 0.46);
 }
 
 .login-swatches {
@@ -294,19 +315,18 @@ textarea {
   width: 4.5rem;
   height: 0.7rem;
   border-radius: 999px;
-  background: var(--gold);
+  background: #ffbe68;
+  box-shadow: 0 5px 16px rgba(255, 181, 85, 0.34);
 }
 
-.login-swatches span:nth-child(2) { background: var(--coral); }
-.login-swatches span:nth-child(3) { background: #9df0e7; }
+.login-swatches span:nth-child(2) { background: #ff7f6b; }
+.login-swatches span:nth-child(3) { background: #77f1e2; }
 
 .login-panel {
   display: grid;
   place-items: center;
   padding: 2rem;
-  background:
-    linear-gradient(150deg, rgba(255, 250, 243, 0.92), rgba(237, 246, 243, 0.86)),
-    url('./assets/interior-workspace-background.png') center / cover;
+  background: radial-gradient(circle at 80% 8%, #e0f7f3 0, transparent 27%), linear-gradient(145deg, #fffaf5 0%, #eef3ff 100%);
 }
 
 .login-card {
@@ -314,10 +334,10 @@ textarea {
   width: min(100%, 400px);
   gap: 1.1rem;
   padding: clamp(1.5rem, 4vw, 2.4rem);
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 60px rgba(21, 42, 80, 0.16);
 }
 
 .login-card h2 { color: var(--navy); }
@@ -338,7 +358,8 @@ textarea {
 .login-card input {
   width: 100%;
   padding: 0.95rem 1rem;
-  border: 1px solid var(--border);
+  border: 1px solid #cbd8ee;
+  background: #f5f8ff;
   border-radius: 16px;
   color: var(--text);
   font-weight: 400;
@@ -361,8 +382,8 @@ textarea {
 }
 
 .login-card input:focus {
-  border-color: rgba(31, 94, 255, 0.45);
-  box-shadow: 0 0 0 4px rgba(31, 94, 255, 0.12);
+  border-color: rgba(17, 123, 170, 0.7);
+  box-shadow: 0 0 0 4px rgba(29, 187, 192, 0.15);
 }
 
 .login-error {
@@ -375,7 +396,14 @@ textarea {
   font-weight: 700;
 }
 
-.login-action { width: 100%; margin-top: 0.4rem; }
+.primary-action.login-action {
+  width: 100%;
+  margin-top: 0.4rem;
+  background: linear-gradient(100deg, #15628c, #257e78);
+  box-shadow: 0 12px 24px rgba(20, 99, 140, 0.22);
+}
+
+.primary-action.login-action:hover { background: linear-gradient(100deg, #0f547b, #196e68); }
 
 .login-divider { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
 .login-divider::before, .login-divider::after { flex: 1; height: 1px; background: var(--border); content: ''; }
