@@ -5,10 +5,15 @@ import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
 import WorkspaceControls from './WorkspaceControls';
 import { APP_ROUTES } from '../config/routes';
-import { createEmployee, deleteEmployee, fetchPayrollOverview, listEmployees, updateEmployee } from '../services/employees';
+import { createEmployee, deleteEmployee, fetchPayrollOverview, fetchPayrollRegister, listEmployees, updateEmployee } from '../services/employees';
 import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
+import { downloadPayrollSummary } from '../utils/payrollPdf';
 
 const emptyEmployee = { name: '', phone: '', email: '', address: '', designation: '', notes: '', status: 'active' };
+const currentMonth = () => {
+  const values = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' }).formatToParts(new Date()).filter(({ type }) => type !== 'literal').map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}`;
+};
 
 function Employees({ navigate, pathname }) {
   const [employees, setEmployees] = useState([]);
@@ -20,6 +25,11 @@ function Employees({ navigate, pathname }) {
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [message, setMessage] = useState('');
   const [payrollOverview, setPayrollOverview] = useState(null);
+  const [payrollPeriod, setPayrollPeriod] = useState(currentMonth);
+  const [payrollRegister, setPayrollRegister] = useState(null);
+  const [payrollFilter, setPayrollFilter] = useState('all');
+  const [employeeFilter, setEmployeeFilter] = useState('all');
+  const [designationFilter, setDesignationFilter] = useState('all');
 
   const refreshEmployees = useCallback(async () => {
     const { response, data } = await listEmployees(searchTerm);
@@ -32,7 +42,7 @@ function Employees({ navigate, pathname }) {
   useEffect(() => {
     refreshEmployees().catch((error) => setMessage(error.message));
   }, [refreshEmployees]);
-  useEffect(() => { fetchPayrollOverview(new Date().toISOString().slice(0, 7)).then(({ response, data }) => response.ok && setPayrollOverview(data)).catch(() => {}); }, []);
+  useEffect(() => { fetchPayrollOverview(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollOverview(data); else setMessage(data?.error || 'Unable to load payroll summary.'); }).catch(() => setMessage('Unable to load payroll summary.')); fetchPayrollRegister(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollRegister(data); else setMessage(data?.error || 'Unable to load payroll register.'); }).catch(() => setMessage('Unable to load payroll register.')); }, [payrollPeriod]);
 
   const visibleEmployees = showInactive ? employees : employees.filter((employee) => employee.status !== 'inactive');
 
@@ -105,6 +115,8 @@ function Employees({ navigate, pathname }) {
       <SaveStatus message={message} />
 
       <section className="employee-kpi-grid" aria-label="Current month payroll summary"><article><span>Active team</span><strong>{payrollOverview?.activeHeadcount ?? '—'}</strong></article><article><span>Salary due</span><strong>Rs. {Number(payrollOverview?.totalDue || 0).toLocaleString('en-IN')}</strong></article><article><span>Paid</span><strong>Rs. {Number(payrollOverview?.paid || 0).toLocaleString('en-IN')}</strong></article><article><span>Balance</span><strong>Rs. {Number(payrollOverview?.balance || 0).toLocaleString('en-IN')}</strong></article></section>
+
+      <section className="admin-card"><div className="section-heading"><div><p className="eyebrow">Monthly payroll</p><h2>Payroll register</h2></div><div className="saved-actions"><label>Month <input type="month" value={payrollPeriod} onChange={(event) => setPayrollPeriod(event.target.value)} /></label><select aria-label="Filter payroll register" value={payrollFilter} onChange={(event) => setPayrollFilter(event.target.value)}><option value="all">All payment statuses</option><option value="unpaid">Unpaid</option><option value="partially_paid">Partially paid</option><option value="paid">Paid</option><option value="not_started">Not started</option></select><select aria-label="Filter employee status" value={employeeFilter} onChange={(event) => setEmployeeFilter(event.target.value)}><option value="all">All employees</option><option value="active">Active</option><option value="inactive">Inactive</option></select><select aria-label="Filter designation" value={designationFilter} onChange={(event) => setDesignationFilter(event.target.value)}><option value="all">All designations</option>{[...new Set((payrollRegister?.employees || []).map((row) => row.employee.designation).filter(Boolean))].map((designation) => <option key={designation} value={designation}>{designation}</option>)}</select><button className="secondary-action compact-action" onClick={() => payrollRegister && downloadPayrollSummary({ ...payrollRegister, employees: payrollRegister.employees.filter((row) => (payrollFilter === 'all' || row.status === payrollFilter) && (employeeFilter === 'all' || row.employee.status === employeeFilter) && (designationFilter === 'all' || row.employee.designation === designationFilter)) })} disabled={!payrollRegister}>Download summary</button></div></div><div className="payroll-entry-list">{(payrollRegister?.employees || []).filter((row) => (payrollFilter === 'all' || row.status === payrollFilter) && (employeeFilter === 'all' || row.employee.status === employeeFilter) && (designationFilter === 'all' || row.employee.designation === designationFilter)).map((row) => <article key={row.employee.id}><div><strong>{row.employee.name}</strong><span>{row.employee.designation || 'Employee'} · {row.status.replaceAll('_', ' ')}</span></div><b>Rs. {Number(row.balance || 0).toLocaleString('en-IN')}</b><IconButton icon="open" className="color-link" label={`Open ${row.employee.name} payroll`} onClick={() => navigate(APP_ROUTES.employeeProfile(row.employee.id))} /></article>)}</div>{!(payrollRegister?.employees || []).length && <p className="section-text">No payroll records for this month.</p>}</section>
 
       <section className="admin-card">
         <div className="section-heading">

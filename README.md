@@ -35,10 +35,15 @@ The frontend calls the Render API directly in production at `https://quotify-i62
 | PUT | `/api/v1/employees/:id` | Update an employee |
 | DELETE | `/api/v1/employees/:id` | Delete an employee owned by the current user |
 | GET | `/api/v1/employees/payroll` | Current owner's monthly payroll KPI summary |
+| GET | `/api/v1/employees/payroll/register` | Owner-scoped employee payroll register for a month |
+| GET | `/api/v1/employees/payroll/export` | Register data used for a manager download |
 | GET | `/api/v1/employees/:id/payroll` | Employee payroll history and entries |
 | POST | `/api/v1/employees/:id/payroll` | Create or update one employee salary month |
 | POST | `/api/v1/employees/:id/payroll/entries` | Add a payment, advance, credit, or deduction |
 | PUT/DELETE | `/api/v1/employees/:id/payroll/entries/:entryId` | Edit or delete an employee payroll entry |
+| POST | `/api/v1/employees/:id/payroll/:period/finalize` | Lock a salary month against edits |
+| POST | `/api/v1/employees/:id/payroll/:period/reopen` | Reopen a finalized salary month |
+| GET | `/api/v1/employees/:id/payroll/:period/payslip` | Owner-scoped payslip data for browser PDF download |
 | PATCH | `/api/v1/quotations/:id/status` | Update quotation lifecycle or payment status and record payments |
 | POST | `/api/v1/quotations/:id/share` | Create a public quotation link |
 | DELETE | `/api/v1/quotations/:id/share` | Revoke a public quotation link |
@@ -114,7 +119,7 @@ Metadata follows the existing A:Q columns:
 The `Clients` tab uses: `client_id, owner_id, name, phone, email, address, notes, created_at, updated_at, status`.
 The `Employee` tab uses: `employee_id, owner_id, name, phone, email, address, designation, notes, status, created_at, updated_at`. Like clients, employee records are owner-scoped and read from `Employee!A2:K`, but they are never tagged to quotations or bills. New employees default to `active`; updates accept only `active` or `inactive`.
 
-Payroll uses two additional tabs: `EmployeePayroll` with `payroll_id, owner_id, employee_id, period, base_salary, created_at, updated_at`, and `EmployeePayrollEntries` with `entry_id, owner_id, employee_id, period, type, amount, entry_date, label, note, recovery_period, created_at, updated_at`. A salary month is a `YYYY-MM` calendar month. The app derives due, paid, balance, and payment status from salary and entries; advances are recovered in their selected month and carry forward when salary is insufficient.
+Payroll uses `EmployeePayroll` with `payroll_id, owner_id, employee_id, period, base_salary, created_at, updated_at`, and `EmployeePayrollEntries` with `entry_id, owner_id, employee_id, period, type, amount, entry_date, label, note, recovery_period, created_at, updated_at`. Create `EmployeePayrollStates` with `state_id, owner_id, employee_id, period, state, locked_at, locked_by, updated_at` and `EmployeePayrollActivity` with `activity_id, owner_id, employee_id, period, action, actor_id, occurred_at, detail, entity_type, entity_id`. A salary month is a `YYYY-MM` calendar month. The app derives due, paid, balance, and payment status from salary and entries; finalized months are read-only until reopened. Employees with payroll history must be made inactive rather than deleted.
 The `ShareLinks` tab uses: `share_id, owner_id, document_type, document_id, token_hash, created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at, view_count`. All five `ShareLinks` date columns are stored as Asia/Kolkata timestamps formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`, and expired or revoked links return `410 Gone`.
 Keep the existing `template_id` column positions for compatibility. This checkout does not implement template routes, repositories, or UI, and does not require a `Templates` tab.
 

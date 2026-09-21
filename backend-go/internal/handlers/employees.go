@@ -116,6 +116,10 @@ func UpdateEmployee(c *gin.Context) {
 		unavailable(c, "Unable to update employee.")
 		return
 	}
+	if existing.Status != employee.Status {
+		user, _, _ := authenticatedUser(c)
+		_ = sheets.SaveEmployeePayrollActivity(c.Request.Context(), sheets.EmployeePayrollActivity{ID: sheets.NewPayrollID("PAC-"), OwnerID: ownerID, EmployeeID: employee.ID, Action: "employee_status_changed", ActorID: user.ID, OccurredAt: payrollStamp(), Detail: employee.Status, EntityType: "employee", EntityID: employee.ID})
+	}
 	c.JSON(http.StatusOK, employee)
 }
 
@@ -132,6 +136,20 @@ func DeleteEmployee(c *gin.Context) {
 	}
 	if employee.ID == "" {
 		notFound(c, "Employee not found.")
+		return
+	}
+	payroll, err := sheets.ListEmployeePayroll(c.Request.Context(), ownerID, employee.ID)
+	if err != nil {
+		unavailable(c, "Unable to check employee payroll history.")
+		return
+	}
+	entries, err := sheets.ListEmployeePayrollEntries(c.Request.Context(), ownerID, employee.ID)
+	if err != nil {
+		unavailable(c, "Unable to check employee payroll history.")
+		return
+	}
+	if len(payroll) > 0 || len(entries) > 0 {
+		conflict(c, "Employees with payroll history cannot be deleted. Mark the employee inactive to retain the audit trail.")
 		return
 	}
 	if err := sheets.DeleteEmployee(c.Request.Context(), employee.Row); err != nil {

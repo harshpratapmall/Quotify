@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import Employees from './Employees';
-import { deleteEmployee, listEmployees } from '../services/employees';
+import { deleteEmployee, fetchPayrollOverview, fetchPayrollRegister, listEmployees } from '../services/employees';
 import { APP_ROUTES } from '../config/routes';
 
 jest.mock('../services/employees', () => ({
@@ -8,10 +8,17 @@ jest.mock('../services/employees', () => ({
   createEmployee: jest.fn(),
   updateEmployee: jest.fn(),
   deleteEmployee: jest.fn(),
+  fetchPayrollOverview: jest.fn(() => Promise.resolve({ response: { ok: true }, data: {} })),
+  fetchPayrollRegister: jest.fn(() => Promise.resolve({ response: { ok: true }, data: { employees: [] } })),
 }));
 
 const activeEmployee = { id: 'EM-1', name: 'Ravi', phone: '9876543210', email: '', address: 'Pune', designation: 'Carpenter', notes: '', status: 'active' };
 const inactiveEmployee = { id: 'EM-2', name: 'Sunil', phone: '', email: 'sunil@example.com', address: '', designation: 'Painter', notes: '', status: 'inactive' };
+
+beforeEach(() => {
+  fetchPayrollOverview.mockResolvedValue({ response: { ok: true }, data: {} });
+  fetchPayrollRegister.mockResolvedValue({ response: { ok: true }, data: { employees: [] } });
+});
 
 test('loads and renders the employee directory', async () => {
   listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee] });

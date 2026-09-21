@@ -5,12 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 )
-
-const employeeRange = "Employee!A:K"
 
 type Employee struct {
 	ID          string `json:"id"`
@@ -28,7 +25,7 @@ type Employee struct {
 }
 
 func ListEmployees(ctx context.Context, ownerID string) ([]Employee, error) {
-	values, err := readValues(ctx, "Employee!A2:K")
+	values, err := readTable(ctx, employeeTable)
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +53,15 @@ func GetEmployee(ctx context.Context, ownerID, id string) (Employee, error) {
 }
 
 func SaveEmployee(ctx context.Context, employee Employee) error {
-	return writeValues(ctx, http.MethodPost, employeeRange+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{employeeToRow(employee)})
+	return appendTable(ctx, employeeTable, [][]string{employeeToRow(employee)})
 }
 
 func UpdateEmployee(ctx context.Context, employee Employee) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("Employee!A%d:K%d?valueInputOption=RAW", employee.Row, employee.Row), [][]string{employeeToRow(employee)})
+	return updateTableRow(ctx, employeeTable, employee.Row, employeeToRow(employee))
 }
 
 func DeleteEmployee(ctx context.Context, row int) error {
-	return deleteDocumentRow(ctx, row, "Employee")
+	return deleteTableRow(ctx, employeeTable, row)
 }
 
 func NewEmployeeID() string {

@@ -30,7 +30,11 @@ var (
 
 	clientTable = Table{Name: tableName("Clients", config.SheetTabClients()), Columns: clientColumns}
 
-	employeeTable = Table{Name: tableName("Employee", config.SheetTabEmployees()), Columns: employeeColumns}
+	employeeTable                = Table{Name: tableName("Employee", config.SheetTabEmployees()), Columns: employeeColumns}
+	employeePayrollTable         = Table{Name: tableName("EmployeePayroll", config.SheetTabEmployeePayroll()), Columns: employeePayrollColumns}
+	employeePayrollEntryTable    = Table{Name: tableName("EmployeePayrollEntries", config.SheetTabEmployeePayrollEntries()), Columns: employeePayrollEntryColumns}
+	employeePayrollStateTable    = Table{Name: tableName("EmployeePayrollStates", config.SheetTabEmployeePayrollStates()), Columns: employeePayrollStateColumns}
+	employeePayrollActivityTable = Table{Name: tableName("EmployeePayrollActivity", config.SheetTabEmployeePayrollActivity()), Columns: employeePayrollActivityColumns}
 
 	shareLinkTable = Table{Name: tableName("ShareLinks", config.SheetTabShareLinks()), Columns: shareLinkColumns}
 
@@ -46,6 +50,10 @@ var billColumns = []string{"bill_id", "created_at", "updated_at", "owner", "clie
 var clientColumns = []string{"client_id", "owner_id", "name", "phone", "email", "address", "notes", "created_at", "updated_at", "status"}
 
 var employeeColumns = []string{"employee_id", "owner_id", "name", "phone", "email", "address", "designation", "notes", "status", "created_at", "updated_at"}
+var employeePayrollColumns = []string{"payroll_id", "owner_id", "employee_id", "period", "base_salary", "created_at", "updated_at"}
+var employeePayrollEntryColumns = []string{"entry_id", "owner_id", "employee_id", "period", "type", "amount", "entry_date", "label", "note", "recovery_period", "created_at", "updated_at"}
+var employeePayrollStateColumns = []string{"state_id", "owner_id", "employee_id", "period", "state", "locked_at", "locked_by", "updated_at"}
+var employeePayrollActivityColumns = []string{"activity_id", "owner_id", "employee_id", "period", "action", "actor_id", "occurred_at", "detail", "entity_type", "entity_id"}
 
 var shareLinkColumns = []string{"share_id", "owner_id", "document_type", "document_id", "token_hash", "created_at", "expires_at", "revoked_at", "first_viewed_at", "last_viewed_at", "view_count"}
 

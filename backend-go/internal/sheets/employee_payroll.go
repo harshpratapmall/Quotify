@@ -3,14 +3,10 @@ package sheets
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
-
-const employeePayrollRange = "EmployeePayroll!A:G"
-const employeePayrollEntryRange = "EmployeePayrollEntries!A:L"
 
 type EmployeePayroll struct {
 	ID         string  `json:"id"`
@@ -38,8 +34,32 @@ type EmployeePayrollEntry struct {
 	Row            int     `json:"-"`
 }
 
+type EmployeePayrollState struct {
+	ID         string `json:"id"`
+	OwnerID    string `json:"ownerId"`
+	EmployeeID string `json:"employeeId"`
+	Period     string `json:"period"`
+	State      string `json:"state"`
+	LockedAt   string `json:"lockedAt"`
+	LockedBy   string `json:"lockedBy"`
+	UpdatedAt  string `json:"updatedAt"`
+	Row        int    `json:"-"`
+}
+type EmployeePayrollActivity struct {
+	ID         string `json:"id"`
+	OwnerID    string `json:"ownerId"`
+	EmployeeID string `json:"employeeId"`
+	Period     string `json:"period"`
+	Action     string `json:"action"`
+	ActorID    string `json:"actorId"`
+	OccurredAt string `json:"occurredAt"`
+	Detail     string `json:"detail"`
+	EntityType string `json:"entityType"`
+	EntityID   string `json:"entityId"`
+}
+
 func ListEmployeePayroll(ctx context.Context, owner, employeeID string) ([]EmployeePayroll, error) {
-	values, err := readValues(ctx, "EmployeePayroll!A2:G")
+	values, err := readTable(ctx, employeePayrollTable)
 	if err != nil {
 		return nil, err
 	}
@@ -65,14 +85,14 @@ func GetEmployeePayrollRecord(ctx context.Context, owner, employeeID, period str
 	return EmployeePayroll{}, nil
 }
 func SaveEmployeePayroll(ctx context.Context, p EmployeePayroll) error {
-	return writeValues(ctx, http.MethodPost, employeePayrollRange+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{payrollToRow(p)})
+	return appendTable(ctx, employeePayrollTable, [][]string{payrollToRow(p)})
 }
 func UpdateEmployeePayroll(ctx context.Context, p EmployeePayroll) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("EmployeePayroll!A%d:G%d?valueInputOption=RAW", p.Row, p.Row), [][]string{payrollToRow(p)})
+	return updateTableRow(ctx, employeePayrollTable, p.Row, payrollToRow(p))
 }
 
 func ListEmployeePayrollEntries(ctx context.Context, owner, employeeID string) ([]EmployeePayrollEntry, error) {
-	values, err := readValues(ctx, "EmployeePayrollEntries!A2:L")
+	values, err := readTable(ctx, employeePayrollEntryTable)
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +118,111 @@ func GetEmployeePayrollEntry(ctx context.Context, owner, employeeID, id string) 
 	return EmployeePayrollEntry{}, nil
 }
 func SaveEmployeePayrollEntry(ctx context.Context, e EmployeePayrollEntry) error {
-	return writeValues(ctx, http.MethodPost, employeePayrollEntryRange+":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", [][]string{payrollEntryToRow(e)})
+	return appendTable(ctx, employeePayrollEntryTable, [][]string{payrollEntryToRow(e)})
 }
 func UpdateEmployeePayrollEntry(ctx context.Context, e EmployeePayrollEntry) error {
-	return writeValues(ctx, http.MethodPut, fmt.Sprintf("EmployeePayrollEntries!A%d:L%d?valueInputOption=RAW", e.Row, e.Row), [][]string{payrollEntryToRow(e)})
+	return updateTableRow(ctx, employeePayrollEntryTable, e.Row, payrollEntryToRow(e))
 }
 func DeleteEmployeePayrollEntry(ctx context.Context, row int) error {
-	return deleteDocumentRow(ctx, row, "EmployeePayrollEntries")
+	return deleteTableRow(ctx, employeePayrollEntryTable, row)
+}
+
+func ListEmployeePayrollStates(ctx context.Context, owner, employeeID string) ([]EmployeePayrollState, error) {
+	rows, err := readTable(ctx, employeePayrollStateTable)
+	if err != nil {
+		return nil, err
+	}
+	out := []EmployeePayrollState{}
+	for i, r := range rows {
+		c := employeePayrollStateTable.cells(r, true)
+		s := EmployeePayrollState{ID: c.get("state_id"), OwnerID: c.get("owner_id"), EmployeeID: c.get("employee_id"), Period: c.get("period"), State: c.get("state"), LockedAt: c.get("locked_at"), LockedBy: c.get("locked_by"), UpdatedAt: c.get("updated_at"), Row: i + 2}
+		if s.ID != "" && s.OwnerID == owner && (employeeID == "" || s.EmployeeID == employeeID) {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+func GetEmployeePayrollState(ctx context.Context, owner, employeeID, period string) (EmployeePayrollState, error) {
+	states, err := ListEmployeePayrollStates(ctx, owner, employeeID)
+	if err != nil {
+		return EmployeePayrollState{}, err
+	}
+	for _, s := range states {
+		if s.Period == period {
+			return s, nil
+		}
+	}
+	return EmployeePayrollState{}, nil
+}
+func SaveEmployeePayrollState(ctx context.Context, s EmployeePayrollState) error {
+	row := buildRow(employeePayrollStateTable, func(k string) string {
+		switch k {
+		case "state_id":
+			return s.ID
+		case "owner_id":
+			return s.OwnerID
+		case "employee_id":
+			return s.EmployeeID
+		case "period":
+			return s.Period
+		case "state":
+			return s.State
+		case "locked_at":
+			return s.LockedAt
+		case "locked_by":
+			return s.LockedBy
+		case "updated_at":
+			return s.UpdatedAt
+		}
+		return ""
+	})
+	if s.Row > 0 {
+		return updateTableRow(ctx, employeePayrollStateTable, s.Row, row)
+	}
+	return appendTable(ctx, employeePayrollStateTable, [][]string{row})
+}
+func ListEmployeePayrollActivity(ctx context.Context, owner, employeeID string) ([]EmployeePayrollActivity, error) {
+	rows, err := readTable(ctx, employeePayrollActivityTable)
+	if err != nil {
+		return nil, err
+	}
+	out := []EmployeePayrollActivity{}
+	for _, r := range rows {
+		c := employeePayrollActivityTable.cells(r, true)
+		a := EmployeePayrollActivity{ID: c.get("activity_id"), OwnerID: c.get("owner_id"), EmployeeID: c.get("employee_id"), Period: c.get("period"), Action: c.get("action"), ActorID: c.get("actor_id"), OccurredAt: c.get("occurred_at"), Detail: c.get("detail"), EntityType: c.get("entity_type"), EntityID: c.get("entity_id")}
+		if a.ID != "" && a.OwnerID == owner && (employeeID == "" || a.EmployeeID == employeeID) {
+			out = append(out, a)
+		}
+	}
+	return out, nil
+}
+func SaveEmployeePayrollActivity(ctx context.Context, a EmployeePayrollActivity) error {
+	row := buildRow(employeePayrollActivityTable, func(k string) string {
+		switch k {
+		case "activity_id":
+			return a.ID
+		case "owner_id":
+			return a.OwnerID
+		case "employee_id":
+			return a.EmployeeID
+		case "period":
+			return a.Period
+		case "action":
+			return a.Action
+		case "actor_id":
+			return a.ActorID
+		case "occurred_at":
+			return a.OccurredAt
+		case "detail":
+			return a.Detail
+		case "entity_type":
+			return a.EntityType
+		case "entity_id":
+			return a.EntityID
+		}
+		return ""
+	})
+	return appendTable(ctx, employeePayrollActivityTable, [][]string{row})
 }
 
 func payrollFromRow(r []string, row int) EmployeePayroll {
