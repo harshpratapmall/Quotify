@@ -30,11 +30,13 @@ var (
 
 	clientTable = Table{Name: tableName("Clients", config.SheetTabClients()), Columns: clientColumns}
 
-	employeeTable                = Table{Name: tableName("Employee", config.SheetTabEmployees()), Columns: employeeColumns}
-	employeePayrollTable         = Table{Name: tableName("EmployeePayroll", config.SheetTabEmployeePayroll()), Columns: employeePayrollColumns}
-	employeePayrollEntryTable    = Table{Name: tableName("EmployeePayrollEntries", config.SheetTabEmployeePayrollEntries()), Columns: employeePayrollEntryColumns}
-	employeePayrollStateTable    = Table{Name: tableName("EmployeePayrollStates", config.SheetTabEmployeePayrollStates()), Columns: employeePayrollStateColumns}
-	employeePayrollActivityTable = Table{Name: tableName("EmployeePayrollActivity", config.SheetTabEmployeePayrollActivity()), Columns: employeePayrollActivityColumns}
+	employeeTable                   = Table{Name: tableName("Employee", config.SheetTabEmployees()), Columns: employeeColumns}
+	employeePayrollTable            = Table{Name: tableName("EmployeePayroll", config.SheetTabEmployeePayroll()), Columns: employeePayrollColumns}
+	employeePayrollEntryTable       = Table{Name: tableName("EmployeePayrollEntries", config.SheetTabEmployeePayrollEntries()), Columns: employeePayrollEntryColumns}
+	employeePayrollStateTable       = Table{Name: tableName("EmployeePayrollStates", config.SheetTabEmployeePayrollStates()), Columns: employeePayrollStateColumns}
+	employeePayrollActivityTable    = Table{Name: tableName("EmployeePayrollActivity", config.SheetTabEmployeePayrollActivity()), Columns: employeePayrollActivityColumns}
+	employeeAttendanceTable         = Table{Name: tableName("EmployeeAttendance", config.SheetTabEmployeeAttendance()), Columns: employeeAttendanceColumns}
+	employeeAttendanceActivityTable = Table{Name: tableName("EmployeeAttendanceActivity", config.SheetTabEmployeeAttendanceActivity()), Columns: employeeAttendanceActivityColumns}
 
 	shareLinkTable = Table{Name: tableName("ShareLinks", config.SheetTabShareLinks()), Columns: shareLinkColumns}
 
@@ -54,6 +56,8 @@ var employeePayrollColumns = []string{"payroll_id", "owner_id", "employee_id", "
 var employeePayrollEntryColumns = []string{"entry_id", "owner_id", "employee_id", "period", "type", "amount", "entry_date", "label", "note", "recovery_period", "created_at", "updated_at"}
 var employeePayrollStateColumns = []string{"state_id", "owner_id", "employee_id", "period", "state", "locked_at", "locked_by", "updated_at"}
 var employeePayrollActivityColumns = []string{"activity_id", "owner_id", "employee_id", "period", "action", "actor_id", "occurred_at", "detail", "entity_type", "entity_id"}
+var employeeAttendanceColumns = []string{"attendance_id", "owner_id", "employee_id", "attendance_date", "status", "created_at", "updated_at"}
+var employeeAttendanceActivityColumns = []string{"activity_id", "owner_id", "attendance_id", "employee_id", "attendance_date", "action", "previous_status", "new_status", "actor_id", "occurred_at"}
 
 var shareLinkColumns = []string{"share_id", "owner_id", "document_type", "document_id", "token_hash", "created_at", "expires_at", "revoked_at", "first_viewed_at", "last_viewed_at", "view_count"}
 

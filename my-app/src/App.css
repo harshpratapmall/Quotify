@@ -727,20 +727,22 @@ textarea {
   }
 
   .dashboard-sidebar {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
-    padding: 1rem 0;
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.85rem 0;
     border-right: 0;
     border-bottom: 1px solid rgba(16, 37, 66, 0.1);
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+
+  .dashboard-sidebar::-webkit-scrollbar { display: none; }
 
   .dashboard-sidebar .sidebar-label,
   .dashboard-sidebar .sidebar-divider,
-  .dashboard-sidebar .sidebar-link:first-of-type { display: none; }
+  .dashboard-sidebar .sidebar-create { display: none; }
 
-  .sidebar-link,
-  .sidebar-create { margin: 0; font-size: 0.84rem; }
+  .sidebar-link { width: auto; min-width: max-content; margin: 0; padding: 0.65rem 0.75rem; font-size: 0.8rem; }
   .dashboard-main { padding: 1.5rem 0 2.5rem; }
   .document-hero-card { border-radius: 24px; }
   .document-library-summary { grid-template-columns: 1fr; }
@@ -1662,6 +1664,11 @@ textarea {
     justify-self: center;
   }
 
+  .topbar-user { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar-actions { gap: .35rem; }
+  .topbar-icon-action { width: 42px; height: 42px; }
+  .topbar-admin-action { display: none; }
+
   .brand-mark {
     width: 56px;
     height: 56px;
@@ -1705,6 +1712,12 @@ textarea {
   .document-total span {
     min-width: 0;
   }
+
+  .document-hero-card { padding: 1.5rem; }
+  .document-hero-card h2 { font-size: 2rem; line-height: 1.05; }
+  .document-hero-card p:not(.eyebrow) { font-size: .92rem; line-height: 1.55; }
+  .document-hero-actions { display: grid; grid-template-columns: 1fr; margin-top: 1.4rem; }
+  .document-hero-actions .primary-action, .document-hero-actions .bill-primary-action { width: 100%; }
 
   .preview-export-actions {
     flex-direction: column;
@@ -1884,6 +1897,11 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
 }
 
 /* Employee payroll workspace */
+.employee-workspace-tabs { display: flex; gap: .35rem; width: fit-content; margin: 1rem 0; padding: .3rem; border: 1px solid #d8e5df; border-radius: 12px; background: #f3f7f5; }
+.employee-workspace-tabs button { min-height: 38px; padding: .45rem .85rem; border: 0; border-radius: 9px; color: var(--muted); background: transparent; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.employee-workspace-tabs button.active { color: #fff; background: var(--teal); box-shadow: 0 4px 10px rgba(39, 94, 87, .2); }
+.employee-directory-card { margin-top: 0; }
+.employee-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
 .employee-kpi-grid, .payroll-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; margin: 1rem 0; }
 .employee-kpi-grid article, .payroll-summary-grid article { padding: 1rem; border: 1px solid #d5e2dc; border-radius: 14px; background: #fff; }
 .employee-kpi-grid span, .payroll-summary-grid span { display: block; color: var(--muted); font-size: 0.78rem; }
@@ -1920,6 +1938,29 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
 .payroll-entry-balance b { margin-top: .15rem; color: var(--navy); font-size: 1rem; }
 .payroll-status { justify-self: start; display: inline-flex; align-items: center; width: fit-content; padding: .34rem .6rem; border-radius: 999px; background: #f1f4f2; color: var(--muted); font-size: .74rem; font-weight: 700; text-transform: capitalize; }
 .payroll-status.unpaid { color: #a3443b; background: #fcece8; }.payroll-status.partially_paid { color: #8d611e; background: #fff2dc; }.payroll-status.paid { color: #226048; background: #e7f4ec; }.payroll-status.overpaid { color: #23407f; background: #e9efff; }
+.attendance-register-card { margin-top: 0; }
+.attendance-register-heading { align-items: flex-end; }
+.attendance-period-controls { display: flex; gap: .65rem; }
+.attendance-month { display: grid; gap: .35rem; min-width: 160px; color: var(--navy); font-size: .75rem; font-weight: 700; }
+.attendance-date { display: none; }
+.attendance-month input { min-height: 42px; padding: .55rem .7rem; border: 1px solid #c6d8d2; border-radius: 9px; color: var(--navy); background: #fff; font: inherit; }
+.attendance-legend { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1rem; }
+.attendance-status { display: inline-flex; align-items: center; width: fit-content; padding: .3rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; text-transform: capitalize; white-space: nowrap; }
+.attendance-status.present { color: #226048; background: #e7f4ec; }.attendance-status.absent, .attendance-status.unpaid_leave { color: #a3443b; background: #fcece8; }.attendance-status.half_day { color: #8d611e; background: #fff2dc; }.attendance-status.paid_leave { color: #23407f; background: #e9efff; }
+.attendance-register-scroll { overflow-x: auto; border: 1px solid #dbe7e2; border-radius: 14px; background: #fff; }
+.attendance-register-table { min-width: 2700px; }
+.attendance-register-head, .attendance-register-row { display: grid; grid-template-columns: 210px repeat(31, 80px); }
+.attendance-register-head { position: sticky; top: 0; z-index: 2; border-bottom: 1px solid #dbe7e2; color: var(--muted); background: #f3f7f5; font-size: .7rem; font-weight: 700; }
+.attendance-register-head strong, .attendance-register-head span { display: grid; place-items: center; min-height: 45px; padding: .35rem; border-right: 1px solid #e7eeeb; text-align: center; }
+.attendance-register-head strong { position: sticky; left: 0; z-index: 3; justify-content: start; color: var(--navy); background: #f3f7f5; text-align: left; }
+.attendance-register-row { min-height: 76px; border-bottom: 1px solid #e7eeeb; }
+.attendance-register-row:last-child { border-bottom: 0; }
+.attendance-employee { position: sticky; left: 0; z-index: 1; display: grid; align-content: center; gap: .2rem; padding: .65rem .8rem; border-right: 1px solid #e7eeeb; background: #fff; }
+.attendance-employee strong { color: var(--navy); font-size: .86rem; }.attendance-employee span { color: var(--muted); font-size: .72rem; }
+.attendance-day { display: grid; place-items: center; padding: .35rem; border-right: 1px solid #edf2ef; }
+.attendance-day select { width: 100%; min-height: 34px; padding: .2rem; border: 1px solid #c6d8d2; border-radius: 7px; color: var(--navy); background: #fff; font: inherit; font-size: .68rem; }
+.attendance-day .attendance-status, .attendance-empty { justify-content: center; width: 100%; min-height: 30px; overflow: hidden; font-size: .62rem; text-align: center; white-space: normal; }
+.attendance-empty { display: grid; place-items: center; color: #a3afb9; }
 @media (max-width: 760px) { .employee-kpi-grid, .payroll-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.employee-payroll-layout { grid-template-columns: 1fr; }.payroll-entry-form { grid-template-columns: 1fr 1fr; }.payroll-toolbar { align-items: stretch; flex-direction: column; }.employee-profile-header { flex-direction: column; }.payroll-register-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }.payroll-entry-list article { grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; }.payroll-entry-balance { text-align: left; }.payroll-entry-list .icon-button { grid-column: 2; grid-row: 1 / span 2; }.payroll-status { grid-column: 1; } }
 
 @media (max-width: 640px) {
@@ -1927,4 +1968,15 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
   .payroll-register-heading { align-items: stretch; }
   .payroll-download { width: 100%; }
   .payroll-register-filters { grid-template-columns: 1fr; }
+  .employee-workspace-tabs { width: 100%; }
+  .employee-workspace-tabs button { flex: 1; padding-inline: .45rem; }
+  .employee-row-actions { justify-content: flex-start; }
+  .attendance-register-heading { align-items: stretch; }
+  .attendance-period-controls { width: 100%; flex-direction: column; }
+  .attendance-month { width: 100%; }
+  .attendance-date { display: grid; gap: .35rem; color: var(--navy); font-size: .75rem; font-weight: 700; }
+  .attendance-date input { min-height: 42px; padding: .55rem .7rem; border: 1px solid #c6d8d2; border-radius: 9px; color: var(--navy); background: #fff; font: inherit; }
+  .attendance-register-table { min-width: 100%; }
+  .attendance-register-head, .attendance-register-row { grid-template-columns: minmax(0, 1fr) 128px; }
+  .attendance-register-head span:not(.selected-date), .attendance-day:not(.selected-date) { display: none; }
 }

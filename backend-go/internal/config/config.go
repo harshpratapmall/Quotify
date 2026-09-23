@@ -77,6 +77,10 @@ func SheetTabEmployeePayrollStates() string  { return os.Getenv("SHEET_TAB_EMPLO
 func SheetTabEmployeePayrollActivity() string {
 	return os.Getenv("SHEET_TAB_EMPLOYEE_PAYROLL_ACTIVITY")
 }
+func SheetTabEmployeeAttendance() string { return os.Getenv("SHEET_TAB_EMPLOYEE_ATTENDANCE") }
+func SheetTabEmployeeAttendanceActivity() string {
+	return os.Getenv("SHEET_TAB_EMPLOYEE_ATTENDANCE_ACTIVITY")
+}
 
 func SheetTabShareLinks() string {
 	return os.Getenv("SHEET_TAB_SHARELINKS")

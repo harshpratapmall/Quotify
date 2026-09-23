@@ -12,6 +12,9 @@ export const deleteEmployee = (id) => apiRequest('DELETE', employeePath(id));
 
 export const fetchPayrollOverview = (period) => requestJson(`/api/v1/employees/payroll?period=${encodeURIComponent(period)}`);
 export const fetchPayrollRegister = (period) => requestJson(`/api/v1/employees/payroll/register?period=${encodeURIComponent(period)}`);
+export const fetchAttendanceRegister = (period) => requestJson(`/api/v1/employees/attendance?period=${encodeURIComponent(period)}`);
+export const saveAttendance = (id, date, status) => apiRequest('PUT', `${employeePath(id)}/attendance/${encodeURIComponent(date)}`, { status });
+export const clearAttendance = (id, date) => apiRequest('DELETE', `${employeePath(id)}/attendance/${encodeURIComponent(date)}`);
 export const fetchEmployeePayroll = (id) => requestJson(`${employeePath(id)}/payroll`);
 export const saveEmployeePayroll = (id, payroll) => apiRequest('POST', `${employeePath(id)}/payroll`, payroll);
 export const createPayrollEntry = (id, entry) => apiRequest('POST', `${employeePath(id)}/payroll/entries`, entry);

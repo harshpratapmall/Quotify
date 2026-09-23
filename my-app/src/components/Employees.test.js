@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import Employees from './Employees';
-import { deleteEmployee, fetchPayrollOverview, fetchPayrollRegister, listEmployees } from '../services/employees';
+import { deleteEmployee, fetchAttendanceRegister, fetchPayrollOverview, fetchPayrollRegister, listEmployees } from '../services/employees';
 import { APP_ROUTES } from '../config/routes';
 
 jest.mock('../services/employees', () => ({
@@ -10,6 +10,9 @@ jest.mock('../services/employees', () => ({
   deleteEmployee: jest.fn(),
   fetchPayrollOverview: jest.fn(() => Promise.resolve({ response: { ok: true }, data: {} })),
   fetchPayrollRegister: jest.fn(() => Promise.resolve({ response: { ok: true }, data: { employees: [] } })),
+  fetchAttendanceRegister: jest.fn(() => Promise.resolve({ response: { ok: true }, data: { employees: [] } })),
+  saveAttendance: jest.fn(),
+  clearAttendance: jest.fn(),
 }));
 
 const activeEmployee = { id: 'EM-1', name: 'Ravi', phone: '9876543210', email: '', address: 'Pune', designation: 'Carpenter', notes: '', status: 'active' };
@@ -18,6 +21,7 @@ const inactiveEmployee = { id: 'EM-2', name: 'Sunil', phone: '', email: 'sunil@e
 beforeEach(() => {
   fetchPayrollOverview.mockResolvedValue({ response: { ok: true }, data: {} });
   fetchPayrollRegister.mockResolvedValue({ response: { ok: true }, data: { employees: [] } });
+  fetchAttendanceRegister.mockResolvedValue({ response: { ok: true }, data: { employees: [] } });
 });
 
 test('loads and renders the employee directory', async () => {
@@ -73,4 +77,15 @@ test('shows no contact shortcuts without a phone', async () => {
   expect(await screen.findByText('Sunil')).toBeTruthy();
   expect(screen.queryByRole('link', { name: /whatsapp sunil/i })).toBeNull();
   expect(screen.queryByRole('link', { name: /call sunil/i })).toBeNull();
+});
+
+test('opens the attendance register from its workspace tab', async () => {
+  listEmployees.mockResolvedValue({ response: { ok: true }, data: [activeEmployee] });
+  fetchAttendanceRegister.mockResolvedValue({ response: { ok: true }, data: { editableFrom: '2026-09-22', editableThrough: '2026-09-24', employees: [{ employee: activeEmployee, counts: { present: 1 }, records: [{ attendanceDate: '2026-09-24', status: 'present' }] }] } });
+
+  render(<Employees navigate={jest.fn()} pathname={APP_ROUTES.employees} />);
+
+  screen.getByRole('tab', { name: 'Attendance' }).click();
+  expect(await screen.findByRole('heading', { name: /monthly register/i })).toBeTruthy();
+  expect(screen.getAllByLabelText(/ravi attendance/i)).toHaveLength(3);
 });

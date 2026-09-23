@@ -5,7 +5,7 @@ import ModalOverlay from './ModalOverlay';
 import SaveStatus from './SaveStatus';
 import WorkspaceControls from './WorkspaceControls';
 import { APP_ROUTES } from '../config/routes';
-import { createEmployee, deleteEmployee, fetchPayrollOverview, fetchPayrollRegister, listEmployees, updateEmployee } from '../services/employees';
+import { clearAttendance, createEmployee, deleteEmployee, fetchAttendanceRegister, fetchPayrollOverview, fetchPayrollRegister, listEmployees, saveAttendance, updateEmployee } from '../services/employees';
 import { buildEmployeeWhatsAppUrl, buildPhoneLink } from '../utils/whatsapp';
 import { downloadPayrollSummary } from '../utils/payrollPdf';
 
@@ -14,6 +14,10 @@ const currentMonth = () => {
   const values = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' }).formatToParts(new Date()).filter(({ type }) => type !== 'literal').map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}`;
 };
+const currentDate = () => `${currentMonth()}-${new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit' }).format(new Date())}`;
+const attendanceStatuses = [['present', 'Present'], ['absent', 'Absent'], ['half_day', 'Half day'], ['paid_leave', 'Paid leave'], ['unpaid_leave', 'Unpaid leave']];
+const monthDays = (period) => Array.from({ length: new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0)).getUTCDate() }, (_, index) => `${period}-${String(index + 1).padStart(2, '0')}`);
+const dayLabel = (date) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', weekday: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(`${date}T00:00:00Z`));
 
 function Employees({ navigate, pathname }) {
   const [employees, setEmployees] = useState([]);
@@ -30,6 +34,10 @@ function Employees({ navigate, pathname }) {
   const [payrollFilter, setPayrollFilter] = useState('all');
   const [employeeFilter, setEmployeeFilter] = useState('all');
   const [designationFilter, setDesignationFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('directory');
+  const [attendanceRegister, setAttendanceRegister] = useState(null);
+  const [attendanceSaving, setAttendanceSaving] = useState('');
+  const [attendanceDate, setAttendanceDate] = useState(currentDate);
 
   const refreshEmployees = useCallback(async () => {
     const { response, data } = await listEmployees(searchTerm);
@@ -42,7 +50,12 @@ function Employees({ navigate, pathname }) {
   useEffect(() => {
     refreshEmployees().catch((error) => setMessage(error.message));
   }, [refreshEmployees]);
-  useEffect(() => { fetchPayrollOverview(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollOverview(data); else setMessage(data?.error || 'Unable to load payroll summary.'); }).catch(() => setMessage('Unable to load payroll summary.')); fetchPayrollRegister(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollRegister(data); else setMessage(data?.error || 'Unable to load payroll register.'); }).catch(() => setMessage('Unable to load payroll register.')); }, [payrollPeriod]);
+  const refreshAttendance = useCallback(async () => {
+    const { response, data } = await fetchAttendanceRegister(payrollPeriod);
+    if (!response.ok) throw new Error(data?.error || 'Unable to load attendance.');
+    setAttendanceRegister(data);
+  }, [payrollPeriod]);
+  useEffect(() => { fetchPayrollOverview(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollOverview(data); else setMessage(data?.error || 'Unable to load payroll summary.'); }).catch(() => setMessage('Unable to load payroll summary.')); fetchPayrollRegister(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollRegister(data); else setMessage(data?.error || 'Unable to load payroll register.'); }).catch(() => setMessage('Unable to load payroll register.')); refreshAttendance().catch((error) => setMessage(error.message)); }, [payrollPeriod, refreshAttendance]);
 
   const visibleEmployees = showInactive ? employees : employees.filter((employee) => employee.status !== 'inactive');
   const payrollRows = (payrollRegister?.employees || []).filter((row) => (
@@ -102,6 +115,24 @@ function Employees({ navigate, pathname }) {
     }
   };
 
+  const updateAttendance = async (employeeId, date, status) => {
+    const key = `${employeeId}-${date}`;
+    setAttendanceSaving(key);
+    const result = await saveAttendance(employeeId, date, status);
+    setAttendanceSaving('');
+    if (!result.response.ok) { setMessage(result.data?.error || 'Unable to save attendance.'); return; }
+    await refreshAttendance();
+  };
+
+  const removeAttendance = async (employeeId, date) => {
+    const key = `${employeeId}-${date}`;
+    setAttendanceSaving(key);
+    const result = await clearAttendance(employeeId, date);
+    setAttendanceSaving('');
+    if (!result.response.ok) { setMessage(result.data?.error || 'Unable to clear attendance.'); return; }
+    await refreshAttendance();
+  };
+
   if (pathname !== APP_ROUTES.employees) return null;
 
   return (
@@ -119,9 +150,13 @@ function Employees({ navigate, pathname }) {
       </div>
       <SaveStatus message={message} />
 
-      <section className="employee-kpi-grid" aria-label="Current month payroll summary"><article><span>Active team</span><strong>{payrollOverview?.activeHeadcount ?? '—'}</strong></article><article><span>Salary due</span><strong>Rs. {Number(payrollOverview?.totalDue || 0).toLocaleString('en-IN')}</strong></article><article><span>Paid</span><strong>Rs. {Number(payrollOverview?.paid || 0).toLocaleString('en-IN')}</strong></article><article><span>Balance</span><strong>Rs. {Number(payrollOverview?.balance || 0).toLocaleString('en-IN')}</strong></article></section>
+      <div className="employee-workspace-tabs" role="tablist" aria-label="Employee workspace sections">
+        {[['directory', 'Directory'], ['payroll', 'Payroll'], ['attendance', 'Attendance']].map(([tab, label]) => <button type="button" role="tab" aria-selected={activeTab === tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab(tab)} key={tab}>{label}</button>)}
+      </div>
 
-      <section className="admin-card payroll-register-card">
+      {activeTab === 'payroll' && <>
+        <section className="employee-kpi-grid" aria-label="Current month payroll summary"><article><span>Active team</span><strong>{payrollOverview?.activeHeadcount ?? '—'}</strong></article><article><span>Salary due</span><strong>Rs. {Number(payrollOverview?.totalDue || 0).toLocaleString('en-IN')}</strong></article><article><span>Paid</span><strong>Rs. {Number(payrollOverview?.paid || 0).toLocaleString('en-IN')}</strong></article><article><span>Balance</span><strong>Rs. {Number(payrollOverview?.balance || 0).toLocaleString('en-IN')}</strong></article></section>
+        <section className="admin-card payroll-register-card">
         <div className="section-heading payroll-register-heading">
           <div>
             <p className="eyebrow">Monthly payroll</p>
@@ -144,9 +179,10 @@ function Employees({ navigate, pathname }) {
           </article>)}
         </div>
         {!payrollRows.length && <p className="section-text">No payroll records match these filters for this month.</p>}
-      </section>
+        </section>
+      </>}
 
-      <section className="admin-card">
+      {activeTab === 'directory' && <section className="admin-card employee-directory-card">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Your records</p>
@@ -168,7 +204,7 @@ function Employees({ navigate, pathname }) {
                 {employee.address && <small>{employee.address}</small>}
                 <small className={employee.status === 'inactive' ? 'employee-status employee-status-inactive' : 'employee-status'}>{employee.status === 'inactive' ? 'Inactive' : 'Active'}</small>
               </div>
-              <div className="saved-actions">
+              <div className="employee-row-actions">
                 <IconButton icon="open" className="color-link" label={`Open ${employee.name} payroll`} onClick={() => navigate(APP_ROUTES.employeeProfile(employee.id))} />
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildEmployeeWhatsAppUrl(employee.name, employee.phone)} className="color-link" icon="message" label={`WhatsApp ${employee.name}`} />}
                 {employee.phone && employee.phone.replace(/\D/g, '') && <IconButton href={buildPhoneLink(employee.phone)} className="color-link" icon="phone" label={`Call ${employee.name}`} />}
@@ -179,7 +215,35 @@ function Employees({ navigate, pathname }) {
           ))}
         </div>
         {!visibleEmployees.length && <p className="section-text">No employees match your search.</p>}
-      </section>
+      </section>}
+
+      {activeTab === 'attendance' && <section className="admin-card attendance-register-card">
+        <div className="section-heading attendance-register-heading">
+          <div><p className="eyebrow">Daily attendance</p><h2>Monthly register</h2><p className="section-text">Mark today or correct either of the previous two days. Attendance does not change payroll.</p></div>
+          <div className="attendance-period-controls"><label className="attendance-month"><span>Month</span><input type="month" value={payrollPeriod} onChange={(event) => { setPayrollPeriod(event.target.value); setAttendanceDate(`${event.target.value}-01`); }} /></label><label className="attendance-date"><span>Focus day</span><input type="date" min={`${payrollPeriod}-01`} max={`${payrollPeriod}-${String(monthDays(payrollPeriod).length).padStart(2, '0')}`} value={attendanceDate} onChange={(event) => setAttendanceDate(event.target.value)} /></label></div>
+        </div>
+        <div className="attendance-legend" aria-label="Attendance status legend">{attendanceStatuses.map(([status, label]) => <span className={`attendance-status ${status}`} key={status}>{label}</span>)}</div>
+        <div className="attendance-register-scroll">
+          <div className="attendance-register-table">
+            <div className="attendance-register-head"><strong>Employee</strong>{monthDays(payrollPeriod).map((date) => <span className={date === attendanceDate ? 'selected-date' : ''} key={date}>{dayLabel(date)}</span>)}</div>
+            {(attendanceRegister?.employees || []).map((row) => {
+              const records = Object.fromEntries((row.records || []).map((record) => [record.attendanceDate, record]));
+              return <article className="attendance-register-row" key={row.employee.id}>
+                <div className="attendance-employee"><strong>{row.employee.name}</strong><span>{row.employee.designation || 'Employee'} · {row.counts.present || 0} present</span></div>
+                {monthDays(payrollPeriod).map((date) => {
+                  const record = records[date];
+                  const editable = date >= (attendanceRegister?.editableFrom || '') && date <= (attendanceRegister?.editableThrough || '');
+                  const saving = attendanceSaving === `${row.employee.id}-${date}`;
+                  return <div className={`attendance-day${date === attendanceDate ? ' selected-date' : ''}`} key={date}>
+                    {editable ? <select aria-label={`${row.employee.name} attendance for ${date}`} value={record?.status || ''} disabled={saving} onChange={(event) => event.target.value ? updateAttendance(row.employee.id, date, event.target.value) : removeAttendance(row.employee.id, date)}><option value="">—</option>{attendanceStatuses.map(([status, label]) => <option value={status} key={status}>{label}</option>)}</select> : <span className={record ? `attendance-status ${record.status}` : 'attendance-empty'} title={record?.status || 'Not recorded'}>{record ? record.status.replaceAll('_', ' ') : '—'}</span>}
+                  </div>;
+                })}
+              </article>;
+            })}
+          </div>
+        </div>
+        {!(attendanceRegister?.employees || []).length && <p className="section-text">No active employees are available for attendance.</p>}
+      </section>}
 
       {showAddEmployee && (
         <ModalOverlay onClose={() => resetForm()} portal sectionClass="record-form-modal employee-record-modal" sectionProps={{ 'aria-labelledby': 'employee-form-title' }}>

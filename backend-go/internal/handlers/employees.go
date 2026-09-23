@@ -148,8 +148,13 @@ func DeleteEmployee(c *gin.Context) {
 		unavailable(c, "Unable to check employee payroll history.")
 		return
 	}
-	if len(payroll) > 0 || len(entries) > 0 {
-		conflict(c, "Employees with payroll history cannot be deleted. Mark the employee inactive to retain the audit trail.")
+	attendance, err := sheets.ListEmployeeAttendanceForEmployee(c.Request.Context(), ownerID, employee.ID)
+	if err != nil {
+		unavailable(c, "Unable to check employee attendance history.")
+		return
+	}
+	if len(payroll) > 0 || len(entries) > 0 || len(attendance) > 0 {
+		conflict(c, "Employees with payroll or attendance history cannot be deleted. Mark the employee inactive to retain the audit trail.")
 		return
 	}
 	if err := sheets.DeleteEmployee(c.Request.Context(), employee.Row); err != nil {

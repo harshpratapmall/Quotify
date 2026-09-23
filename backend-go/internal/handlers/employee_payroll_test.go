@@ -3,6 +3,7 @@ package handlers
 import (
 	"backend-go/internal/sheets"
 	"testing"
+	"time"
 )
 
 func TestBuildPayrollSummariesCarriesAdvanceAcrossSkippedMonths(t *testing.T) {
@@ -29,5 +30,21 @@ func TestBuildPayrollSummaryDoesNotRecoverAdvanceBeforeScheduledMonth(t *testing
 func TestPayrollValidation(t *testing.T) {
 	if !validPayrollPeriod("2026-09") || validPayrollPeriod("2026-13") || validPayrollPeriod("2026-9") {
 		t.Fatal("payroll period validation accepted an invalid calendar month")
+	}
+}
+
+func TestAttendanceValidation(t *testing.T) {
+	if !validAttendanceDate("2026-09-24") || validAttendanceDate("2026-9-24") || validAttendanceDate("2026-13-01") {
+		t.Fatal("attendance date validation accepted an invalid calendar date")
+	}
+	if !attendanceStatuses["present"] || !attendanceStatuses["unpaid_leave"] || attendanceStatuses["holiday"] {
+		t.Fatal("attendance statuses do not match the approved set")
+	}
+	today := payrollNow().Format("2006-01-02")
+	if !attendanceDateEditable(today) || !attendanceDateEditable(payrollNow().AddDate(0, 0, -2).Format("2006-01-02")) {
+		t.Fatal("attendance edit window should include today and the prior two days")
+	}
+	if attendanceDateEditable(payrollNow().AddDate(0, 0, -3).Format("2006-01-02")) || attendanceDateEditable(time.Now().In(payrollLocation).AddDate(0, 0, 1).Format("2006-01-02")) {
+		t.Fatal("attendance edit window accepted a protected date")
 	}
 }

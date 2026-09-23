@@ -35,7 +35,7 @@ POSTHOG_HOST=
 
 Use `GOOGLE_SERVICE_ACCOUNT_JSON` instead of the file path in hosted environments. Share the spreadsheet with the service account as an Editor. User records are read from the schema registry at `backend-go/internal/sheets/schema.go`; per-tab names can be overridden via the `SHEET_TAB_USERS` environment variable. Range strings are derived from the column count.
 
-Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `EmployeePayroll`, `EmployeePayrollEntries`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
+Persistence uses `Users`, `Quotations`, `Bills`, `Clients`, `Employee`, `EmployeePayroll`, `EmployeePayrollEntries`, `EmployeeAttendance`, `EmployeeAttendanceActivity`, `ShareLinks`, and `BusinessProfiles`; create their headers using the root README schemas. There is no template repository or template API in this checkout.
 
 Business profiles read/write `BusinessProfiles!A:K`. Append `website` in K1 without moving A:J. Existing rows without K are supported. GET/PUT `/api/v1/business-profile` expose `website`; PUT preserves it when omitted and clears it when explicitly empty. Bare domains become HTTPS URLs, and other schemes are rejected. Backend support should be deployed before the frontend website field. These changes are unverified: tests and builds were skipped by request.
 
