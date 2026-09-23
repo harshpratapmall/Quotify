@@ -1,6 +1,6 @@
 # Business Desk
 
-Business Desk is a workspace for Door2Door Interiors that keeps business profiles, clients, employees, quotations, bills, and payment follow-up together. Users sign in with a password or Google, save itemized documents to Google Sheets, share public document links, and export PDFs in the browser. Administrators manage users and reset passwords.
+Business Desk is a workspace for Door2Door Interiors that keeps business profiles, clients, employees, quotations, bills, and payment follow-up together. Users sign in with a password or Google, save itemized documents to Google Sheets, share public document links, and export PDFs in the browser. Administrators have an admin-only user-management workspace for managing users and resetting passwords; general-user pages are unavailable to administrator sessions.
 
 ## Structure
 

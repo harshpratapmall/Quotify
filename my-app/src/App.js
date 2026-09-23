@@ -264,6 +264,12 @@ function App() {
     setDocumentType(initialType);
     setPreviewOnly(false);
     setSaveStatus('');
+    if (isAdminUser(currentUser)) {
+      setSavedDocuments({ quotation: [], bill: [] });
+      setBusinessProfile({});
+      return;
+    }
+
     Promise.all([listDocuments(DOCUMENT_TYPES.quotation), listDocuments(DOCUMENT_TYPES.bill)])
       .then(([quotations, bills]) => setSavedDocuments({ quotation: quotations, bill: bills }))
       .catch(() => setSavedDocuments({ quotation: [], bill: [] }));
@@ -317,8 +323,14 @@ function App() {
       navigate(authenticatedHome, true);
     }
 
-    if (authStatus === 'authenticated' && pathname === APP_ROUTES.adminUsers && !isAdminUser(currentUser)) {
-      navigate(APP_ROUTES.home, true);
+    if (authStatus === 'authenticated') {
+      if (isAdminUser(currentUser) && pathname !== APP_ROUTES.adminUsers) {
+        navigate(APP_ROUTES.adminUsers, true);
+      }
+
+      if (!isAdminUser(currentUser) && pathname === APP_ROUTES.adminUsers) {
+        navigate(APP_ROUTES.home, true);
+      }
     }
   }, [authStatus, authenticatedHome, currentUser, navigate, pathname]);
 
@@ -487,8 +499,8 @@ function App() {
     return <LoginScreen onLogin={login} onGoogleLogin={startGoogleLogin} isLoggingIn={isLoggingIn} error={loginError} />;
   }
 
-  if (pathname === APP_ROUTES.adminUsers && isAdminUser(currentUser)) {
-    return <AdminUsers navigate={navigate} currentUser={currentUser} logout={logout} />;
+  if (isAdminUser(currentUser)) {
+    return <AdminUsers currentUser={currentUser} logout={logout} />;
   }
   if (pathname === APP_ROUTES.businessProfile) return <BusinessProfile profile={businessProfile} setProfile={setBusinessProfile} navigate={navigate} saveProfile={async (profile) => { const { response, data } = await saveBusinessProfile(profile); if (!response.ok) throw new Error(data?.error || 'Unable to save your profile.'); setBusinessProfile(data); return true; }} />;
   if (pathname.startsWith('/employees/')) return <EmployeeProfile pathname={pathname} navigate={navigate} />;

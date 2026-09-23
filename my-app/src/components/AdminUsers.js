@@ -3,9 +3,8 @@ import ActionIcon from './ActionIcon';
 import IconButton from './IconButton';
 import SaveStatus from './SaveStatus';
 import { createUser, listUsers, resetUserPassword, updateUserStatus } from '../services/admin';
-import { APP_ROUTES } from '../config/routes';
 
-function AdminUsers({ navigate, currentUser, logout }) {
+function AdminUsers({ currentUser, logout }) {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ username: '', displayName: '', password: '' });
   const [message, setMessage] = useState('');
@@ -69,7 +68,7 @@ function AdminUsers({ navigate, currentUser, logout }) {
     <main className="admin-page user-management-page">
       <header className="admin-header">
         <div><p className="eyebrow">Administration</p><h1>User management</h1><p>Signed in as {currentUser.displayName || currentUser.username}.</p></div>
-        <div className="header-actions"><IconButton icon="back" label="Back to overview" onClick={() => navigate(APP_ROUTES.home)} /><IconButton icon="logout" label="Log out" onClick={logout} /></div>
+        <div className="header-actions"><IconButton icon="logout" label="Log out" onClick={logout} /></div>
       </header>
       <section className="admin-summary" aria-label="User summary"><article><span>Total users</span><strong>{users.length}</strong></article><article><span>Active</span><strong>{users.filter((user) => user.status === 'active').length}</strong></article><article><span>Inactive</span><strong>{users.filter((user) => user.status === 'inactive').length}</strong></article></section>
       <section className="admin-card">

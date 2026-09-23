@@ -29,6 +29,7 @@ Two-service business workspace for Door2Door Interiors:
 - Business profiles: `backend-go/internal/handlers/business_profile.go`, `backend-go/internal/sheets/business_profiles.go`; the "Getting started" onboarding guide `my-app/src/components/UserGuide.js` renders behind a toggle button on the Business Profile page. The UI no longer edits quote prefix or terms, but those columns remain in `BusinessProfiles!A:J` for compatibility.
 - Library pages: `my-app/src/components/DocumentLibraryModal.js` provides a per-library search box (matches username, client name, or project) and collapsible document tiles whose status/payment controls are revealed by clicking the tile.
 - Admin users: `backend-go/internal/handlers/admin_users.go`, `backend-go/internal/sheets/credentials.go`.
+- Administrator sessions are frontend-restricted to `/admin/users`; any general-user route redirects there, and the admin screen exposes user management and logout only.
 - Routes/CORS: `backend-go/internal/routes/routes.go`.
 - Frontend orchestration: `my-app/src/App.js`.
 - Frontend API calls: `my-app/src/services/` (shared fetch helper in `services/apiClient.js`).

@@ -1,6 +1,6 @@
 # Business Desk Frontend
 
-React 19 frontend for quotations, bills, clients, employees, business profiles, sharing, and administrator user management. See the [root README](../README.md) for shared setup, API routes, schemas, and deployment.
+React 19 frontend for quotations, bills, clients, employees, business profiles, sharing, and administrator user management. Administrator sessions are restricted to the user-management workspace; general-user routes redirect there. See the [root README](../README.md) for shared setup, API routes, schemas, and deployment.
 
 ## Run
 
@@ -35,7 +35,7 @@ REACT_APP_ENV=local
 - Employee directory with search, add/edit/delete, and active/inactive archive (inactive rows hidden by default) plus WhatsApp and call shortcuts; employees are never linked to quotations or bills
 - Document lifecycle controls for quotations and bills, quotation accepted/declined decisions (auto-marked `viewed` when a share link opens), and optional bill due dates. Quotations and bills track recorded payments by date and amount with a derived payment status; the payment-records panel with a Total/Received/Pending summary renders only for `partially_paid` documents, and payment details stay hidden for `cancelled` documents. Converting a quotation to a bill carries its recorded payments into the bill.
 - Quotation-to-bill conversion, public links, and prefilled WhatsApp drafts
-- Admin user search, creation, activation/deactivation, and password resets
+- Admin user search, creation, activation/deactivation, and password resets in an admin-only workspace
 - Per-library search (by username, client name, or project) and collapsible library tiles that reveal status and payment controls on click
 - Color-coded library and client action buttons (preview/edit/delete), and themed status/payment dropdowns
 - "Getting started" onboarding guide on the business profile page, toggled behind a button
