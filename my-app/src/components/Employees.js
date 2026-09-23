@@ -45,6 +45,11 @@ function Employees({ navigate, pathname }) {
   useEffect(() => { fetchPayrollOverview(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollOverview(data); else setMessage(data?.error || 'Unable to load payroll summary.'); }).catch(() => setMessage('Unable to load payroll summary.')); fetchPayrollRegister(payrollPeriod).then(({ response, data }) => { if (response.ok) setPayrollRegister(data); else setMessage(data?.error || 'Unable to load payroll register.'); }).catch(() => setMessage('Unable to load payroll register.')); }, [payrollPeriod]);
 
   const visibleEmployees = showInactive ? employees : employees.filter((employee) => employee.status !== 'inactive');
+  const payrollRows = (payrollRegister?.employees || []).filter((row) => (
+    (payrollFilter === 'all' || row.status === payrollFilter)
+    && (employeeFilter === 'all' || row.employee.status === employeeFilter)
+    && (designationFilter === 'all' || row.employee.designation === designationFilter)
+  ));
 
   const change = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
@@ -116,7 +121,30 @@ function Employees({ navigate, pathname }) {
 
       <section className="employee-kpi-grid" aria-label="Current month payroll summary"><article><span>Active team</span><strong>{payrollOverview?.activeHeadcount ?? '—'}</strong></article><article><span>Salary due</span><strong>Rs. {Number(payrollOverview?.totalDue || 0).toLocaleString('en-IN')}</strong></article><article><span>Paid</span><strong>Rs. {Number(payrollOverview?.paid || 0).toLocaleString('en-IN')}</strong></article><article><span>Balance</span><strong>Rs. {Number(payrollOverview?.balance || 0).toLocaleString('en-IN')}</strong></article></section>
 
-      <section className="admin-card"><div className="section-heading"><div><p className="eyebrow">Monthly payroll</p><h2>Payroll register</h2></div><div className="saved-actions"><label>Month <input type="month" value={payrollPeriod} onChange={(event) => setPayrollPeriod(event.target.value)} /></label><select aria-label="Filter payroll register" value={payrollFilter} onChange={(event) => setPayrollFilter(event.target.value)}><option value="all">All payment statuses</option><option value="unpaid">Unpaid</option><option value="partially_paid">Partially paid</option><option value="paid">Paid</option><option value="not_started">Not started</option></select><select aria-label="Filter employee status" value={employeeFilter} onChange={(event) => setEmployeeFilter(event.target.value)}><option value="all">All employees</option><option value="active">Active</option><option value="inactive">Inactive</option></select><select aria-label="Filter designation" value={designationFilter} onChange={(event) => setDesignationFilter(event.target.value)}><option value="all">All designations</option>{[...new Set((payrollRegister?.employees || []).map((row) => row.employee.designation).filter(Boolean))].map((designation) => <option key={designation} value={designation}>{designation}</option>)}</select><button className="secondary-action compact-action" onClick={() => payrollRegister && downloadPayrollSummary({ ...payrollRegister, employees: payrollRegister.employees.filter((row) => (payrollFilter === 'all' || row.status === payrollFilter) && (employeeFilter === 'all' || row.employee.status === employeeFilter) && (designationFilter === 'all' || row.employee.designation === designationFilter)) })} disabled={!payrollRegister}>Download summary</button></div></div><div className="payroll-entry-list">{(payrollRegister?.employees || []).filter((row) => (payrollFilter === 'all' || row.status === payrollFilter) && (employeeFilter === 'all' || row.employee.status === employeeFilter) && (designationFilter === 'all' || row.employee.designation === designationFilter)).map((row) => <article key={row.employee.id}><div><strong>{row.employee.name}</strong><span>{row.employee.designation || 'Employee'} · {row.status.replaceAll('_', ' ')}</span></div><b>Rs. {Number(row.balance || 0).toLocaleString('en-IN')}</b><IconButton icon="open" className="color-link" label={`Open ${row.employee.name} payroll`} onClick={() => navigate(APP_ROUTES.employeeProfile(row.employee.id))} /></article>)}</div>{!(payrollRegister?.employees || []).length && <p className="section-text">No payroll records for this month.</p>}</section>
+      <section className="admin-card payroll-register-card">
+        <div className="section-heading payroll-register-heading">
+          <div>
+            <p className="eyebrow">Monthly payroll</p>
+            <h2>Payroll register</h2>
+          </div>
+          <button className="secondary-action compact-action payroll-download" onClick={() => payrollRegister && downloadPayrollSummary({ ...payrollRegister, employees: payrollRows })} disabled={!payrollRegister}>Download summary</button>
+        </div>
+        <div className="payroll-register-filters" aria-label="Payroll register filters">
+          <label className="payroll-filter-month"><span>Month</span><input type="month" value={payrollPeriod} onChange={(event) => setPayrollPeriod(event.target.value)} /></label>
+          <label><span>Payment status</span><select value={payrollFilter} onChange={(event) => setPayrollFilter(event.target.value)}><option value="all">All statuses</option><option value="unpaid">Unpaid</option><option value="partially_paid">Partially paid</option><option value="paid">Paid</option><option value="not_started">Not started</option></select></label>
+          <label><span>Employment status</span><select value={employeeFilter} onChange={(event) => setEmployeeFilter(event.target.value)}><option value="all">All employees</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+          <label><span>Designation</span><select value={designationFilter} onChange={(event) => setDesignationFilter(event.target.value)}><option value="all">All designations</option>{[...new Set((payrollRegister?.employees || []).map((row) => row.employee.designation).filter(Boolean))].map((designation) => <option key={designation} value={designation}>{designation}</option>)}</select></label>
+        </div>
+        <div className="payroll-entry-list">
+          {payrollRows.map((row) => <article key={row.employee.id}>
+            <div className="payroll-entry-identity"><strong>{row.employee.name}</strong><span>{row.employee.designation || 'Employee'}</span></div>
+            <span className={`payroll-status ${row.status}`}>{row.status.replaceAll('_', ' ')}</span>
+            <div className="payroll-entry-balance"><span>Balance due</span><b>Rs. {Number(row.balance || 0).toLocaleString('en-IN')}</b></div>
+            <IconButton icon="open" className="color-link" label={`Open ${row.employee.name} payroll`} onClick={() => navigate(APP_ROUTES.employeeProfile(row.employee.id))} />
+          </article>)}
+        </div>
+        {!payrollRows.length && <p className="section-text">No payroll records match these filters for this month.</p>}
+      </section>
 
       <section className="admin-card">
         <div className="section-heading">

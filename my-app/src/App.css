@@ -1903,15 +1903,28 @@ button:focus-visible, select:focus-visible { outline: 3px solid var(--gold); out
 .payroll-breakdown b { color: var(--navy); }
 .payroll-entry-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; align-items: end; }
 .payroll-entry-form button { align-self: end; }
-.payroll-entry-list { display: grid; }
-.payroll-entry-list article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 1rem; align-items: center; padding: .8rem 0; border-bottom: 1px solid #e3ece8; }
-.payroll-entry-list strong, .payroll-entry-list span { display: block; }
-.payroll-entry-list span { margin-top: .2rem; color: var(--muted); font-size: .8rem; }
-.payroll-entry-list b { color: var(--navy); }
-.payroll-status { text-transform: capitalize; }
-.payroll-status.unpaid { color: #a3443b; }.payroll-status.partially_paid { color: #9a6821; }.payroll-status.paid { color: #226048; }.payroll-status.overpaid { color: #23407f; }
-@media (max-width: 760px) { .employee-kpi-grid, .payroll-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.employee-payroll-layout { grid-template-columns: 1fr; }.payroll-entry-form { grid-template-columns: 1fr 1fr; }.payroll-toolbar { align-items: stretch; flex-direction: column; }.employee-profile-header { flex-direction: column; } }
+.payroll-register-card { padding: clamp(1.2rem, 2.5vw, 1.75rem); }
+.payroll-register-heading { align-items: center; margin-bottom: 1.15rem; }
+.payroll-register-heading h2 { margin-bottom: 0; }
+.payroll-download { flex-shrink: 0; }
+.payroll-register-filters { display: grid; grid-template-columns: 1.15fr repeat(3, minmax(150px, 1fr)); gap: .75rem; padding: 1rem; border: 1px solid #dbe7e2; border-radius: 14px; background: #f7faf8; }
+.payroll-register-filters label { display: grid; gap: .35rem; min-width: 0; color: var(--navy); font-size: .75rem; font-weight: 700; letter-spacing: .02em; }
+.payroll-register-filters input, .payroll-register-filters select { width: 100%; min-height: 42px; padding: .55rem .7rem; border: 1px solid #c6d8d2; border-radius: 9px; color: var(--navy); background: #fff; font: inherit; font-weight: 500; }
+.payroll-entry-list { display: grid; margin-top: .9rem; }
+.payroll-entry-list article { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(110px, .6fr) minmax(120px, .65fr) auto; gap: 1rem; align-items: center; padding: 1rem .2rem; border-bottom: 1px solid #e3ece8; }
+.payroll-entry-list article:last-child { border-bottom: 0; }
+.payroll-entry-identity strong, .payroll-entry-identity span, .payroll-entry-balance span, .payroll-entry-balance b { display: block; }
+.payroll-entry-identity strong { color: var(--navy); }
+.payroll-entry-identity span, .payroll-entry-balance span { margin-top: .2rem; color: var(--muted); font-size: .8rem; }
+.payroll-entry-balance { text-align: right; }
+.payroll-entry-balance b { margin-top: .15rem; color: var(--navy); font-size: 1rem; }
+.payroll-status { justify-self: start; display: inline-flex; align-items: center; width: fit-content; padding: .34rem .6rem; border-radius: 999px; background: #f1f4f2; color: var(--muted); font-size: .74rem; font-weight: 700; text-transform: capitalize; }
+.payroll-status.unpaid { color: #a3443b; background: #fcece8; }.payroll-status.partially_paid { color: #8d611e; background: #fff2dc; }.payroll-status.paid { color: #226048; background: #e7f4ec; }.payroll-status.overpaid { color: #23407f; background: #e9efff; }
+@media (max-width: 760px) { .employee-kpi-grid, .payroll-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.employee-payroll-layout { grid-template-columns: 1fr; }.payroll-entry-form { grid-template-columns: 1fr 1fr; }.payroll-toolbar { align-items: stretch; flex-direction: column; }.employee-profile-header { flex-direction: column; }.payroll-register-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }.payroll-entry-list article { grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; }.payroll-entry-balance { text-align: left; }.payroll-entry-list .icon-button { grid-column: 2; grid-row: 1 / span 2; }.payroll-status { grid-column: 1; } }
 
 @media (max-width: 640px) {
   .user-guide-grid { grid-template-columns: 1fr; }
+  .payroll-register-heading { align-items: stretch; }
+  .payroll-download { width: 100%; }
+  .payroll-register-filters { grid-template-columns: 1fr; }
 }
