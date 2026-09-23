@@ -41,10 +41,10 @@ func TestAttendanceValidation(t *testing.T) {
 		t.Fatal("attendance statuses do not match the approved set")
 	}
 	today := payrollNow().Format("2006-01-02")
-	if !attendanceDateEditable(today) || !attendanceDateEditable(payrollNow().AddDate(0, 0, -2).Format("2006-01-02")) {
-		t.Fatal("attendance edit window should include today and the prior two days")
+	if !attendanceDateEditable(today) || !attendanceDateEditable(payrollNow().AddDate(0, 0, -9).Format("2006-01-02")) {
+		t.Fatal("attendance edit window should include the most recent ten calendar days")
 	}
-	if attendanceDateEditable(payrollNow().AddDate(0, 0, -3).Format("2006-01-02")) || attendanceDateEditable(time.Now().In(payrollLocation).AddDate(0, 0, 1).Format("2006-01-02")) {
+	if attendanceDateEditable(payrollNow().AddDate(0, 0, -10).Format("2006-01-02")) || attendanceDateEditable(time.Now().In(payrollLocation).AddDate(0, 0, 1).Format("2006-01-02")) {
 		t.Fatal("attendance edit window accepted a protected date")
 	}
 }

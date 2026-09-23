@@ -219,7 +219,7 @@ function Employees({ navigate, pathname }) {
 
       {activeTab === 'attendance' && <section className="admin-card attendance-register-card">
         <div className="section-heading attendance-register-heading">
-          <div><p className="eyebrow">Daily attendance</p><h2>Monthly register</h2><p className="section-text">Mark today or correct either of the previous two days. Attendance does not change payroll.</p></div>
+          <div><p className="eyebrow">Daily attendance</p><h2>Monthly register</h2><p className="section-text">Mark or correct the most recent 10 calendar days. Attendance does not change payroll.</p></div>
           <div className="attendance-period-controls"><label className="attendance-month"><span>Month</span><input type="month" value={payrollPeriod} onChange={(event) => { setPayrollPeriod(event.target.value); setAttendanceDate(`${event.target.value}-01`); }} /></label><label className="attendance-date"><span>Focus day</span><input type="date" min={`${payrollPeriod}-01`} max={`${payrollPeriod}-${String(monthDays(payrollPeriod).length).padStart(2, '0')}`} value={attendanceDate} onChange={(event) => setAttendanceDate(event.target.value)} /></label></div>
         </div>
         <div className="attendance-legend" aria-label="Attendance status legend">{attendanceStatuses.map(([status, label]) => <span className={`attendance-status ${status}`} key={status}>{label}</span>)}</div>

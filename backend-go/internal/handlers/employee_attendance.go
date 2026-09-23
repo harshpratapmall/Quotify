@@ -23,7 +23,7 @@ func attendanceDateEditable(value string) bool {
 		return false
 	}
 	today := payrollNow()
-	return value >= today.AddDate(0, 0, -2).Format("2006-01-02") && value <= today.Format("2006-01-02")
+	return value >= today.AddDate(0, 0, -9).Format("2006-01-02") && value <= today.Format("2006-01-02")
 }
 
 func attendanceEmployee(c *gin.Context) (string, sheets.Employee, bool) {
@@ -96,7 +96,7 @@ func ListEmployeeAttendance(c *gin.Context) {
 	sort.Slice(rows, func(i, j int) bool {
 		return rows[i]["employee"].(sheets.Employee).Name < rows[j]["employee"].(sheets.Employee).Name
 	})
-	c.JSON(http.StatusOK, gin.H{"period": period, "employees": rows, "editableFrom": payrollNow().AddDate(0, 0, -2).Format("2006-01-02"), "editableThrough": payrollNow().Format("2006-01-02")})
+	c.JSON(http.StatusOK, gin.H{"period": period, "employees": rows, "editableFrom": payrollNow().AddDate(0, 0, -9).Format("2006-01-02"), "editableThrough": payrollNow().Format("2006-01-02")})
 }
 
 func SaveEmployeeAttendance(c *gin.Context) {
@@ -106,7 +106,7 @@ func SaveEmployeeAttendance(c *gin.Context) {
 	}
 	date := c.Param("date")
 	if !validAttendanceDate(date) || !attendanceDateEditable(date) {
-		badRequest(c, "Attendance can be changed only for today and the previous two days.")
+		badRequest(c, "Attendance can be changed only for the most recent 10 calendar days.")
 		return
 	}
 	if employee.Status != "active" {
@@ -155,7 +155,7 @@ func ClearEmployeeAttendance(c *gin.Context) {
 	}
 	date := c.Param("date")
 	if !validAttendanceDate(date) || !attendanceDateEditable(date) {
-		badRequest(c, "Attendance can be changed only for today and the previous two days.")
+		badRequest(c, "Attendance can be changed only for the most recent 10 calendar days.")
 		return
 	}
 	existing, err := sheets.GetEmployeeAttendance(c.Request.Context(), owner, employee.ID, date)
