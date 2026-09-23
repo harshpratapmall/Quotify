@@ -140,13 +140,9 @@ func Logout(c *gin.Context) {
 
 func setSessionCookie(c *gin.Context, value string, maxAge int) {
 	secure := config.CookieSecure()
-	sameSite := http.SameSiteLaxMode
-	if secure {
-		// The Vercel frontend and Render API are cross-site, so production
-		// requests need an explicit cross-site cookie policy.
-		sameSite = http.SameSiteNoneMode
-	}
-	c.SetSameSite(sameSite)
+	// Browser requests use Vercel's same-origin /api rewrite. Lax keeps the
+	// session first-party and avoids iPadOS blocking it as third-party state.
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(sessionCookieName, value, maxAge, "/", "", secure, true)
 }
 

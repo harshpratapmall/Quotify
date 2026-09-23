@@ -41,7 +41,7 @@ func TestRequireAdminBlocksRegularUsers(t *testing.T) {
 	}
 }
 
-func TestSessionCookieUsesCrossSitePolicyInProduction(t *testing.T) {
+func TestSessionCookieUsesFirstPartyPolicyInProduction(t *testing.T) {
 	t.Setenv("COOKIE_SECURE", "true")
 	gin.SetMode(gin.TestMode)
 
@@ -50,7 +50,7 @@ func TestSessionCookieUsesCrossSitePolicyInProduction(t *testing.T) {
 	setSessionCookie(context, "session-token", 600)
 
 	cookie := recorder.Header().Get("Set-Cookie")
-	for _, expected := range []string{"SameSite=None", "Secure", "HttpOnly"} {
+	for _, expected := range []string{"SameSite=Lax", "Secure", "HttpOnly"} {
 		if !strings.Contains(cookie, expected) {
 			t.Fatalf("Set-Cookie header %q does not contain %q", cookie, expected)
 		}

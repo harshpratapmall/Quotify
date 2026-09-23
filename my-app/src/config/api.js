@@ -1,7 +1,10 @@
 const API_BASE_URLS = {
   local: 'http://localhost:8000',
-  development: 'https://quotify-i62o.onrender.com',
-  production: 'https://quotify-i62o.onrender.com',
+  // Hosted requests stay on the Vercel origin. Its /api rewrite forwards
+  // them to Render, which keeps the signed session cookie first-party on
+  // iPadOS as well as desktop browsers.
+  development: '',
+  production: '',
 };
 
 const hostnameEnvironment = {

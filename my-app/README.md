@@ -19,7 +19,7 @@ Optional: create `.env` from `.env.example`:
 REACT_APP_ENV=local
 ```
 
-`src/config/api.js` always selects the local API on `localhost` and `127.0.0.1`. Other hosts use `REACT_APP_ENV=development` or `production` when specified, then hostname detection, with production as the fallback. Both hosted environments call `https://quotify-i62o.onrender.com` directly. Setting `REACT_APP_ENV=local` does not force the local API on a remote hostname. API requests preserve `credentials: 'include'`.
+`src/config/api.js` always selects the local API on `localhost` and `127.0.0.1`. Other hosts use `REACT_APP_ENV=development` or `production` when specified, then hostname detection, with production as the fallback. Hosted environments call the same-origin `/api` path, which Vercel rewrites to Render. This keeps authenticated cookies first-party on iPadOS. Setting `REACT_APP_ENV=local` does not force the local API on a remote hostname. API requests preserve `credentials: 'include'`.
 
 ## Main Responsibilities
 

@@ -59,7 +59,7 @@ Two-service business workspace for Door2Door Interiors:
 - New dates use `Asia/Kolkata`; the active draft uses browser `sessionStorage`.
 - Preserve `credentials: 'include'` on frontend requests.
 - CORS must allow PATCH for client, document, payment, and admin status updates.
-- Production frontend API calls use `https://quotify-i62o.onrender.com` directly; preserve `credentials: 'include'` and Render CORS. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
+- Production frontend API calls use Vercel's same-origin `/api` rewrite to the Render service; preserve `credentials: 'include'`. This makes the signed session cookie first-party for iPadOS browsers. The Vercel `/api/blob/upload` function remains the separate Blob upload authorization path.
 - PostHog API telemetry is optional, non-blocking, and excludes request bodies, cookies, query strings, credentials, client data, and quotation content. It disables PostHog IP/GeoIP enrichment and records only parameterized routes, method, status, duration, login username, and a HMAC-pseudonymized authenticated user ID.
 - Public share tokens are stored as hashes; public document views are read-only and sanitized. Bill and quotation shares additionally expose `paymentStatus` and the raw `payments` JSON so the share page can render the same Received/Pending summary as the app.
 - ShareLinks date columns (`created_at, expires_at, revoked_at, first_viewed_at, last_viewed_at`) are stored in Asia/Kolkata formatted `DD-MM-YYYY HH:MM:SS`. New share links expire 10 minutes after creation; legacy rows without `expires_at` are treated as expiring 10 minutes after `created_at`. Expired or revoked links return `410 Gone`.

@@ -41,7 +41,7 @@ Business profiles read/write `BusinessProfiles!A:K`. Append `website` in K1 with
 
 The OAuth settings are required for Google sign-in, not password sign-in. `GOOGLE_ALLOWED_DOMAINS` is optional. `AUTH_DEBUG` defaults to false. `POSTHOG_API_KEY` enables non-blocking server-side API telemetry; events contain only the parameterized route, HTTP method, response status, duration, login username, and a HMAC-pseudonymized user ID. Server-side events disable IP and GeoIP collection. They never include request bodies, cookies, query strings, client data, credentials, or document content. In production set `COOKIE_SECURE=true` and explicitly configure `CORS_ALLOWED_ORIGINS` with the frontend origin; PATCH is required for status updates.
 
-In production, set `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://business-desk-net.vercel.app/`. Register the Render callback URL in the Google Cloud OAuth client.
+In production, browser API requests go through the Vercel same-origin `/api` rewrite to Render. Set `GOOGLE_OAUTH_REDIRECT_URL=https://business-desk-net.vercel.app/api/v1/auth/google/callback` and `OAUTH_FRONTEND_URL=https://business-desk-net.vercel.app/`. Register that Vercel callback URL in the Google Cloud OAuth client. This lets the signed, HTTP-only `SameSite=Lax` session cookie work on iPadOS browsers, which block third-party cookie sessions.
 
 ## API Reference
 
