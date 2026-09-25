@@ -72,13 +72,13 @@ The Business Profile page includes an optional Website field. The API normalizes
 
 ## Logo Uploads
 
-Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. The app obtains a five-minute upload ticket from the authenticated backend and includes it in the Blob request; the Vercel function verifies it with the backend because the Render session cookie is not available on the Vercel domain. JPEG, PNG, and WebP files are limited to 500 KB, and uploaded logos are displayed inside a fixed topbar frame. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. `QUOTIFY_API_URL` is optional and overrides the backend used to verify upload tickets.
+Business logos are uploaded to a public Vercel Blob store through `/api/blob/upload`. The app obtains a five-minute upload ticket from the authenticated backend and includes it in the Blob request; the Vercel function verifies it with the backend because the API session cookie is not available on the Vercel domain. JPEG, PNG, and WebP files are limited to 500 KB, and uploaded logos are displayed inside a fixed topbar frame. The Vercel project must have `BLOB_READ_WRITE_TOKEN`, which is created automatically when the Blob store is connected. Set `QUOTIFY_API_URL=https://quotify-t879.onrender.com` in Vercel so it verifies upload tickets against the deployed API.
 
 The React development server alone does not run `api/blob-upload.js`; upload testing requires the Vercel function and Blob configuration. Open Edit Profile before selecting a logo, then save the profile to persist its URL.
 
 ## Deployment
 
-Deploy this directory to Vercel with `npm run build` and output directory `build`. `vercel.json` rewrites `/share/:token` to the SPA and `/api/blob/upload` to the upload function. It also retains an `/api/*` proxy to Render, while normal browser API requests use the direct Render URL. Configure Render CORS to allow the deployed frontend origin.
+Deploy this directory to Vercel with `npm run build` and output directory `build`. `vercel.json` rewrites `/share/:token` to the SPA and `/api/blob/upload` to the upload function. It proxies browser `/api/*` requests to `https://quotify-t879.onrender.com`; configure the API CORS to allow the deployed frontend origin.
 
 ## Scripts
 

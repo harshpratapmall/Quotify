@@ -11,7 +11,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://quotify-i62o.onrender.com/api/:path*"
+      "destination": "https://quotify-t879.onrender.com/api/:path*"
     }
   ]
 }

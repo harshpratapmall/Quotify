@@ -8,7 +8,7 @@ Business Desk is a workspace for Door2Door Interiors that keeps business profile
 - `backend-go/`: Go 1.22/Gin API; deploy from this directory to Render.
 - `render.yaml`: Render service definition.
 
-The frontend calls the Render API directly in production at `https://quotify-i62o.onrender.com` and sends requests with credentials. Vercel hosts the frontend and the Blob upload authorization function.
+The frontend sends production API requests through Vercel's same-origin `/api` rewrite to `https://quotify-t879.onrender.com`. Vercel hosts the frontend and the Blob upload authorization function.
 
 ## API
 
@@ -148,9 +148,9 @@ Both PDF footers align icons and contact text blocks around a common vertical ce
 
 ## Business Logos
 
-Business logos are uploaded directly from the browser to Vercel Blob. The browser first obtains a five-minute authorization ticket from the authenticated Render API, and the Vercel function at `/api/blob/upload` verifies that ticket with Render before issuing an upload token. This works across the separate Render and Vercel cookie domains. JPEG, PNG, and WebP files up to 500 KB are permitted, and the profile save stores the returned public URL in `BusinessProfiles`. The app displays every uploaded logo inside the same fixed-size topbar frame.
+Business logos are uploaded directly from the browser to Vercel Blob. The browser first obtains a five-minute authorization ticket from the authenticated API, and the Vercel function at `/api/blob/upload` verifies that ticket with the API before issuing an upload token. This works across the separate API and Vercel domains. JPEG, PNG, and WebP files up to 500 KB are permitted, and the profile save stores the returned public URL in `BusinessProfiles`. The app displays every uploaded logo inside the same fixed-size topbar frame.
 
-Connect a public Vercel Blob store to the `my-app/` Vercel project. Vercel creates `BLOB_READ_WRITE_TOKEN` automatically. Set `QUOTIFY_API_URL` only if the upload authorization function must use a backend URL other than its current Render default.
+Connect a public Vercel Blob store to the `my-app/` Vercel project. Vercel creates `BLOB_READ_WRITE_TOKEN` automatically. Set `QUOTIFY_API_URL=https://quotify-t879.onrender.com` so the upload authorization function verifies tickets against the deployed API.
 
 ## Local Setup
 
@@ -190,9 +190,9 @@ Password sign-in does not require Google OAuth configuration; the Google sign-in
 
 ## Deployment
 
-Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. The browser calls the Render API directly at `https://quotify-i62o.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://quotify-i62o.onrender.com/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://business-desk-net.vercel.app/`, and the frontend origin in `CORS_ALLOWED_ORIGINS`.
+Deploy `my-app/` to Vercel and connect the public Vercel Blob store so `BLOB_READ_WRITE_TOKEN` is available. Browser API calls stay on Vercel's `/api` origin and are proxied to `https://quotify-t879.onrender.com`; the Vercel `/api/blob/upload` function remains responsible only for authorizing Blob uploads. Deploy `backend-go/` using `render.yaml`; hosted configuration needs `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `AUTH_SESSION_SECRET`, `COOKIE_SECURE=true`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL=https://business-desk-net.vercel.app/api/v1/auth/google/callback`, `OAUTH_FRONTEND_URL=https://business-desk-net.vercel.app/`, and `CORS_ALLOWED_ORIGINS=https://business-desk-net.vercel.app`.
 
-Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://quotify-i62o.onrender.com/api/v1/auth/google/callback` as authorized redirect URIs in the Google Cloud OAuth client.
+Register both `http://localhost:8000/api/v1/auth/google/callback` and `https://business-desk-net.vercel.app/api/v1/auth/google/callback` as authorized redirect URIs in the Google Cloud OAuth client.
 
 ## Behavior Notes
 

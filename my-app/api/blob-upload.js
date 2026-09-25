@@ -1,6 +1,6 @@
 const { handleUpload } = require('@vercel/blob/client');
 
-const BUSINESS_API_URL = process.env.QUOTIFY_API_URL || 'https://quotify-i62o.onrender.com';
+const BUSINESS_API_URL = process.env.QUOTIFY_API_URL || 'https://quotify-t879.onrender.com';
 const MAX_LOGO_FILE_SIZE_BYTES = 500 * 1024;
 
 async function authorizedUser(clientPayload) {

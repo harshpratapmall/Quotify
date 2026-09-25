@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: quotify-i62o
+    name: quotify-t879
     runtime: go
     plan: free
     rootDir: backend-go
@@ -19,7 +19,7 @@ services:
       - key: GOOGLE_OAUTH_CLIENT_SECRET
         sync: false
       - key: GOOGLE_OAUTH_REDIRECT_URL
-        value: https://quotify-i62o.onrender.com/api/v1/auth/google/callback
+        value: https://business-desk-net.vercel.app/api/v1/auth/google/callback
       - key: OAUTH_FRONTEND_URL
         value: https://business-desk-net.vercel.app/
       - key: GOOGLE_ALLOWED_DOMAINS
